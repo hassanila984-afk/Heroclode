@@ -3050,7 +3050,7 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
     const stamps = (word, step = 0.06) => [...word].map((_, k) => ["stamp" + (k % 4), k * step, 0.7]);
 
     // [beat number, picture, sounds as [name, seconds after the beat, volume]]. The music starts at beat 8.
-    let START_BEAT = 8;   // 12 after the opening video, which already shows the first part
+    let START_BEAT = 8;   // 34 after the opening video: it goes straight to the finale (TAKE YOUR TIME … FIREFLY)
     const EVENTS = [
       [8, () => { clear(); layer("i-bg-deep i-halftone"); moon(42, 74, 20, 220); fireflies(14); fig("side", "right", 30, "right:-30cqw;bottom:-14vh;"); flash(0.8); caption("THE NIGHT IS STILL AWAKE", 30); }, [["punch", 0, 0.8]]],
       [10, () => { speed(); caption("…AND SO IS SHE.", 84, "i-gold"); }, [["stamp2", 0, 0.5]]],
@@ -3093,7 +3093,7 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
       for (let i = START_BEAT; i <= 44; i++) if (KICKS.has(i) || SNARES.has(i)) list.push([B(i), () => pulse(i), false]);
       for (const [i, fn, sfx] of EVENTS) if (i >= START_BEAT) list.push([B(i), fn, sfx]);
       for (const i of WHOOSH_INTO) if (i > START_BEAT) list.push([B(i) - 0.26, null, [["@whoosh", 0, 0.26]]]);
-      list.push([B(19), null, [["@riser", 0, B(23) - B(19)]]]);
+      if (START_BEAT < 19) list.push([B(19), null, [["@riser", 0, B(23) - B(19)]]]);
       return list.sort((a, b) => a[0] - b[0]);
     }
 
@@ -3208,7 +3208,7 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
         try {
           await playing;
           if (ended) return;
-          out(); START_BEAT = 12;
+          out(); START_BEAT = 34;
           runVideo(v);
           return;
         } catch (e) { root.querySelector(".i-vid").remove(); }

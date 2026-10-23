@@ -2,297 +2,325 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cut">
-<meta name="theme-color" content="#f6f3ee">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+<meta name="theme-color" content="#6c3cf0">
 <title>Spark</title>
 <style>
   :root {
-    --bg: #f6f3ee;
-    --card: #ffffff;
-    --text: #2a2622;
-    --muted: #7a7168;
-    --line: #e7e1d8;
-    --accent: #d9692b;
-    --accent-soft: #fbe7da;
-    --good: #3f8f5b;
-    --e1: #c9483b; --e2: #e08a3c; --e3: #d8b43c; --e4: #7fb04f; --e5: #3f8f5b;
+    --bg: #fff7ec;
+    --chat-bg: radial-gradient(circle at 15% 10%, #ffe2f1 0, transparent 40%),
+               radial-gradient(circle at 90% 30%, #dff4ff 0, transparent 40%),
+               radial-gradient(circle at 30% 90%, #fff1c9 0, transparent 45%), #fff7ec;
+    --text: #22183a;
+    --muted: #7d7396;
+    --bot: #ffffff;
+    --me: #6c3cf0;
+    --me-text: #ffffff;
+    --head: linear-gradient(120deg, #6c3cf0, #e5408f 60%, #ff9a3c);
+    --chip: #ffffff;
+    --chip-line: #e5dcff;
+    --line: #eee5f8;
+    --good: #18a957;
+    --e1: #ff4d6d; --e2: #ff9a3c; --e3: #ffd23f; --e4: #8bd346; --e5: #18c27a;
   }
   @media (prefers-color-scheme: dark) {
     :root {
-      --bg: #1a1816;
-      --card: #24211e;
-      --text: #f0ebe4;
-      --muted: #a39a90;
-      --line: #36322d;
-      --accent: #ef8550;
-      --accent-soft: #3a2a20;
-      --good: #6cc08a;
+      --bg: #140f24;
+      --chat-bg: radial-gradient(circle at 15% 10%, #3a1640 0, transparent 40%),
+                 radial-gradient(circle at 90% 30%, #142c46 0, transparent 40%),
+                 radial-gradient(circle at 30% 90%, #3a2a10 0, transparent 45%), #140f24;
+      --text: #f4efff;
+      --muted: #a89fc4;
+      --bot: #241c3d;
+      --chip: #241c3d;
+      --chip-line: #3d3266;
+      --line: #342a55;
+      --good: #43d98a;
     }
   }
-  * { box-sizing: border-box; }
-  html, body { margin: 0; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; }
   body {
     background: var(--bg);
     color: var(--text);
-    font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-    padding-bottom: calc(76px + env(safe-area-inset-bottom));
+    font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    display: flex; flex-direction: column;
+    height: 100dvh;
+    overflow: hidden;
   }
-  main { max-width: 560px; margin: 0 auto; padding: 20px 16px; }
-  h1 { font-size: 26px; margin: 4px 0 2px; }
-  h2 { font-size: 18px; margin: 0 0 10px; }
-  p { margin: 0 0 10px; }
-  .muted { color: var(--muted); }
-  .small { font-size: 14px; }
-  .card {
-    background: var(--card);
-    border: 1px solid var(--line);
-    border-radius: 16px;
-    padding: 16px;
-    margin: 14px 0;
+
+  /* ---------- header ---------- */
+  header {
+    background: var(--head);
+    background-size: 200% 200%;
+    animation: shimmer 8s ease infinite;
+    color: #fff;
+    display: flex; align-items: center; gap: 12px;
+    padding: calc(10px + env(safe-area-inset-top)) 16px 10px;
+    box-shadow: 0 4px 18px rgba(108, 60, 240, .25);
+    z-index: 2;
   }
-  .hero { border-color: var(--accent); background: var(--accent-soft); }
-  .hero .step { font-size: 22px; font-weight: 600; margin: 6px 0 4px; }
-  button {
-    font: inherit;
-    border: 1px solid var(--line);
-    background: var(--card);
-    color: var(--text);
-    border-radius: 12px;
-    padding: 10px 14px;
-    cursor: pointer;
+  @keyframes shimmer { 0%,100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+  header .who { flex: 1; min-width: 0; }
+  header b { font-size: 18px; display: block; }
+  header small { opacity: .9; font-size: 13px; }
+  .icon-btn {
+    border: 0; background: rgba(255,255,255,.2); color: #fff;
+    width: 38px; height: 38px; border-radius: 50%; font-size: 18px; cursor: pointer;
   }
-  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
-  button.link { border: 0; background: none; padding: 4px 6px; color: var(--muted); }
-  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-  .energy { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
-  .energy button { padding: 10px 2px; font-size: 13px; display: flex; flex-direction: column; align-items: center; gap: 2px; }
-  .energy button b { font-size: 20px; }
-  .energy button.on { border-color: var(--accent); background: var(--accent-soft); font-weight: 600; }
-  input[type=text], textarea {
-    font: inherit; width: 100%;
-    border: 1px solid var(--line); border-radius: 12px;
-    padding: 10px 12px; background: var(--bg); color: var(--text);
+  .score {
+    background: rgba(255,255,255,.22); border-radius: 999px; padding: 4px 10px;
+    font-weight: 700; font-size: 14px; white-space: nowrap;
   }
-  textarea { min-height: 70px; resize: vertical; }
-  form.add { display: flex; gap: 8px; }
-  form.add input { flex: 1; min-width: 0; }
-  ul.list { list-style: none; padding: 0; margin: 0; }
-  ul.list > li { border-top: 1px solid var(--line); padding: 10px 0; }
-  ul.list > li:first-child { border-top: 0; }
-  .task-title { display: flex; gap: 8px; align-items: flex-start; }
-  .task-title span { flex: 1; overflow-wrap: anywhere; }
-  .steps { list-style: none; padding: 4px 0 0 28px; margin: 0; font-size: 15px; }
-  .steps li { padding: 2px 0; }
-  .done-text { text-decoration: line-through; color: var(--muted); }
-  input[type=checkbox] { width: 20px; height: 20px; accent-color: var(--accent); margin-top: 2px; flex: none; }
-  .joke {
-    font-size: 15px; font-style: italic;
-    background: var(--card); border-radius: 12px;
-    padding: 10px 12px; margin: 10px 0 0;
+  .score.bump { animation: bump .5s ease; }
+  @keyframes bump { 40% { transform: scale(1.4); } }
+
+  /* ---------- Bolt, the buddy ---------- */
+  .bolt {
+    width: 48px; height: 48px; flex: none; position: relative;
+    border-radius: 50% 50% 46% 46%;
+    background: radial-gradient(circle at 35% 30%, #fff6b0, #ffd23f 45%, #ff9a3c);
+    box-shadow: 0 0 0 3px rgba(255,255,255,.6), 0 4px 10px rgba(0,0,0,.2);
+    animation: float 3s ease-in-out infinite;
   }
-  .joke.done { font-style: normal; font-weight: 600; color: var(--good); }
-  .joke button.link { font-style: normal; font-size: 13px; text-decoration: underline; }
-  .timer { font-size: 44px; font-weight: 700; text-align: center; font-variant-numeric: tabular-nums; margin: 6px 0; }
-  .bars { display: flex; align-items: flex-end; gap: 4px; height: 110px; margin-top: 8px; }
-  .bars div { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; height: 100%; }
-  .bars i { display: block; width: 100%; border-radius: 6px 6px 2px 2px; min-height: 3px; background: var(--line); }
-  .bars span { font-size: 11px; color: var(--muted); margin-top: 4px; }
-  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; text-align: center; }
-  .stats b { display: block; font-size: 24px; }
-  .note { border-color: var(--e2); }
-  .win { overflow-wrap: anywhere; }
-  .win small { display: block; color: var(--muted); }
-  nav {
-    position: fixed; left: 0; right: 0; bottom: 0;
-    background: var(--card); border-top: 1px solid var(--line);
-    display: flex; justify-content: center;
-    padding-bottom: env(safe-area-inset-bottom);
+  .bolt::before {
+    content: ""; position: absolute; top: -9px; left: 50%; transform: translateX(-50%) rotate(12deg);
+    width: 10px; height: 14px; background: #ffd23f;
+    clip-path: polygon(60% 0, 0 60%, 45% 60%, 30% 100%, 100% 35%, 55% 35%);
   }
-  nav button {
-    flex: 1; max-width: 140px; border: 0; border-radius: 0; background: none;
-    padding: 12px 4px; color: var(--muted); font-size: 14px;
+  .bolt .eye {
+    position: absolute; top: 17px; width: 7px; height: 10px; border-radius: 4px; background: #22183a;
+    animation: blink 4s infinite; transition: height .2s, top .2s;
   }
-  nav button.on { color: var(--accent); font-weight: 700; }
-  [hidden] { display: none !important; }
+  .bolt .eye.l { left: 13px; } .bolt .eye.r { right: 13px; }
+  .bolt .mouth {
+    position: absolute; left: 50%; top: 29px; transform: translateX(-50%);
+    width: 14px; height: 7px; border: 3px solid #22183a; border-top: 0;
+    border-radius: 0 0 14px 14px; transition: all .2s;
+  }
+  .bolt .cheek { position: absolute; top: 28px; width: 7px; height: 4px; border-radius: 50%; background: #ff7aa8; opacity: .8; }
+  .bolt .cheek.l { left: 6px; } .bolt .cheek.r { right: 6px; }
+  .bolt.sleepy .eye { height: 3px; top: 21px; animation: none; }
+  .bolt.sleepy .mouth { width: 8px; height: 8px; border: 3px solid #22183a; border-radius: 50%; top: 29px; }
+  .bolt.typing { animation: wobble .6s ease-in-out infinite; }
+  .bolt.party { animation: party .9s ease; }
+  .bolt.party .mouth { width: 18px; height: 10px; background: #22183a; }
+  @keyframes float { 50% { transform: translateY(-3px); } }
+  @keyframes blink { 0%, 92%, 100% { transform: scaleY(1); } 95% { transform: scaleY(.1); } }
+  @keyframes wobble { 25% { transform: rotate(-6deg); } 75% { transform: rotate(6deg); } }
+  @keyframes party { 30% { transform: translateY(-14px) rotate(-15deg) scale(1.15); } 60% { transform: translateY(0) rotate(360deg); } 100% { transform: rotate(360deg); } }
+
+  /* ---------- chat ---------- */
+  #chat {
+    flex: 1; overflow-y: auto; background: var(--chat-bg);
+    padding: 16px 12px 8px;
+    scroll-behavior: smooth;
+  }
+  .wrap { max-width: 620px; margin: 0 auto; display: flex; flex-direction: column; gap: 8px; }
+  .msg {
+    max-width: 86%; padding: 10px 14px; border-radius: 20px;
+    overflow-wrap: anywhere;
+    animation: pop .35s cubic-bezier(.2, 1.4, .4, 1) both;
+    box-shadow: 0 2px 6px rgba(34, 24, 58, .08);
+  }
+  .msg.bot { background: var(--bot); align-self: flex-start; border-bottom-left-radius: 6px; }
+  .msg.me { background: var(--me); color: var(--me-text); align-self: flex-end; border-bottom-right-radius: 6px; }
+  .msg.big { font-size: 22px; font-weight: 800; line-height: 1.25; }
+  .msg.task {
+    background: linear-gradient(135deg, #ffd23f, #ff9a3c); color: #22183a;
+    font-size: 21px; font-weight: 800; border-bottom-left-radius: 6px;
+  }
+  .msg.task small { display: block; font-size: 13px; font-weight: 600; opacity: .75; }
+  .msg.joke { font-style: italic; }
+  .msg.party { background: linear-gradient(135deg, #18c27a, #3cc8ff); color: #fff; font-weight: 700; }
+  .msg.history { animation: none; }
+  .day {
+    align-self: center; font-size: 12px; color: var(--muted);
+    background: var(--bot); padding: 3px 10px; border-radius: 999px; margin: 6px 0;
+  }
+  @keyframes pop { from { opacity: 0; transform: translateY(10px) scale(.85); } to { opacity: 1; transform: none; } }
+  .typing-dots { display: inline-flex; gap: 4px; padding: 4px 2px; }
+  .typing-dots i { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); animation: dot 1s infinite; }
+  .typing-dots i:nth-child(2) { animation-delay: .15s; } .typing-dots i:nth-child(3) { animation-delay: .3s; }
+  @keyframes dot { 30% { transform: translateY(-5px); opacity: .5; } }
+
+  /* special bubbles */
+  .ring { display: flex; align-items: center; gap: 14px; }
+  .ring svg { width: 84px; height: 84px; transform: rotate(-90deg); flex: none; }
+  .ring circle { fill: none; stroke-width: 9; }
+  .ring .track { stroke: var(--line); }
+  .ring .prog { stroke: url(#ringGrad); stroke-linecap: round; transition: stroke-dashoffset 1s linear; }
+  .ring b { font-size: 30px; font-variant-numeric: tabular-nums; }
+  .tasklist { list-style: none; padding: 0; margin: 6px 0 0; }
+  .tasklist li { display: flex; gap: 8px; align-items: center; padding: 6px 0; border-top: 1px solid var(--line); }
+  .tasklist li span { flex: 1; }
+  .tasklist button { border: 0; background: none; color: var(--muted); font-size: 16px; cursor: pointer; padding: 2px 6px; }
+  .bars { display: flex; align-items: flex-end; gap: 5px; height: 90px; margin: 10px 0 4px; }
+  .bars div { flex: 1; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; }
+  .bars i { width: 100%; min-height: 4px; border-radius: 6px 6px 2px 2px; background: var(--line); animation: grow .6s ease both; transform-origin: bottom; }
+  .bars span { font-size: 11px; color: var(--muted); margin-top: 3px; }
+  @keyframes grow { from { transform: scaleY(0); } }
+  .stats { display: flex; gap: 14px; margin-top: 8px; font-size: 14px; }
+  .stats b { font-size: 20px; display: block; }
+
+  /* ---------- bottom ---------- */
+  footer {
+    background: var(--bg); border-top: 1px solid var(--line);
+    padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
+    z-index: 2;
+  }
+  footer .wrap { gap: 8px; }
+  #chips { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+  #chips:empty { display: none; }
+  .chip {
+    font: inherit; font-weight: 700; font-size: 15px;
+    border: 2px solid var(--chip-line); background: var(--chip); color: var(--text);
+    border-radius: 999px; padding: 9px 15px; cursor: pointer;
+    animation: pop .3s cubic-bezier(.2, 1.4, .4, 1) both;
+    transition: transform .1s;
+  }
+  .chip:active { transform: scale(.92); }
+  .chip.main { background: linear-gradient(135deg, #6c3cf0, #e5408f); color: #fff; border-color: transparent; box-shadow: 0 4px 12px rgba(108,60,240,.35); }
+  .chip.go { background: linear-gradient(135deg, #18c27a, #3cc8ff); color: #fff; border-color: transparent; }
+  .chip:nth-child(2) { animation-delay: .05s; } .chip:nth-child(3) { animation-delay: .1s; }
+  .chip:nth-child(4) { animation-delay: .15s; } .chip:nth-child(5) { animation-delay: .2s; } .chip:nth-child(6) { animation-delay: .25s; }
+  .menu { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; }
+  .menu button {
+    font: inherit; font-size: 13px; font-weight: 600; white-space: nowrap;
+    border: 0; background: var(--line); color: var(--text); border-radius: 999px; padding: 6px 11px; cursor: pointer;
+  }
+  form { display: flex; gap: 8px; }
+  form input {
+    flex: 1; min-width: 0; font: inherit;
+    border: 2px solid var(--chip-line); border-radius: 999px; padding: 10px 16px;
+    background: var(--chip); color: var(--text); outline: none;
+  }
+  form input:focus { border-color: #6c3cf0; }
+  form button {
+    width: 46px; height: 46px; border-radius: 50%; border: 0; flex: none;
+    background: linear-gradient(135deg, #6c3cf0, #e5408f); color: #fff; font-size: 20px; cursor: pointer;
+  }
+  #confetti { position: fixed; inset: 0; pointer-events: none; z-index: 10; }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
 </style>
 </head>
 <body>
-<main>
+<svg width="0" height="0" style="position:absolute">
+  <defs><linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6c3cf0"/><stop offset="1" stop-color="#ff9a3c"/></linearGradient></defs>
+</svg>
 
-  <!-- TODAY -->
-  <section id="view-today">
-    <p class="muted small" id="today-date"></p>
-    <h1 id="greeting">Hi.</h1>
+<header>
+  <div class="bolt" id="bolt"><i class="eye l"></i><i class="eye r"></i><i class="cheek l"></i><i class="cheek r"></i><i class="mouth"></i></div>
+  <div class="who">
+    <b>Bolt</b>
+    <small id="status">online</small>
+  </div>
+  <span class="score" id="score" title="Steps done today">⚡ 0</span>
+  <button class="icon-btn" id="mute" aria-label="Sound on or off">🔊</button>
+</header>
 
-    <div class="card">
-      <h2>How much energy do you have right now?</h2>
-      <div class="energy" id="energy-buttons"></div>
-      <p class="muted small" id="energy-advice" style="margin-top:10px"></p>
-    </div>
+<div id="chat"><div class="wrap" id="log"></div></div>
 
-    <div class="card hero" id="one-thing"></div>
+<footer>
+  <div class="wrap">
+    <div id="chips"></div>
+    <div class="menu">
+      <button data-menu="list">📋 My list</button>
+      <button data-menu="joke">😂 Joke</button>
+      <button data-menu="win">🌟 Good thing</button>
+      <button data-menu="week">📈 My week</button>
+      <button data-menu="energy">🔋 Battery</button>
+    </div>
+    <form id="form">
+      <input id="input" type="text" maxlength="160" autocomplete="off" placeholder="Type a task to add…">
+      <button aria-label="Send">➤</button>
+    </form>
+  </div>
+</footer>
 
-    <div class="card" id="timer-card" hidden>
-      <h2>Just 2 minutes</h2>
-      <p class="muted small" id="timer-step"></p>
-      <div class="timer" id="timer">2:00</div>
-      <p class="muted small" id="timer-msg">You only have to start. Stopping after 2 minutes still counts.</p>
-      <div class="row">
-        <button class="primary" id="timer-done">I did it</button>
-        <button id="timer-stop">Stop</button>
-      </div>
-    </div>
-
-    <div class="card">
-      <h2>One good thing</h2>
-      <p class="muted small" id="win-prompt"></p>
-      <form class="add" id="win-form-today">
-        <input type="text" id="win-input-today" placeholder="Even something small" maxlength="200">
-        <button class="primary">Save</button>
-      </form>
-    </div>
-  </section>
-
-  <!-- TASKS -->
-  <section id="view-tasks" hidden>
-    <h1>Tasks</h1>
-    <p class="muted small">Write it down so your head doesn't have to hold it. Break anything that feels heavy into tiny steps.</p>
-    <div class="card">
-      <form class="add" id="task-form">
-        <input type="text" id="task-input" placeholder="Add a task" maxlength="140">
-        <button class="primary">Add</button>
-      </form>
-    </div>
-    <div class="card"><ul class="list" id="task-list"></ul></div>
-  </section>
-
-  <!-- WINS -->
-  <section id="view-wins">
-    <h1>Good moments</h1>
-    <p class="muted small">Things that went well or felt good. Over time this shows you what still gives you energy at work.</p>
-    <div class="card">
-      <form class="add" id="win-form">
-        <input type="text" id="win-input" placeholder="What went well?" maxlength="200">
-        <button class="primary">Save</button>
-      </form>
-    </div>
-    <div class="card"><ul class="list" id="win-list"></ul></div>
-  </section>
-
-  <!-- WEEK -->
-  <section id="view-week" hidden>
-    <h1>Your pattern</h1>
-    <div class="card note" id="care-note" hidden>
-      <h2>Your energy has been low for a while</h2>
-      <p class="small">Many of your check-ins in the last two weeks were Empty or Low. That's worth taking seriously. Sleep, food, movement and a few real days off help, and a doctor can check common causes like low iron, vitamin D, thyroid or depression. Talking to someone you trust helps too.</p>
-    </div>
-    <div class="card">
-      <h2>Energy, last 14 days</h2>
-      <div class="bars" id="bars"></div>
-    </div>
-    <div class="card">
-      <h2>Last 7 days</h2>
-      <div class="stats" id="stats"></div>
-    </div>
-    <div class="card">
-      <h2>What I notice</h2>
-      <ul class="list small" id="insights"></ul>
-    </div>
-    <div class="card">
-      <h2>Your data</h2>
-      <p class="muted small">Everything stays on this device. Nothing is sent anywhere.</p>
-      <div class="row">
-        <button id="export">Download backup</button>
-        <button id="import">Restore backup</button>
-        <input type="file" id="import-file" accept="application/json" hidden>
-      </div>
-    </div>
-  </section>
-
-</main>
-
-<nav>
-  <button data-view="today" class="on">Today</button>
-  <button data-view="tasks">Tasks</button>
-  <button data-view="wins">Good moments</button>
-  <button data-view="week">Pattern</button>
-</nav>
+<canvas id="confetti"></canvas>
 
 <script>
 (() => {
   const KEY = 'spark-v1';
-  const ENERGY = [
-    { v: 1, label: 'Empty', face: '😩' },
-    { v: 2, label: 'Low', face: '😔' },
-    { v: 3, label: 'Okay', face: '😐' },
-    { v: 4, label: 'Good', face: '🙂' },
-    { v: 5, label: 'Great', face: '😄' },
-  ];
-  const ADVICE = {
-    1: 'Running on empty. Aim for one tiny step today, or none. Rest is allowed.',
-    2: 'Low energy. Pick one small thing. That is a full day’s win.',
-    3: 'Okay. Aim for 2–3 small steps, with breaks between them.',
-    4: 'Good energy. A nice moment to do the step you’ve been avoiding.',
-    5: 'Great energy! Use it for something that matters to you.',
-  };
-  const WIN_PROMPTS = [
-    'What is one thing you did today, even a small one?',
-    'Was there a moment at work that felt okay, or even good?',
-    'Who did you help today?',
-    'What did you finish, start, or decide today?',
-    'What made you smile today?',
-    'What part of your work would you miss if it disappeared?',
-  ];
-  const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  const JOKES = [
-    'This task might need a coffee to handle. Maybe two. Espresso yourself.',
-    'I told my to-do list a joke. It didn’t laugh. It just got longer.',
-    'This task is like a broken pencil. Pointless until you start.',
-    'Why did the task cross the road? To get done on the other side. Help it.',
-    'I’m reading a book about procrastination. I’ll finish it later.',
-    'This step is so small, an ant would call it a warm-up.',
-    'Don’t worry about this task. Worrying is a tea-dious job. Have a coffee instead.',
-    'I used to hate tasks, but they grew on me. Like a to-do moss.',
-    'This task called. It said it’s not as scary as it looks. It’s mostly bark.',
-    'Do it now, and future you will buy you a coffee. Future you is very generous.',
-    'Why don’t tasks ever get tired? Because you do it for them. Sorry. Coffee?',
-    'I asked my energy where it went. It said it was on a coffee break. Go join it.',
-    'Step one: start. Step two: act like you meant to start all along.',
-    'My boss said I need to stop procrastinating. I said: we’ll see about that tomorrow.',
-    'This task is two minutes long. Shorter than finding the TV remote.',
-    'Why did the coffee file a police report? It got mugged. Unlike you, it got stuff done.',
-    'Rome wasn’t built in a day. But they did lay one brick. This is your brick.',
-    'I would tell you a joke about this task, but you’d have to do it first.',
-    'This task is not a mountain. It’s a speed bump wearing a mountain costume.',
-    'What do you call a finished task? A done-ut. Treat yourself to one.',
-    'Time flies like an arrow. Tasks fly like a banana. Nobody knows why. Just start.',
-    'Your to-do list called. It misses you. It’s kind of clingy.',
-    'I’m great at multitasking. I can waste time, be unproductive and procrastinate all at once.',
-    'Coffee: because adulting is hard and this task won’t do itself. I checked.',
-    'This task walked into a bar. Nobody did it there either. Be the hero.',
-    'Why was the calendar so popular? It had a lot of dates. You have just one step.',
-    'Low battery? Same. Let’s do one tiny thing in low-power mode.',
-    'I’m not lazy. I’m in energy-saving mode. This step uses very little energy.',
-  ];
-  const DONE_JOKES = [
-    'Done! I’d give you a high five, but I’m a web page.',
-    'Done! That task never saw you coming.',
-    'Done! You deserve a coffee. Or a nap. Or both, in that order.',
-    'Done! Somewhere, a to-do list is crying. Good.',
-    'Done! I’m so proud I’d put you on the fridge.',
-    'Done! That’s what I call a tea-riffic job.',
-  ];
-  const pick = (arr, not) => {
-    let j;
-    do { j = arr[Math.floor(Math.random() * arr.length)]; } while (arr.length > 1 && j === not);
-    return j;
-  };
-  let joke = pick(JOKES);
-  let jokeFor = null;
-  let celebrate = null;
 
-  // ---------- storage ----------
-  function blank() { return { checkins: {}, tasks: [], wins: [], doneLog: [] }; }
+  // ================= Bolt's lines =================
+  const R = (arr) => arr[Math.floor(Math.random() * arr.length)];
+  const GREET = {
+    morning: ['Good morning! ☀️ Or as I call it, "why is it bright already".', 'Morning! I’ve had zero coffee because I’m a web page. You?', 'Rise and… well, rise at least. 🌅'],
+    afternoon: ['Hey hey! Afternoon slump hitting yet? 🫠', 'Afternoon! The part of the day where lunch makes everyone a zombie. 🧟', 'Yo! Halfway through the day. You survived the morning, legend.'],
+    evening: ['Evening! 🌙 The day is almost over. You made it.', 'Hey night owl. 🦉 Let’s keep this chill.', 'Evening! If today was a movie, what rating? Don’t answer. Let’s just finish strong.'],
+  };
+  const BACK = ['Oh hey, you’re back! I missed you. Don’t tell anyone. 🤫', 'Look who it is! 👀', 'Welcome back! I kept your seat warm. 🪑', 'You came back! My plan is working. 😈'];
+  const ASK_ENERGY = ['Real talk: how’s your battery right now? 🔋', 'Battery check! How charged are you? 🔋', 'Before anything: how much energy do you have? Be honest, I can’t tell your boss.'];
+  const ENERGY = [
+    { v: 1, chip: '🪫 Dead', react: ['Dead battery. Got it. 🪫 Today the goal is ONE tiny thing. Or zero. Resting is allowed, I checked the rules.', 'Oof. Running on fumes. We’re doing the smallest thing possible, like a sloth on vacation. 🦥'] },
+    { v: 2, chip: '😔 Low', react: ['Low battery mode activated. 🐢 One small thing today = full win. That’s the deal.', 'Low? Okay. We go slow. Slow is still moving. 🐌'] },
+    { v: 3, chip: '😐 Meh', react: ['Meh is fine. Meh is honest. Let’s aim for 2–3 tiny steps with snack breaks. 🍪', 'Meh energy: the official energy of Tuesdays. Let’s do a couple of small things.'] },
+    { v: 4, chip: '🙂 Decent', react: ['Decent! 🙌 Great time to do that one thing you’ve been avoiding. You know the one.', 'Ooh, decent battery. Let’s use it before a meeting steals it. 🏃'] },
+    { v: 5, chip: '⚡ Charged', react: ['CHARGED?! Who are you and what did you do with my human? ⚡⚡', 'Full power! Quick, do something before it wears off! 🚀'] },
+  ];
+  const TASK_INTRO = ['Okay. Your ONE thing right now:', 'Today’s victim:', 'Next up on the chopping block:', 'Here’s the only thing you need to think about:', 'Drumroll please… 🥁'];
+  const TASK_JOKES = [
+    'This task might need a coffee to handle. Maybe two. Espresso yourself. ☕',
+    'This task is not a mountain. It’s a speed bump wearing a mountain costume. 🎭',
+    'Fun fact: this task is scared of you. It’s been hiding in the list for days.',
+    'This one’s so small an ant would call it a warm-up. 🐜',
+    'I’d do it for you, but I don’t have hands. Just vibes. ✨',
+    'Do it now and future you buys you a coffee. Future you is very generous.',
+    'Rome wasn’t built in a day. But somebody laid one brick. This is your brick. 🧱',
+    'This task walked into a bar. Nobody did it there either. Be the hero. 🦸',
+    'Shorter than finding the TV remote. Probably.',
+    'I believe in you. Mostly because I’m programmed to. But also genuinely.',
+  ];
+  const JOKES = [
+    'I’m reading a book about anti-gravity. It’s impossible to put down. 📚',
+    'I told my to-do list a joke. It didn’t laugh. It just got longer.',
+    'Why don’t skeletons fight each other? They don’t have the guts. 💀',
+    'I’m great at multitasking. I can waste time, be unproductive and procrastinate all at once.',
+    'What do you call a fake noodle? An impasta. 🍝',
+    'I used to be addicted to soap. I’m clean now. 🧼',
+    'Why did the coffee file a police report? It got mugged. ☕',
+    'My boss told me to have a good day. So I went home. 🏠',
+    'Why did the scarecrow get promoted? He was outstanding in his field. 🌾',
+    'I asked my energy where it went. It said it’s on a coffee break. Indefinitely.',
+    'I’m reading a book about procrastination. I’ll finish it later.',
+    'What do you call a sleeping dinosaur? A dino-snore. 🦕',
+    'Why did the computer go to the doctor? It had a virus. And no sick days. 🤒',
+    'I only know 25 letters of the alphabet. I don’t know y.',
+    'Parallel lines have so much in common. It’s a shame they’ll never meet.',
+    'What’s the best thing about Switzerland? I don’t know, but the flag is a big plus. 🇨🇭',
+    'Why do bees have sticky hair? Because they use honeycombs. 🐝',
+    'I’m not lazy. I’m in energy-saving mode. Like a phone at 3%.',
+    'My email inbox and I have a lot in common. We’re both full of things nobody wants to deal with.',
+    'What do you call a cow with no legs? Ground beef. 🐄',
+  ];
+  const RIMSHOT = ['🥁 ba-dum-tss', '😂', 'I’ll see myself out. 🚪', 'Thank you, I’m here all week. 🎤', 'You smiled. I saw that. 😏'];
+  const DONE = [
+    'YESSS! 🎉 That task never saw you coming.',
+    'DONE! Somewhere, a to-do list is crying. Good. 😤',
+    'Look at you go! I’d high-five you but I’m a blob. 🙌',
+    'Boom. 💥 Handled. Like a boss. A tired boss, but a boss.',
+    'Done! You deserve a coffee. Or a nap. Or both, in that order. ☕😴',
+    'Legendary. I’m telling all the other apps about you. 🏆',
+    'That was easier than it looked, right? It always is. Sneaky tasks.',
+  ];
+  const FIRST_TODAY = 'First one today! The first one is the hardest. Everything after is downhill. 🛷';
+  const NOT_NOW = ['Fine. I’ll put it in timeout. 🙈', 'Skipping. It’ll think about what it did.', 'No problem, back of the line it goes. 🚶', 'Okay, okay. Next suspect!'];
+  const TOO_BIG = ['Too big? Let’s shrink it. 🔬 What’s the tiniest first piece? Stupidly small. Like "open the laptop" small.', 'Big task energy. 😩 Type the smallest possible first step. If it doesn’t feel silly, it’s not small enough.'];
+  const SPLIT_OK = ['Ooh, tiny. I respect it. 🤏', 'Perfect. That’s a step even a sleepy panda could do. 🐼', 'Love it. Small steps, big flex. 💪'];
+  const ADDED = ['Added! It’s on the list now. Shaking, probably. 📝', 'Got it. Written in my tiny brain. 🧠', 'Noted! I’ll bring it up at the worst possible moment. Kidding. Mostly.', 'On the list! You don’t have to remember it anymore. That’s my job.'];
+  const EMPTY = ['Your list is empty. Suspicious. 🤨 Type a task below, or just enjoy the peace.', 'Nothing on the list! Either you’re a legend or you’re hiding tasks from me. 👀 Type one below whenever.'];
+  const TIMER_START = ['2 minutes. That’s it. You just have to START. I’ll be here pretending to work too. ⏱️', 'Timer on! 2 minutes. If you stop after, it still counts. Those are the rules, I made them.'];
+  const TIMER_END = ['⏰ 2 minutes! You STARTED, which is the hardest part. Keep going or call it. Both count.', '⏰ Ding! Starting is 90% of the battle. The other 10% is snacks.'];
+  const ASK_WIN = ['Quick one before you go: what’s one thing that went okay today? Even tiny. 🌟', 'Tell me one good thing from today. Small counts. "I drank water" counts. 🌟'];
+  const WIN_OK = ['Saved to the good-stuff vault. 🏦✨ Over time we’ll see what still lights you up.', 'Love that. 💛 Collecting these for you.', 'That’s going in the highlight reel. 🎬'];
+  const CARE = 'Hey, real talk for a sec. 💛 Your battery has been low for most of the last two weeks. That’s not laziness, that’s a signal. Sleep, food, a walk and a few real days off help. And a doctor can check things like iron, vitamin D, thyroid and depression. You deserve to feel better, not just push through.';
+
+  // ================= storage =================
+  function blank() { return { checkins: {}, tasks: [], wins: [], doneLog: [], chat: [], muted: false }; }
   function load() {
     try {
       const d = JSON.parse(localStorage.getItem(KEY));
@@ -302,338 +330,436 @@
   }
   let data = load();
   function save() {
+    data.chat = data.chat.slice(-60);
     try { localStorage.setItem(KEY, JSON.stringify(data)); } catch (e) {}
   }
 
-  // ---------- helpers ----------
+  // ================= helpers =================
   const $ = (id) => document.getElementById(id);
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   function dayKey(d = new Date()) {
     return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
   }
   function daysAgo(n) { const d = new Date(); d.setDate(d.getDate() - n); return d; }
-  function energyColor(v) { return v ? `var(--e${v})` : 'var(--line)'; }
+  const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const doneToday = () => data.doneLog.filter((d) => d === dayKey()).length;
 
-  // The next thing to do: first unfinished step of the first unfinished task
-  // (skipped tasks are moved to the end of the list).
   function nextThing() {
     for (const t of data.tasks) {
       if (t.done) continue;
-      const step = t.steps.find((s) => !s.done);
-      return { task: t, step };
+      return { task: t, step: t.steps.find((s) => !s.done) };
     }
     return null;
   }
   function markDone(task, step) {
     if (step) step.done = true;
-    if (!step || task.steps.every((s) => s.done)) {
-      task.done = true;
-      task.doneAt = Date.now();
-    }
+    if (!step || task.steps.every((s) => s.done)) { task.done = true; task.doneAt = Date.now(); }
     data.doneLog.push(dayKey());
   }
 
-  // ---------- today ----------
-  function renderToday() {
-    const now = new Date();
-    $('today-date').textContent = now.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
-    const h = now.getHours();
-    $('greeting').textContent = h < 12 ? 'Good morning.' : h < 18 ? 'Good afternoon.' : 'Good evening.';
+  // ================= sound =================
+  let ac = null;
+  function tone(freq, start, dur, type = 'sine', vol = 0.12) {
+    if (data.muted) return;
+    try {
+      ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+      const o = ac.createOscillator(), g = ac.createGain();
+      o.type = type; o.frequency.value = freq;
+      const t = ac.currentTime + start;
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(vol, t + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      o.connect(g).connect(ac.destination);
+      o.start(t); o.stop(t + dur + 0.02);
+    } catch (e) {}
+  }
+  const sfx = {
+    pop: () => { tone(660, 0, 0.08, 'sine', 0.06); tone(990, 0.04, 0.08, 'sine', 0.05); },
+    send: () => tone(440, 0, 0.07, 'triangle', 0.06),
+    win: () => [523, 659, 784, 1047].forEach((f, i) => tone(f, i * 0.09, 0.35, 'triangle', 0.12)),
+    rim: () => { tone(180, 0, 0.12, 'square', 0.05); tone(240, 0.12, 0.12, 'square', 0.05); tone(2000, 0.26, 0.25, 'triangle', 0.05); },
+    alarm: () => [0, 0.2, 0.4].forEach((s) => tone(880, s, 0.15, 'square', 0.06)),
+  };
+  function buzz(p) { try { navigator.vibrate && navigator.vibrate(p); } catch (e) {} }
 
-    const today = data.checkins[dayKey()];
-    $('energy-buttons').innerHTML = ENERGY.map((e) =>
-      `<button data-energy="${e.v}" class="${today && today.energy === e.v ? 'on' : ''}"><b>${e.face}</b>${e.label}</button>`
-    ).join('');
-    $('energy-advice').textContent = today ? ADVICE[today.energy] : 'Tap one. There is no wrong answer.';
+  // ================= confetti =================
+  const cv = $('confetti'), cx = cv.getContext('2d');
+  let parts = [], raf = null;
+  function confetti(n = 140) {
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    cv.width = innerWidth; cv.height = innerHeight;
+    const colors = ['#6c3cf0', '#e5408f', '#ff9a3c', '#ffd23f', '#18c27a', '#3cc8ff'];
+    for (let i = 0; i < n; i++) {
+      parts.push({
+        x: innerWidth / 2 + (Math.random() - 0.5) * 80, y: innerHeight * 0.6,
+        vx: (Math.random() - 0.5) * 14, vy: -Math.random() * 16 - 6,
+        r: Math.random() * 6 + 4, c: colors[i % colors.length],
+        a: Math.random() * 6, va: (Math.random() - 0.5) * 0.4, life: 0,
+      });
+    }
+    if (!raf) raf = requestAnimationFrame(frame);
+  }
+  function frame() {
+    cx.clearRect(0, 0, cv.width, cv.height);
+    parts = parts.filter((p) => p.y < cv.height + 20 && p.life < 220);
+    for (const p of parts) {
+      p.vy += 0.4; p.vx *= 0.99; p.x += p.vx; p.y += p.vy; p.a += p.va; p.life++;
+      cx.save(); cx.translate(p.x, p.y); cx.rotate(p.a);
+      cx.fillStyle = p.c; cx.fillRect(-p.r / 2, -p.r / 4, p.r, p.r / 2);
+      cx.restore();
+    }
+    raf = parts.length ? requestAnimationFrame(frame) : null;
+    if (!raf) cx.clearRect(0, 0, cv.width, cv.height);
+  }
 
-    $('win-prompt').textContent = WIN_PROMPTS[now.getDate() % WIN_PROMPTS.length];
+  // ================= chat UI =================
+  const log = $('log'), chat = $('chat'), bolt = $('bolt');
+  function scrollDown() { requestAnimationFrame(() => { chat.scrollTop = chat.scrollHeight; }); }
+  function bubble(from, html, cls = '', keep = true) {
+    const el = document.createElement('div');
+    el.className = `msg ${from} ${cls}`;
+    el.innerHTML = html;
+    log.appendChild(el);
+    if (keep) { data.chat.push({ from, html, cls, day: dayKey() }); save(); }
+    scrollDown();
+    return el;
+  }
+  let typingEl = null;
+  async function typing(ms) {
+    bolt.classList.add('typing');
+    $('status').textContent = 'typing…';
+    typingEl = bubble('bot', '<span class="typing-dots"><i></i><i></i><i></i></span>', '', false);
+    await sleep(ms);
+    typingEl.remove(); typingEl = null;
+    bolt.classList.remove('typing');
+    $('status').textContent = 'online';
+  }
+  // Bolt says something, with a typing pause scaled to its length.
+  async function say(html, cls = '', keep = true) {
+    await typing(Math.min(1300, 350 + html.length * 12));
+    sfx.pop();
+    return bubble('bot', html, cls, keep);
+  }
+  function me(text) { sfx.send(); bubble('me', esc(text)); }
+
+  // Quick-reply chips. Each: [label, handler, style]
+  function chips(list) {
+    const box = $('chips');
+    box.innerHTML = '';
+    for (const [label, fn, style] of list) {
+      const b = document.createElement('button');
+      b.className = 'chip ' + (style || '');
+      b.textContent = label;
+      b.onclick = () => { if (busy) return; box.innerHTML = ''; run(fn); };
+      box.appendChild(b);
+    }
+    scrollDown();
+  }
+  // Run one flow at a time so buttons can't overlap conversations.
+  // Typed messages queue up behind whatever Bolt is saying.
+  let busy = false, queue = Promise.resolve();
+  function run(fn) {
+    queue = queue.then(async () => {
+      busy = true;
+      try { await fn(); } catch (e) { console.error(e); } finally { busy = false; }
+    });
+    return queue;
+  }
+  let mode = 'task'; // what typed text means: task | split | win
+  function setMode(m) {
+    mode = m;
+    $('input').placeholder = { task: 'Type a task to add…', split: 'Tiniest first step…', win: 'One good thing…' }[m];
+  }
+  function setMood() {
+    const c = data.checkins[dayKey()];
+    bolt.classList.toggle('sleepy', !!c && c.energy <= 2);
+  }
+  function updateScore(bumpIt) {
+    const s = $('score');
+    s.textContent = '⚡ ' + doneToday();
+    if (bumpIt) { s.classList.remove('bump'); void s.offsetWidth; s.classList.add('bump'); }
+  }
+
+  // ================= flows =================
+  async function greet() {
+    const h = new Date().getHours();
+    const part = h < 12 ? 'morning' : h < 18 ? 'afternoon' : 'evening';
+    await say(R(GREET[part]), 'big');
+    if (lowStreak()) await say(CARE);
+    await askEnergy();
+  }
+
+  async function askEnergy() {
+    await say(R(ASK_ENERGY));
+    chips(ENERGY.map((e) => [e.chip, () => pickEnergy(e)]));
+  }
+  async function pickEnergy(e) {
+    me(e.chip);
+    data.checkins[dayKey()] = { energy: e.v, at: Date.now() };
+    save();
+    setMood();
+    await say(R(e.react));
+    await offerNext();
+  }
+
+  let currentChips = [];
+  async function offerNext() {
+    setMode('task');
     const next = nextThing();
-    const doneToday = data.doneLog.filter((d) => d === dayKey()).length;
-    const box = $('one-thing');
     if (!next) {
-      box.innerHTML = `<p class="muted small">YOUR ONE THING</p>
-        <p class="step">Nothing waiting.</p>
-        ${celebrate ? `<p class="joke done">🎉 ${esc(celebrate)}</p>` : ''}
-        <p class="small">${doneToday ? `You finished ${doneToday} step${doneToday > 1 ? 's' : ''} today. That's enough.` : 'Add a task in the Tasks tab when you are ready.'}</p>`;
+      await say(R(EMPTY));
+      currentChips = [['😂 Tell me a joke', joke], ['🌟 Good thing today', askWin]];
+      chips(currentChips);
       return;
     }
     const { task, step } = next;
+    await say(R(TASK_INTRO));
     const left = task.steps.filter((s) => !s.done).length;
-    const key = step ? step.id : task.id;
-    if (key !== jokeFor) { joke = pick(JOKES, joke); jokeFor = key; }
-    box.innerHTML = `<p class="muted small">YOUR ONE THING</p>
-      <p class="step">${esc(step ? step.text : task.title)}</p>
-      ${step ? `<p class="small muted">Part of: ${esc(task.title)} (${left} step${left > 1 ? 's' : ''} left)</p>` : ''}
-      ${doneToday ? `<p class="small">Done today: ${doneToday} ✓</p>` : ''}
-      ${celebrate ? `<p class="joke done">🎉 ${esc(celebrate)}</p>` : ''}
-      <p class="joke">☕ ${esc(joke)} <button class="link" data-act="joke">Another joke</button></p>
-      <div class="row" style="margin-top:10px">
-        <button class="primary" data-act="start">Start for 2 min</button>
-        <button data-act="done">Done</button>
-        <button data-act="split">Too big? Split it</button>
-        <button class="link" data-act="skip">Not now</button>
-      </div>`;
+    await typing(500);
+    sfx.pop();
+    bubble('bot', step && step.text !== task.title ? `${esc(step.text)}<small>part of “${esc(task.title)}” · ${left} step${left > 1 ? 's' : ''} left</small>` : esc(task.title), 'task');
+    await say(R(TASK_JOKES), 'joke');
+    currentChips = [
+      ['⏱️ Start 2 min', startTimer, 'main'],
+      ['✅ Done', done, 'go'],
+      ['😩 Too big', tooBig],
+      ['🙈 Not now', notNow],
+      ['😂 Joke', joke],
+    ];
+    chips(currentChips);
   }
 
-  $('energy-buttons').addEventListener('click', (e) => {
-    const b = e.target.closest('button[data-energy]');
-    if (!b) return;
-    data.checkins[dayKey()] = { energy: Number(b.dataset.energy), at: Date.now() };
-    save();
-    renderToday();
-  });
-
-  $('one-thing').addEventListener('click', (e) => {
-    const b = e.target.closest('button[data-act]');
+  async function done() {
+    me('✅ Done');
     const next = nextThing();
-    if (!b || !next) return;
-    const { task, step } = next;
-    celebrate = null;
-    switch (b.dataset.act) {
-      case 'start': startTimer(step ? step.text : task.title); return;
-      case 'joke': joke = pick(JOKES, joke); renderToday(); return;
-      case 'done': markDone(task, step); celebrate = pick(DONE_JOKES); break;
-      case 'split': splitTask(task); break;
-      case 'skip':
-        data.tasks.splice(data.tasks.indexOf(task), 1);
-        data.tasks.push(task);
-        break;
-    }
+    if (next) markDone(next.task, next.step);
     save();
-    renderAll();
-  });
+    celebrate();
+    const n = doneToday();
+    await say(R(DONE), 'party');
+    if (n === 1) await say(FIRST_TODAY);
+    else if (n === 3 || n === 5 || n === 10) await say(`That’s ${n} today. 🔥 You’re on a roll. Allowed to stop here and feel smug.`);
+    const winToday = data.wins.some((w) => w.date === dayKey());
+    if (!winToday && (n === 2 || new Date().getHours() >= 17)) return askWin();
+    await offerNext();
+  }
+  function celebrate() {
+    sfx.win(); buzz([40, 40, 80]); confetti();
+    bolt.classList.remove('party'); void bolt.offsetWidth; bolt.classList.add('party');
+    updateScore(true);
+  }
 
-  function splitTask(task) {
-    const text = prompt(`Break "${task.title}" into tiny steps.\nOne step per line, or separate them with commas.\nTip: make the first step so small it feels silly.`);
-    if (!text) return;
-    const parts = text.split(/\n|,/).map((s) => s.trim()).filter(Boolean);
-    if (!parts.length) return;
-    task.steps = task.steps.filter((s) => s.done).concat(parts.map((p) => ({ id: uid(), text: p, done: false })));
+  async function notNow() {
+    me('🙈 Not now');
+    const next = nextThing();
+    if (next) { data.tasks.splice(data.tasks.indexOf(next.task), 1); data.tasks.push(next.task); save(); }
+    await say(R(NOT_NOW));
+    await offerNext();
+  }
+
+  async function tooBig() {
+    me('😩 Too big');
+    setMode('split');
+    await say(R(TOO_BIG));
+    $('input').focus();
+    chips([['Never mind', async () => { me('Never mind'); await offerNext(); }]]);
+  }
+  async function addStep(text) {
+    const next = nextThing();
+    if (!next) return offerNext();
+    // The new tiny step goes before any unfinished steps.
+    const firstOpen = next.task.steps.findIndex((s) => !s.done);
+    const s = { id: uid(), text, done: false };
+    if (firstOpen !== -1) next.task.steps.splice(firstOpen, 0, s);
+    // No steps left yet: the rest of the task stays on as its own step.
+    else next.task.steps.push(s, { id: uid(), text: next.task.title, done: false });
+    save();
+    await say(R(SPLIT_OK));
+    await offerNext();
+  }
+
+  async function joke() {
+    await say(R(JOKES), 'joke');
+    await sleep(500);
+    sfx.rim();
+    await say(R(RIMSHOT));
+    chips(currentChips);
+  }
+
+  async function askWin() {
+    setMode('win');
+    await say(R(ASK_WIN));
+    $('input').focus();
+    chips([['Skip', async () => { me('Skip'); await say('All good. Tomorrow then. 😌'); await offerNext(); }]]);
+  }
+  async function addWin(text) {
+    data.wins.unshift({ id: uid(), text, date: dayKey(), at: Date.now() });
+    save();
+    sfx.win(); confetti(60);
+    await say(R(WIN_OK));
+    if (data.wins.length === 5 || data.wins.length === 15) await showWins();
+    await offerNext();
+  }
+  async function showWins() {
+    await say(`Here’s your good-stuff vault so far 🏦<ul class="tasklist">${data.wins.slice(0, 8).map((w) => `<li><span>🌟 ${esc(w.text)}</span></li>`).join('')}</ul><small>Notice anything that repeats? A kind of task, a person, a time of day? That’s where your spark still is.</small>`, '', false);
+  }
+
+  async function addTask(text) {
+    const wasEmpty = !nextThing();
+    data.tasks.push({ id: uid(), title: text, steps: [], done: false, created: Date.now() });
+    save();
+    await say(R(ADDED));
+    if (wasEmpty) await offerNext(); else chips(currentChips);
   }
 
   // ---------- 2-minute timer ----------
   let timerId = null;
-  function startTimer(text) {
-    stopTimer();
+  async function startTimer() {
+    me('⏱️ Start 2 min');
+    await say(R(TIMER_START));
+    const C = 2 * Math.PI * 36;
+    const el = bubble('bot', `<div class="ring"><svg viewBox="0 0 84 84"><circle class="track" cx="42" cy="42" r="36"/><circle class="prog" cx="42" cy="42" r="36" stroke-dasharray="${C}" stroke-dashoffset="0"/></svg><b>2:00</b></div>`, '', false);
+    const prog = el.querySelector('.prog'), num = el.querySelector('b');
     let left = 120;
-    $('timer-card').hidden = false;
-    $('timer-step').textContent = text;
-    $('timer-msg').textContent = 'You only have to start. Stopping after 2 minutes still counts.';
-    const tick = () => {
-      $('timer').textContent = Math.floor(left / 60) + ':' + String(left % 60).padStart(2, '0');
-      if (left <= 0) {
-        clearInterval(timerId);
-        timerId = null;
-        $('timer-msg').textContent = 'Two minutes done. Keep going if it feels okay, or stop. Both are fine.';
-        if (navigator.vibrate) navigator.vibrate(200);
-      }
+    chips([['✅ Did it!', () => { stopTimer(); return done(); }, 'go'], ['🛑 Stop', async () => { stopTimer(); me('🛑 Stop'); await say('No stress. You tried, that counts. 💛'); chips(currentChips); }]]);
+    clearInterval(timerId);
+    timerId = setInterval(async () => {
       left--;
-    };
-    tick();
-    timerId = setInterval(tick, 1000);
-    $('timer-card').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      num.textContent = Math.floor(left / 60) + ':' + String(left % 60).padStart(2, '0');
+      prog.style.strokeDashoffset = String(C * (1 - left / 120));
+      if (left === 60) { sfx.pop(); bubble('bot', 'Halfway! You’re doing it. 👀', '', false); }
+      if (left <= 0) {
+        stopTimer();
+        sfx.alarm(); buzz([200, 100, 200]);
+        if (busy) return;
+        await run(() => say(R(TIMER_END)));
+        chips([['✅ Done', done, 'go'], ['⏱️ 2 more', startTimer, 'main'], ['🛑 Call it', async () => { me('🛑 Call it'); await say('Respect. You showed up. 💛'); await offerNext(); }]]);
+      }
+    }, 1000);
   }
-  function stopTimer() {
-    if (timerId) clearInterval(timerId);
-    timerId = null;
-    $('timer-card').hidden = true;
-  }
-  $('timer-stop').addEventListener('click', stopTimer);
-  $('timer-done').addEventListener('click', () => {
-    const next = nextThing();
-    if (next) markDone(next.task, next.step);
-    celebrate = pick(DONE_JOKES);
-    save();
-    stopTimer();
-    renderAll();
-  });
+  function stopTimer() { clearInterval(timerId); timerId = null; }
 
-  // ---------- tasks ----------
-  function renderTasks() {
+  // ---------- list & week ----------
+  async function showList() {
     const open = data.tasks.filter((t) => !t.done);
-    const done = data.tasks.filter((t) => t.done).sort((a, b) => b.doneAt - a.doneAt).slice(0, 10);
-    const item = (t) => `<li data-id="${t.id}">
-        <div class="task-title">
-          <input type="checkbox" data-act="toggle" ${t.done ? 'checked' : ''} aria-label="Done">
-          <span class="${t.done ? 'done-text' : ''}">${esc(t.title)}</span>
-          ${t.done ? '' : '<button class="link" data-act="split">Split</button>'}
-          <button class="link" data-act="del" aria-label="Delete">✕</button>
-        </div>
-        ${t.steps.length ? `<ul class="steps">${t.steps.map((s) =>
-          `<li><label class="row" style="gap:6px"><input type="checkbox" data-step="${s.id}" ${s.done ? 'checked' : ''}>
-           <span class="${s.done ? 'done-text' : ''}">${esc(s.text)}</span></label></li>`).join('')}</ul>` : ''}
-      </li>`;
-    $('task-list').innerHTML =
-      (open.length ? open.map(item).join('') : '<li class="muted small">No open tasks. Nice.</li>') +
-      (done.length ? `<li class="muted small" style="padding-top:16px">Recently finished</li>` + done.map(item).join('') : '');
+    if (!open.length) { await say(R(EMPTY)); return chips(currentChips); }
+    await say(`Here’s the list. Tap ✕ to delete. 🗑️<ul class="tasklist">${open.map((t) =>
+      `<li data-id="${t.id}"><span>${esc(t.title)}${t.steps.some((s) => !s.done) ? ` <small>(${t.steps.filter((s) => !s.done).length} steps)</small>` : ''}</span><button data-del="${t.id}" aria-label="Delete">✕</button></li>`).join('')}</ul>`, '', false);
+    chips(currentChips);
   }
-
-  $('task-form').addEventListener('submit', (e) => {
-    e.preventDefault();
-    const title = $('task-input').value.trim();
-    if (!title) return;
-    data.tasks.push({ id: uid(), title, steps: [], done: false, created: Date.now() });
-    $('task-input').value = '';
-    save();
-    renderAll();
-  });
-
-  $('task-list').addEventListener('change', (e) => {
-    const li = e.target.closest('li[data-id]');
-    if (!li) return;
-    const task = data.tasks.find((t) => t.id === li.dataset.id);
-    if (e.target.dataset.step) {
-      const step = task.steps.find((s) => s.id === e.target.dataset.step);
-      if (e.target.checked) markDone(task, step);
-      else { step.done = false; task.done = false; }
-    } else if (e.target.dataset.act === 'toggle') {
-      if (e.target.checked) { task.steps.forEach((s) => (s.done = true)); markDone(task, null); }
-      else task.done = false;
-    }
-    save();
-    renderAll();
-  });
-
-  $('task-list').addEventListener('click', (e) => {
-    const b = e.target.closest('button[data-act]');
-    const li = e.target.closest('li[data-id]');
-    if (!b || !li) return;
-    const task = data.tasks.find((t) => t.id === li.dataset.id);
-    if (b.dataset.act === 'del') {
-      if (!confirm(`Delete "${task.title}"?`)) return;
-      data.tasks = data.tasks.filter((t) => t !== task);
-    } else if (b.dataset.act === 'split') {
-      splitTask(task);
-    }
-    save();
-    renderAll();
-  });
-
-  // ---------- wins ----------
-  function addWin(text) {
-    text = text.trim();
-    if (!text) return false;
-    data.wins.unshift({ id: uid(), text, date: dayKey(), at: Date.now() });
-    save();
-    renderAll();
-    return true;
-  }
-  function renderWins() {
-    $('win-list').innerHTML = data.wins.length
-      ? data.wins.map((w) => `<li class="win" data-id="${w.id}"><div class="task-title"><span>${esc(w.text)}
-          <small>${new Date(w.at).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}</small></span>
-          <button class="link" data-act="del" aria-label="Delete">✕</button></div></li>`).join('')
-      : '<li class="muted small">Nothing yet. Start with one small thing that went okay.</li>';
-  }
-  $('win-form').addEventListener('submit', (e) => {
-    e.preventDefault();
-    if (addWin($('win-input').value)) $('win-input').value = '';
-  });
-  $('win-form-today').addEventListener('submit', (e) => {
-    e.preventDefault();
-    if (addWin($('win-input-today').value)) {
-      $('win-input-today').value = '';
-      $('win-input-today').placeholder = 'Saved ✓ Add another?';
-    }
-  });
-  $('win-list').addEventListener('click', (e) => {
-    const b = e.target.closest('button[data-act=del]');
+  log.addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-del]');
     if (!b) return;
-    const id = b.closest('li').dataset.id;
-    data.wins = data.wins.filter((w) => w.id !== id);
+    data.tasks = data.tasks.filter((t) => t.id !== b.dataset.del);
     save();
-    renderAll();
+    b.closest('li').remove();
+    sfx.send();
   });
 
-  // ---------- week / pattern ----------
-  function renderWeek() {
-    const bars = [];
-    let lowCount = 0, checkCount = 0;
-    for (let i = 13; i >= 0; i--) {
-      const d = daysAgo(i);
-      const c = data.checkins[dayKey(d)];
-      if (c) { checkCount++; if (c.energy <= 2) lowCount++; }
-      const pct = c ? c.energy * 20 : 0;
-      bars.push(`<div title="${dayKey(d)}${c ? ': ' + ENERGY[c.energy - 1].label : ''}">
-        <i style="height:${pct}%;background:${energyColor(c && c.energy)}"></i>
-        <span>${DAYS[d.getDay()][0]}</span></div>`);
+  function lowStreak() {
+    let low = 0, n = 0;
+    for (let i = 0; i < 14; i++) {
+      const c = data.checkins[dayKey(daysAgo(i))];
+      if (c) { n++; if (c.energy <= 2) low++; }
     }
-    $('bars').innerHTML = bars.join('');
-    $('care-note').hidden = !(checkCount >= 5 && lowCount / checkCount >= 0.6);
-
-    const last7 = new Set([...Array(7)].map((_, i) => dayKey(daysAgo(i))));
-    const energies = [...last7].map((k) => data.checkins[k]).filter(Boolean).map((c) => c.energy);
-    const avg = energies.length ? (energies.reduce((a, b) => a + b, 0) / energies.length) : 0;
-    const steps = data.doneLog.filter((d) => last7.has(d)).length;
-    const wins = data.wins.filter((w) => last7.has(w.date)).length;
-    $('stats').innerHTML = `
-      <div><b>${avg ? ENERGY[Math.round(avg) - 1].face : '–'}</b><span class="small muted">avg energy</span></div>
-      <div><b>${steps}</b><span class="small muted">steps done</span></div>
-      <div><b>${wins}</b><span class="small muted">good moments</span></div>`;
-
-    // Insights from all check-ins: best / worst weekday.
+    return n >= 5 && low / n >= 0.6;
+  }
+  async function showWeek() {
+    const colors = ['var(--line)', 'var(--e1)', 'var(--e2)', 'var(--e3)', 'var(--e4)', 'var(--e5)'];
+    let bars = '';
+    const last7 = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = daysAgo(i), k = dayKey(d), c = data.checkins[k];
+      last7.push(k);
+      bars += `<div><i style="height:${c ? c.energy * 20 : 0}%;background:${colors[c ? c.energy : 0]};animation-delay:${(6 - i) * 0.06}s"></i><span>${DAYS[d.getDay()]}</span></div>`;
+    }
+    const steps = data.doneLog.filter((d) => last7.includes(d)).length;
+    const wins = data.wins.filter((w) => last7.includes(w.date)).length;
+    // best and worst weekday across all check-ins
     const byDay = {};
     for (const [k, c] of Object.entries(data.checkins)) {
       const [y, m, d] = k.split('-').map(Number);
-      const wd = new Date(y, m - 1, d).getDay();
-      (byDay[wd] = byDay[wd] || []).push(c.energy);
+      (byDay[new Date(y, m - 1, d).getDay()] ||= []).push(c.energy);
     }
-    const dayAvgs = Object.entries(byDay).filter(([, v]) => v.length >= 2)
+    const avgs = Object.entries(byDay).filter(([, v]) => v.length >= 2)
       .map(([wd, v]) => [Number(wd), v.reduce((a, b) => a + b, 0) / v.length]).sort((a, b) => a[1] - b[1]);
-    const notes = [];
-    if (dayAvgs.length >= 2) {
-      const low = dayAvgs[0], high = dayAvgs[dayAvgs.length - 1];
-      if (high[1] - low[1] >= 0.8) {
-        notes.push(`Your energy is usually lowest on <b>${DAYS[low[0]]}</b> and highest on <b>${DAYS[high[0]]}</b>. Try putting hard tasks on ${DAYS[high[0]]} and keeping ${DAYS[low[0]]} light.`);
-      }
+    let insight = steps ? `You did ${steps} step${steps > 1 ? 's' : ''} this week. While tired. That’s not nothing, that’s grit. 💪` : 'Quiet week. That’s okay. One tiny step next time? 🤏';
+    if (avgs.length >= 2 && avgs[avgs.length - 1][1] - avgs[0][1] >= 0.8) {
+      const lo = DAYS[avgs[0][0]], hi = DAYS[avgs[avgs.length - 1][0]];
+      insight += `<br><br>🔎 Pattern: your battery is lowest on <b>${lo}</b> and best on <b>${hi}</b>. Save the hard stuff for ${hi}, keep ${lo} chill.`;
     }
-    if (steps === 0 && energies.length) notes.push('No steps done this week. That’s okay. Try splitting one task into a step that takes under 2 minutes.');
-    if (steps > 0) notes.push(`You finished ${steps} step${steps > 1 ? 's' : ''} this week while tired. That counts.`);
-    if (data.wins.length >= 3) notes.push('Read back through your Good moments. Look for what repeats: a kind of task, a person, a time of day. That’s where your energy still is.');
-    if (!notes.length) notes.push('Check in for a few days and patterns will show up here.');
-    $('insights').innerHTML = notes.map((n) => `<li>${n}</li>`).join('');
+    await say(`Your week, scientifically analyzed by a blob 🧪<div class="bars">${bars}</div>
+      <div class="stats"><span><b>${steps}</b>steps</span><span><b>${wins}</b>good things</span><span><b>${Object.keys(data.checkins).length}</b>check-ins</span></div>
+      <p style="margin:10px 0 0">${insight}</p>`, '', false);
+    if (lowStreak()) await say(CARE);
+    if (data.wins.length) await showWins();
+    chips(currentChips);
   }
 
-  $('export').addEventListener('click', () => {
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `spark-backup-${dayKey()}.json`;
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  // ================= wiring =================
+  $('form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const text = $('input').value.trim();
+    if (!text) return;
+    $('input').value = '';
+    me(text);
+    $('chips').innerHTML = '';
+    const m = mode;
+    setMode('task');
+    run(() => (m === 'split' ? addStep(text) : m === 'win' ? addWin(text) : addTask(text)));
   });
-  $('import').addEventListener('click', () => $('import-file').click());
-  $('import-file').addEventListener('change', async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    try {
-      const d = JSON.parse(await file.text());
-      if (!d || !Array.isArray(d.tasks)) throw new Error('bad');
-      if (!confirm('Replace everything in Spark with this backup?')) return;
-      data = Object.assign(blank(), d);
-      save();
-      renderAll();
-    } catch (err) {
-      alert('That file is not a Spark backup.');
+
+  document.querySelector('.menu').addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-menu]');
+    if (!b || busy) return;
+    $('chips').innerHTML = '';
+    const act = {
+      list: () => { me('📋 My list'); return showList(); },
+      joke: () => { me('😂 Joke'); return joke(); },
+      win: () => { me('🌟 Good thing'); return askWin(); },
+      week: () => { me('📈 My week'); return showWeek(); },
+      energy: () => { me('🔋 Battery'); return askEnergy(); },
+    }[b.dataset.menu];
+    run(act);
+  });
+
+  $('mute').addEventListener('click', () => {
+    data.muted = !data.muted;
+    save();
+    $('mute').textContent = data.muted ? '🔇' : '🔊';
+    if (!data.muted) sfx.pop();
+  });
+
+  // ================= start =================
+  $('mute').textContent = data.muted ? '🔇' : '🔊';
+  setMood();
+  updateScore(false);
+  let lastDay = null;
+  for (const m of data.chat) {
+    if (m.day !== lastDay) {
+      const d = document.createElement('div');
+      d.className = 'day';
+      d.textContent = m.day === dayKey() ? 'Today' : m.day;
+      log.appendChild(d);
+      lastDay = m.day;
     }
-    e.target.value = '';
-  });
-
-  // ---------- navigation ----------
-  function show(view) {
-    for (const v of ['today', 'tasks', 'wins', 'week']) $('view-' + v).hidden = v !== view;
-    document.querySelectorAll('nav button').forEach((b) => b.classList.toggle('on', b.dataset.view === view));
-    window.scrollTo(0, 0);
+    bubble(m.from, m.html, (m.cls || '') + ' history', false);
   }
-  document.querySelector('nav').addEventListener('click', (e) => {
-    const b = e.target.closest('button[data-view]');
-    if (b) show(b.dataset.view);
+  const seenToday = data.chat.some((m) => m.day === dayKey());
+  if (!seenToday) {
+    const d = document.createElement('div');
+    d.className = 'day'; d.textContent = 'Today';
+    log.appendChild(d);
+  }
+  run(async () => {
+    await sleep(300);
+    if (!seenToday) return greet();
+    await say(R(BACK));
+    if (!data.checkins[dayKey()]) return askEnergy();
+    await offerNext();
   });
-
-  function renderAll() { renderToday(); renderTasks(); renderWins(); renderWeek(); }
-  renderAll();
-  show('today');
 })();
 </script>
 </body>

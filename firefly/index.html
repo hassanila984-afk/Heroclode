@@ -253,7 +253,7 @@
   .i-halftone { background-image: radial-gradient(rgba(7, 5, 26, .35) 28%, transparent 30%); background-size: 9px 9px; animation: iDots 3s linear infinite; }
   .i-stripes { inset: -10% calc(50% - 50vw - 70px) -10% calc(50% - 50vw - 70px); will-change: transform; background: repeating-linear-gradient(-28deg, var(--iv) 0 26px, var(--iv-deep) 26px 52px); animation: iSlide 1.4s linear infinite; }
   .i-rays { inset: auto; left: calc(50% - 80vmax); top: calc(50% - 80vmax); width: 160vmax; height: 160vmax; will-change: transform; background: repeating-conic-gradient(from 0deg at 50% 50%, var(--iv) 0 8deg, var(--iv-deep) 8deg 16deg); animation: iSpin 6s linear infinite; }
-  .i-speed { inset: auto; left: calc(50% - 80vmax); top: calc(50% - 80vmax); width: 160vmax; height: 160vmax; will-change: transform; background: repeating-conic-gradient(from 0deg at 50% 50%, rgba(255, 255, 255, .55) 0 .6deg, transparent .6deg 7deg); animation: iSpin 2.5s linear infinite, iFlick .12s steps(2) infinite; opacity: .5; }
+  .i-speed { z-index: 0; inset: auto; left: calc(50% - 80vmax); top: calc(50% - 80vmax); width: 160vmax; height: 160vmax; will-change: transform; background: repeating-conic-gradient(from 0deg at 50% 50%, rgba(255, 255, 255, .55) 0 .6deg, transparent .6deg 7deg); animation: iSpin 2.5s linear infinite, iFlick .12s steps(2) infinite; opacity: .5; }
   /* type */
   .i-word { position: absolute; z-index: 3; left: 50%; top: 50%; white-space: nowrap; line-height: .9; text-transform: uppercase; }
   .i-word.i-back { z-index: 0; }
@@ -269,19 +269,41 @@
   .i-rgb { animation: iRgb .28s steps(3) 2; }
   .i-box { display: inline-block; padding: .04em .14em .02em; margin: 0 .03em; }
   /* images: an outer layer drifts slowly, the inner one makes the entrance */
-  .i-drift { position: absolute; inset: 0; will-change: transform; animation: iDrift2 2.4s ease-out forwards; }
+  .i-drift { position: absolute; z-index: 1; inset: 0; will-change: transform; animation: iDrift2 2.4s ease-out forwards; }
   .i-fig { position: absolute; height: 92%; width: auto; }
-  .i-panel { position: absolute; overflow: hidden; background: var(--ik); border: 4px solid var(--iw); box-shadow: 10px 10px 0 var(--ik); }
+  .i-panel { position: absolute; z-index: 1; overflow: hidden; background: var(--ik); border: 4px solid var(--iw); box-shadow: 10px 10px 0 var(--ik); }
   .i-panel img { width: 100%; height: 100%; object-fit: cover; display: block; }
-  .i-strip { position: absolute; left: -10%; right: -10%; overflow: hidden; border-top: 5px solid var(--ig); border-bottom: 5px solid var(--ig); }
-  .i-strip img { width: 100%; height: 100%; object-fit: cover; }
+  /* an eye-level strip: the face is sized to the strip's height so both eyes always fit */
+  .i-strip { position: absolute; z-index: 1; left: -10%; right: -10%; overflow: hidden; border-top: 5px solid var(--ig); border-bottom: 5px solid var(--ig);
+    background: radial-gradient(rgba(123, 60, 255, .35) 28%, transparent 30%) 0 0 / 8px 8px, var(--ik); }
+  .i-strip img { position: absolute; left: 50%; top: 50%; width: calc(var(--sh) * 3.4); max-width: none; height: auto; transform: translate(-50%, -39%); animation: iPan 1.6s ease-out forwards; }
+  .i-strip::after, .i-panel::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(115deg, transparent 38%, rgba(255, 255, 255, .38) 50%, transparent 62%); transform: translateX(-130%); animation: iGleam .9s ease-out .15s forwards; }
+  /* the opening video: fills wide screens, letterboxed on tall ones; captions sit on the video itself */
+  .i-vid { position: absolute; inset: 0; z-index: 5; background: var(--ik); overflow: hidden; }
+  .i-vid[hidden] { display: none; }
+  /* tall screens: a big band across the middle, words in the dark space above and below it */
+  .i-vbox { position: absolute; left: 50%; top: 50%; width: max(100vw, 71.11vh); height: max(56.25vw, 40vh); transform: translate(-50%, -50%); container-type: size; }
+  .i-vtext { position: absolute; inset: 0; container-type: size; }
+  @media (min-aspect-ratio: 6/5) { .i-vbox { width: max(100vw, 177.78vh); height: max(56.25vw, 100vh); } }
+  .i-vbox video { display: block; width: 100%; height: 100%; object-fit: cover; }
+  /* life on every shot: a slow camera sway, breathing figures, rising sparks */
+  .i-shake { animation: iSway 4.5s ease-in-out infinite alternate; }
+  .i-fig { animation: iBreath 2.4s ease-in-out infinite; }
+  .i-spark { position: absolute; z-index: 2; width: 5px; height: 5px; border-radius: 50%; background: #fff3c4; box-shadow: 0 0 10px 3px rgba(255, 210, 122, .7); pointer-events: none; animation: iRise var(--d) linear var(--del) infinite; opacity: 0; }
+  .i-twinkle { position: absolute; z-index: 2; color: var(--ig); font: 20px/1 sans-serif; pointer-events: none; text-shadow: 0 0 10px rgba(255, 210, 122, .9); animation: iTwinkle 1.2s ease-in-out var(--del) infinite; opacity: 0; }
+  @keyframes iPan { from { translate: -4% 0; } to { translate: 4% 0; } }
+  @keyframes iGleam { to { transform: translateX(130%); } }
+  @keyframes iSway { from { rotate: -.5deg; scale: 1.01; } to { rotate: .6deg; scale: 1.035; } }
+  @keyframes iBreath { 50% { translate: 0 -1%; scale: 1.015; } }
+  @keyframes iRise { 0% { transform: translateY(0) scale(.5); opacity: 0; } 15% { opacity: 1; } 100% { transform: translateY(-40cqh) scale(1.1); opacity: 0; } }
+  @keyframes iTwinkle { 0%, 100% { transform: scale(.3) rotate(0); opacity: 0; } 50% { transform: scale(1) rotate(45deg); opacity: 1; } }
   .i-slash { position: absolute; inset: -20%; }
   .i-shard { position: absolute; inset: 0 calc(50% - 50vw); z-index: 2; will-change: transform; }
   .i-flash { position: absolute; inset: 0 calc(50% - 50vw); z-index: 7; background: var(--iw); }
-  .i-moon { position: absolute; border-radius: 50%; background: radial-gradient(circle at 40% 38%, #fff6d8, var(--ig) 55%, #e09a30); box-shadow: 0 0 80px 20px rgba(255, 210, 122, .35); }
+  .i-moon { position: absolute; z-index: 1; border-radius: 50%; background: radial-gradient(circle at 40% 38%, #fff6d8, var(--ig) 55%, #e09a30); box-shadow: 0 0 80px 20px rgba(255, 210, 122, .35); }
   .i-dot { position: absolute; width: 6px; height: 6px; border-radius: 50%; background: #fff3c4; box-shadow: 0 0 12px 4px rgba(255, 210, 122, .7); }
-  .i-chibi { position: absolute; left: 50%; bottom: 0; height: 46vh; transform: translateX(-50%); }
-  .i-grid { position: absolute; inset: 14% 9% 20%; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 10px; transform: rotate(-4deg); }
+  .i-chibi { position: absolute; z-index: 1; left: 50%; bottom: 0; height: 46vh; transform: translateX(-50%); }
+  .i-grid { position: absolute; z-index: 1; inset: 14% 9% 20%; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 10px; transform: rotate(-4deg); }
   .i-grid div { overflow: hidden; border: 3px solid var(--iw); box-shadow: 6px 6px 0 var(--ik); }
   .i-grid img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 35%; }
   @keyframes iSlide { to { transform: translateX(64px); } }
@@ -2887,11 +2909,34 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
     let track = null, root = null, shaker = null, stage = null, raf = 0, cues = [], next = 0, clock0 = 0, onDone = null, ended = false, timers = [];
     let ready = null, isReady = false, begun = false, keep = [], synced = true, begunAt = 0;
 
-    const add = (node) => { stage.appendChild(node); return node; };
+    let target = null;   // the video box while the opening video plays, else the stage
+    const add = (node) => { (target || stage).appendChild(node); return node; };
     // a share of the framed stage's width, in pixels (for animated moves)
     const px = (pct) => Math.round((pct * stage.clientWidth) / 100);
     function layer(cls, style = "", html = "") { const d = document.createElement("div"); d.className = "i-layer " + cls; d.style.cssText = style; d.innerHTML = html; return add(d); }
-    const clear = () => { stage.innerHTML = ""; };
+    const clear = () => { stage.innerHTML = ""; if (!calm) sparks(); };
+    // a few rising sparks and twinkles on every shot, so the picture is never still
+    function sparks() {
+      for (let k = 0; k < 10; k++) {
+        const d = document.createElement("div"); d.className = "i-spark";
+        d.style.cssText = `left:${5 + Math.random() * 90}%;top:${55 + Math.random() * 45}%;--d:${(2 + Math.random() * 2).toFixed(2)}s;--del:${(-Math.random() * 3).toFixed(2)}s`;
+        add(d);
+      }
+      for (let k = 0; k < 3; k++) {
+        const d = document.createElement("div"); d.className = "i-twinkle"; d.textContent = "✦";
+        d.style.cssText = `left:${8 + Math.random() * 84}%;top:${6 + Math.random() * 70}%;--del:${(Math.random() * 1.2).toFixed(2)}s`;
+        add(d);
+      }
+    }
+    // a face strip at eye level, sliding in from one side
+    function strip(name, top, h, fromLeft) {
+      const st = document.createElement("div"); st.className = "i-strip";
+      st.style.cssText = `top:${top}%;height:${h}%;--sh:${h}cqh`;
+      st.innerHTML = `<img src="${IMG(name)}" alt="">`;
+      add(st);
+      const sk = fromLeft ? -4 : 4;
+      anim(st, [{ transform: `translateX(${fromLeft ? -100 : 100}%) skewY(${sk}deg)` }, { transform: `translateX(0) skewY(${sk}deg)` }], 150);
+    }
     const anim = (node, frames, ms, opts = {}) => node.animate(frames, Object.assign({ duration: ms, easing: "cubic-bezier(.2,.9,.2,1)", fill: "forwards" }, opts));
     function word(text, cls, x = 50, y = 50, rot = -8, ms = 160) {
       const d = document.createElement("div");
@@ -3005,19 +3050,19 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
     const stamps = (word, step = 0.06) => [...word].map((_, k) => ["stamp" + (k % 4), k * step, 0.7]);
 
     // [beat number, picture, sounds as [name, seconds after the beat, volume]]. The music starts at beat 8.
-    const START_BEAT = 8;
+    let START_BEAT = 8;   // 12 after the opening video, which already shows the first part
     const EVENTS = [
       [8, () => { clear(); layer("i-bg-deep i-halftone"); moon(42, 74, 20, 220); fireflies(14); fig("side", "right", 30, "right:-30cqw;bottom:-14vh;"); flash(0.8); caption("THE NIGHT IS STILL AWAKE", 30); }, [["punch", 0, 0.8]]],
       [10, () => { speed(); caption("…AND SO IS SHE.", 84, "i-gold"); }, [["stamp2", 0, 0.5]]],
       [12, () => { clear(); layer("i-stripes"); speed(); flash(); word("WELCOME", "i-xl i-shadow", 50, 46, -8); shards("#ffd27a"); }, [["punch", 0, 1], ["glitch", 0, 0.8]]],
       [14, () => { slash("#07051a", 240); word("TO THE NIGHT", "i-m i-gold i-shadow", 50, 60, -8); }, [["metal", 0, 0.6]]],
-      [16, () => { clear(); layer("i-bg-deep"); const st = document.createElement("div"); st.className = "i-strip"; st.style.cssText = "top:38%;height:20%"; st.innerHTML = `<img src="${IMG("face_soft")}" alt="" style="object-position:50% 44%">`; add(st); anim(st, [{ transform: "translateX(100%) skewY(4deg)" }, { transform: "translateX(0) skewY(4deg)" }], 150); word("WHO IS SHE?", "i-m i-shadow", 50, 74, -6); }, [["shutter", 0, 0.7]]],
+      [16, () => { clear(); layer("i-bg-deep"); strip("face_soft", 38, 20, false); word("SAY HELLO TO…", "i-m i-shadow", 50, 74, -6); }, [["shutter", 0, 0.7]]],
       [18, () => { clear(); layer("i-bg-violet i-halftone"); layer("i-rays", "opacity:.35"); word("LUMA", "i-xl i-outline i-back", 50, 13, -8, 200); fig("front", "left", -40, "bottom:-20vh;"); shards(); caption("YOUR NIGHT FRIEND", 92, "i-gold"); }, [["metal", 0, 1], ["glitch", 0.05, 0.5]]],
       [20, () => { const l = stage.querySelector(".i-outline"); if (l) { l.classList.remove("i-rgb"); void l.offsetWidth; l.classList.add("i-rgb"); } flash(0.35, 100); }, [["glitch", 0, 0.6]]],
       [21, () => flash(0.25, 90), []],
       [22, () => { speed(); flash(0.55, 200); }, []],
       // the drop: a face on every beat
-      [23, () => { clear(); layer("i-bg-deep i-halftone"); speed(); const st = document.createElement("div"); st.className = "i-strip"; st.style.cssText = "top:24%;height:24%"; st.innerHTML = `<img src="${IMG("face_smirk")}" alt="" style="object-position:50% 46%">`; add(st); anim(st, [{ transform: "translateX(-100%) skewY(-4deg)" }, { transform: "translateX(0) skewY(-4deg)" }], 140); word("SHE LISTENS.", "i-l i-shadow", 50, 70, -6); }, [["punch", 0, 1], ["shutter", 0.02, 0.6]]],
+      [23, () => { clear(); layer("i-bg-deep i-halftone"); speed(); strip("face_smirk", 24, 24, true); word("SHE LISTENS.", "i-l i-shadow", 50, 70, -6); }, [["punch", 0, 1], ["shutter", 0.02, 0.6]]],
       [24, () => { clear(); layer("i-bg-violet"); panel("face_smile", 6, 10, 62, 58, -4, "0 4%,100% 0,94% 100%,4% 92%", "-60cqw, 0"); word("SHE REMEMBERS.", "i-m i-shadow", 50, 82, -5); }, [["shutter", 0, 0.8]]],
       [25, () => { clear(); layer("i-bg-gold i-halftone"); panel("face_soft", 32, 22, 62, 58, 5, "6% 0,100% 6%,96% 100%,0 94%", "60cqw, 0"); word("SHE TEASES.", "i-m i-dark", 46, 14, -7); }, [["shutter", 0, 0.8]]],
       [26, () => { clear(); layer("i-bg-deep"); panel("face_shy", 16, 14, 68, 60, -2, "3% 0,100% 3%,97% 100%,0 96%", "0, 60vh", "50% 40%"); word("SHE STAYS.", "i-l i-gold i-shadow", 50, 86, -6); }, [["shutter", 0, 0.8]]],
@@ -3046,8 +3091,8 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
     function buildCues() {
       const list = [];
       for (let i = START_BEAT; i <= 44; i++) if (KICKS.has(i) || SNARES.has(i)) list.push([B(i), () => pulse(i), false]);
-      for (const [i, fn, sfx] of EVENTS) list.push([B(i), fn, sfx]);
-      for (const i of WHOOSH_INTO) list.push([B(i) - 0.26, null, [["@whoosh", 0, 0.26]]]);
+      for (const [i, fn, sfx] of EVENTS) if (i >= START_BEAT) list.push([B(i), fn, sfx]);
+      for (const i of WHOOSH_INTO) if (i > START_BEAT) list.push([B(i) - 0.26, null, [["@whoosh", 0, 0.26]]]);
       list.push([B(19), null, [["@riser", 0, B(23) - B(19)]]]);
       return list.sort((a, b) => a[0] - b[0]);
     }
@@ -3086,12 +3131,64 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
       if (ended) return;
       ended = true;
       cancelAnimationFrame(raf);
+      const v = root.querySelector(".i-vid video"); if (v) v.pause();
       timers.forEach(clearTimeout); timers = [];
       backToBackground();
       const r = root;
       r.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 600, fill: "forwards" }).onfinish = () => r.remove();
       state.introSeen = true; persist();
       if (onDone) onDone();
+    }
+    // Captions over the opening video (intro/opening.mp4, 10 s), placed on its shots:
+    // 0.5 the eye, 2.2 she turns, 4.5 glass breaks to her silhouette, 6.45 the swirl, 8.5 the card.
+    // [video second, what, text, style, [x, y] on wide screens (over the video), [x, y] on tall screens (above/below it)]
+    const VCUES = [
+      [0.55, "cap", "THOSE EYES…", "", [50, 88], [50, 22]],
+      [1.25, "word", "SEE YOU.", "i-m i-gold i-shadow", [70, 80], [50, 80]],
+      [2.25, "clear"],
+      [2.25, "word", "HEY,", "i-m i-shadow", [74, 28], [32, 17]],
+      [2.75, "word", "YOU.", "i-l i-gold i-shadow", [78, 46], [62, 23]],
+      [3.6, "cap", "UP LATE AGAIN?", "", [50, 86], [50, 80]],
+      [4.6, "clear"],
+      [4.6, "word", "WHO", "i-l i-shadow", [70, 24], [30, 15]],
+      [5.1, "word", "IS", "i-l i-shadow", [76, 44], [62, 22]],
+      [5.6, "word", "SHE?", "i-xl i-gold i-shadow", [72, 70], [50, 83]],
+      [6.5, "clear"],
+      [6.5, "cap", "THE NIGHT IS STILL AWAKE", "", [50, 12], [50, 22]],
+      [7.4, "cap", "…AND SO IS SHE.", "i-gold", [50, 90], [50, 79]],
+      [8.55, "clear"],
+      [8.55, "word", "READY?", "i-l i-dark", [78, 50], [50, 81]],
+    ];
+    function vcue(c, wide) {
+      const [, what, text, cls, w, t] = c;
+      if (what === "clear") return target.querySelectorAll(".i-word").forEach((n) => n.remove());
+      const [x, y] = wide ? w : t;
+      if (what === "cap") caption(text, y, cls);
+      else word(text, wide ? cls : cls.replace("i-dark", "i-gold i-shadow"), x, y, -8);
+      if (what === "cap" && x !== 50) target.lastChild.style.left = x + "%";
+    }
+    function runVideo(v) {
+      let k = 0, lastT = -1, stuckSince = performance.now();
+      const wide = matchMedia("(min-aspect-ratio: 6/5)").matches;
+      target = root.querySelector(wide ? ".i-vbox" : ".i-vtext");
+      const step = () => {
+        if (ended) return;
+        const tt = v.currentTime;
+        if (tt !== lastT) { lastT = tt; stuckSince = performance.now(); }
+        while (k < VCUES.length && tt >= VCUES[k][0]) { try { vcue(VCUES[k], wide); } catch (e) {} k++; }
+        // on to the music when it ends, or if it stalls for 3 s
+        if (v.ended || tt >= v.duration - 0.05 || performance.now() - stuckSince > 3000) return afterVideo(v);
+        raf = requestAnimationFrame(step);
+      };
+      raf = requestAnimationFrame(step);
+    }
+    async function afterVideo(v) {
+      const box = root.querySelector(".i-vid");
+      target = null;
+      v.pause();
+      box.animate([{ opacity: 1, filter: "brightness(1)" }, { opacity: 0, filter: "brightness(3)" }], { duration: 180, fill: "forwards" }).onfinish = () => box.remove();
+      await Promise.race([ready, new Promise((r) => setTimeout(r, 4000))]);
+      if (!ended) startMusic();
     }
     async function begin() {
       if (begun) return;
@@ -3100,12 +3197,30 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
       const st = root.querySelector(".i-start");
       st.style.pointerEvents = "none";
       const fxBtn = root.querySelector(".i-fx"); if (fxBtn) fxBtn.remove();
-      // everything is normally decoded while the title shows; on a slow line, wait (up to 6 s)
+      if (sound.isOn(BG)) sound.stop(BG);
+      sound.preloadVoices();
+      // the opening video starts inside the tap itself, so phones allow its sound
+      const v = root.querySelector(".i-vid video");
+      let playing = null;
+      if (v) { root.querySelector(".i-vid").hidden = false; playing = v.play(); }
+      const out = () => st.animate([{ transform: "scale(1)", opacity: 1, filter: "brightness(1)" }, { transform: "scale(1.25)", opacity: 0, filter: "brightness(2.5)" }], { duration: 260, easing: "ease-in", fill: "forwards" }).onfinish = () => st.remove();
+      if (playing) {
+        try {
+          await playing;
+          if (ended) return;
+          out(); START_BEAT = 12;
+          runVideo(v);
+          return;
+        } catch (e) { root.querySelector(".i-vid").remove(); }
+      }
+      // no video: straight into the music (everything is normally decoded while the title shows)
       if (!isReady) { const tap = st.querySelector(".i-tap"); if (tap) tap.textContent = "LOADING…"; }
       await Promise.race([ready, new Promise((r) => setTimeout(r, 6000))]);
       if (ended) return;
-      st.animate([{ transform: "scale(1)", opacity: 1, filter: "brightness(1)" }, { transform: "scale(1.25)", opacity: 0, filter: "brightness(2.5)" }], { duration: 260, easing: "ease-in", fill: "forwards" }).onfinish = () => st.remove();
-      if (sound.isOn(BG)) sound.stop(BG);
+      out();
+      startMusic();
+    }
+    function startMusic() {
       const from = B(START_BEAT) - 0.25;
       track = sound.track("intro", 0.9, from) || sound.clip("music/intro.mp3", 0.9, from);
       synced = true; begunAt = performance.now();
@@ -3121,11 +3236,12 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
         .then(() => { isReady = true; });
     }
     function play(done) {
-      onDone = done; ended = false; begun = false; isReady = false; track = null; timers = [];
+      onDone = done; ended = false; begun = false; isReady = false; track = null; timers = []; target = null; START_BEAT = 8;
       root = document.createElement("div");
       root.id = "intro";
       root.innerHTML = `
         <div class="i-shake"><div class="i-stage"></div></div>
+        <div class="i-vid" hidden><div class="i-vbox"><video playsinline preload="auto"><source src="intro/opening.mp4" type="video/mp4"><source src="intro/opening.webm" type="video/webm"></video></div><div class="i-vtext"></div></div>
         <div class="i-grain"></div>
         <div class="i-start" role="button" tabindex="0" aria-label="Start">
           <div class="i-logo">FIREFLY</div>

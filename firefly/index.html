@@ -2779,11 +2779,10 @@ ${last}${langNote()}`;
   };
   UNLOCK.forEach((ev) => addEventListener(ev, firstTouch, { capture: true, passive: true }));
   // Start the song as soon as the page opens, if the browser allows sound without a touch.
-  if (sound.auto() && state.introSeen) { sound.start(BG); setTimeout(() => { if (sound.audible()) UNLOCK.forEach((ev) => removeEventListener(ev, firstTouch, true)); }, 800); }
   renderChrome();
   show(state.onboarded ? "home" : "onboard");
-  // the first time, the intro plays over everything; the app is ready underneath
-  if (!state.introSeen) intro.play(() => { suggestAt = 0; show(state.onboarded ? "home" : "onboard"); });
+  // the intro plays every time the app opens; the app is ready underneath
+  intro.play(() => { suggestAt = 0; show(state.onboarded ? "home" : "onboard"); });
   connectStore();
 })();
 </script>

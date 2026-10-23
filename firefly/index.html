@@ -2908,7 +2908,10 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
       anim(d, [{ transform: "translate(-50%, -30%) scaleX(1.4)", opacity: 0 }, { transform: "translate(-50%, -50%) scaleX(1)", opacity: 1 }], 420);
       return d;
     }
-    function flash(o = 0.9, ms = 150) { anim(layer("i-flash"), [{ opacity: o }, { opacity: 0 }], ms); }
+    // "Reduce motion" (e.g. Windows animation effects off) keeps the whole intro, just calmer:
+    // no shaking or zoom bumps, soft flashes, no glass shards or speed lines.
+    const calm = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    function flash(o = 0.9, ms = 150) { anim(layer("i-flash"), [{ opacity: calm ? Math.min(o, 0.2) : o }, { opacity: 0 }], calm ? 300 : ms); }
     function slash(color, ms = 300) {
       const d = layer("i-slash", `background:${color};inset:-10% auto -10% 0;width:55%`);
       anim(d, [{ transform: "skewX(-18deg) translateX(-140%)" }, { transform: "skewX(-18deg) translateX(260%)" }], ms, { easing: "cubic-bezier(.6,0,.3,1)" });
@@ -2955,13 +2958,14 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
     }
     // glass shards that sweep the screen on a cut
     function shards(color = "#fbf7ff") {
+      if (calm) return;
       const polys = ["0 0,70% 0,20% 100%,0 100%", "60% 0,100% 0,100% 55%,35% 100%,15% 100%", "40% 100%,100% 45%,100% 100%"];
       polys.forEach((poly, k) => {
         const d = layer("i-shard", `background:${k === 1 ? "#07051a" : color};clip-path:polygon(${poly})`);
         anim(d, [{ transform: `translate(${k % 2 ? "" : "-"}110%, ${k === 2 ? 40 : -20}%)`, opacity: 1 }, { transform: "translate(0, 0)", opacity: 1, offset: 0.45 }, { transform: `translate(${k % 2 ? "-" : ""}120%, ${k === 2 ? -30 : 25}%)`, opacity: 1 }], 240, { delay: k * 20, easing: "cubic-bezier(.7,0,.3,1)" });
       });
     }
-    const speed = () => layer("i-speed");
+    const speed = () => (calm ? null : layer("i-speed"));
     function grid4() {
       const g = document.createElement("div"); g.className = "i-grid";
       g.innerHTML = ["face_smile", "face_soft", "face_smirk", "face_shy"].map((n) => `<div><img src="${IMG(n)}" alt=""></div>`).join("");
@@ -2985,6 +2989,7 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
     }
     // the beat you can see: a zoom bump on kicks, a jolt on snares
     function pulse(i) {
+      if (calm) return;
       const k = KICKS.has(i), s = SNARES.has(i);
       if (k) stage.animate([{ transform: "scale(1.035)" }, { transform: "scale(1)" }], { duration: 170, easing: "cubic-bezier(.2,.8,.3,1)" });
       if (s) shaker.animate([{ transform: "translate(5px, -3px)" }, { transform: "translate(-4px, 2px)" }, { transform: "translate(0, 0)" }], { duration: 110 });
@@ -3098,10 +3103,6 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
       synced = true; begunAt = performance.now();
       sound.preloadVoices();
       clock0 = performance.now() - from * 1000;
-      if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
-        layer("", "background:radial-gradient(circle at 50% 40%, rgba(123,60,255,.5), transparent 65%), #07051a");
-        word("FIREFLY", "i-xl", 50, 40, 0); timers.push(setTimeout(finish, 2500)); return;
-      }
       cues = buildCues(); next = 0; raf = requestAnimationFrame(tick);
     }
     // fetch and decode the music, effects and pictures while the title screen is up

@@ -4,7 +4,9 @@ import { configured, sameSecret, sameOrigin, json, saveApiKey, apiKey } from "..
 // One-time setup from /setup.html: with the access code, save the Anthropic API key (checked first).
 export async function onRequestGet({ env }) {
   if (!configured(env)) return json({ ready: false, error: "not_configured" }, 503);
-  return json({ ready: !!(await apiKey(env)) });
+  const k = await apiKey(env);
+  // the same short hint the Anthropic console shows, to tell which key is saved
+  return json({ ready: !!k, key: k ? k.slice(0, 14) + "..." + k.slice(-4) : null });
 }
 
 export async function onRequestPost({ request, env }) {

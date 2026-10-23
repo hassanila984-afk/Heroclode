@@ -62,7 +62,7 @@ export async function onRequestPost({ request, env }) {
         : e instanceof Anthropic.AuthenticationError ? "not_configured"
         : e instanceof Anthropic.BadRequestError ? "bad_request"
         : "upstream";
-      await send({ error: code });
+      await send({ error: code, debug: String(e && e.status) + " " + String(e && e.message).slice(0, 300) });
     } finally { await w.close(); }
   })();
   return new Response(out.readable, { headers: { "content-type": "text/event-stream", "cache-control": "no-store" } });

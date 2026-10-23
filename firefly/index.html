@@ -385,6 +385,15 @@
   .ch-av.lm-react[data-mood="shy"] { animation: lmSquish .6s ease; }
   .chat-head b { font-family: var(--display); font-size: 22px; font-weight: 400; display: block; line-height: 1.2; }
   .chat-head span.st { font-size: 13px; color: var(--haze); }
+  /* watching together */
+  .ch-watch { margin-inline-start: auto; flex: none; border: 1px solid rgba(255, 210, 122, .4); background: rgba(255, 210, 122, .1); color: var(--mist); border-radius: 999px; padding: 8px 12px; font: 600 13px var(--body); cursor: pointer; }
+  .watchbar { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 14px; background: rgba(123, 60, 255, .18); border: 1px solid rgba(123, 60, 255, .4); font-size: 13px; }
+  .watchbar[hidden], .ch-watch[hidden], .attach[hidden] { display: none; }
+  .wb-dot { flex: none; width: 8px; height: 8px; border-radius: 50%; background: #ff5a7a; box-shadow: 0 0 8px #ff5a7a; animation: iBlink 1.4s ease-in-out infinite; }
+  .wb-t { flex: 1; }
+  .watchbar button { flex: none; border: 0; background: rgba(255, 255, 255, .1); color: var(--mist); border-radius: 999px; padding: 6px 10px; font: 600 12px var(--body); cursor: pointer; }
+  .attach { flex: none; width: 46px; height: 46px; border-radius: 50%; border: 1px solid var(--glass-line); background: rgba(0, 0, 0, .25); font-size: 18px; cursor: pointer; }
+  .msg img { display: block; max-width: 100%; max-height: 220px; border-radius: 12px; margin-bottom: 6px; }
   .chat-head span.st::before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #6fe0a0; margin-inline-end: 6px; vertical-align: middle; }
   .lm-dots { position: absolute; top: 4%; inset-inline-start: -6%; display: none; gap: 4px; }
   .lm-dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--mist); animation: lmDot 1.2s ease-in-out infinite; }
@@ -527,7 +536,12 @@
       soundsEyebrow: "Sounds", soundsTitle: "Tune the night.", volume: "{name} volume",
       layer_song: "Radio · Bershy", layer_music: "Calm music", layer_rain: "Rain", layer_ocean: "Ocean waves", layer_crickets: "Crickets", layer_wind: "Wind in grass", layer_hum: "Brown noise",
       lumaSounds: "Luma's sounds", lumaSoundsNote: "Cute little sounds when Luma reacts.",
-      stListening: "listening…", stThinking: "thinking…", stTyping: "typing…",
+      stListening: "listening…", stThinking: "thinking…", stTyping: "typing…", stWatching: "watching with you…",
+      watchBtn: "👀 Watch with me", watchOn: "Luma is watching your screen", watchFloat: "📌 Float", watchStop: "Stop",
+      watchNote: "She glances now and then and only talks when she has something to say. Nothing from your screen is saved, only what she learns about you. Each look uses your Claude usage.",
+      watchNoSupport: "This device can't share its screen with a web page (iPad and phones can't) 🥺 Send me a screenshot instead 📷",
+      watchBlocked: "Screen sharing isn't allowed here 🥺 Send me a screenshot instead 📷",
+      watchEnded: "That was fun! Again sometime? 🌙", attach: "Send a picture", picSent: "📷",
       tonesTitle: "Brainwave tones",
       tonesNote: "Binaural beats: each ear hears a slightly different tone, and the brain perceives a slow pulse between them. Use headphones. Studies on their effect are mixed, but many people find them calming. Pair with rain or brown noise.",
       tone_off: "Off", tone_alpha: "Unwind · 10 Hz alpha", tone_theta: "Deep calm · 6 Hz theta", tone_delta: "Sleep · 2.5 Hz delta",
@@ -622,7 +636,12 @@
       soundsEyebrow: "الأصوات", soundsTitle: "اضبط أنغام الليل.", volume: "مستوى صوت {name}",
       layer_song: "Radio · Bershy", layer_music: "موسيقى هادئة", layer_rain: "مطر", layer_ocean: "أمواج البحر", layer_crickets: "صراصير الليل", layer_wind: "ريح في العشب", layer_hum: "ضجيج بنّي",
       lumaSounds: "أصوات لُمى", lumaSoundsNote: "أصوات صغيرة لطيفة حين تتفاعل لُمى.",
-      stListening: "تستمع إليك…", stThinking: "تفكّر…", stTyping: "تكتب…",
+      stListening: "تستمع إليك…", stThinking: "تفكّر…", stTyping: "تكتب…", stWatching: "تشاهد معك…",
+      watchBtn: "👀 شاهدي معي", watchOn: "لُمى تشاهد شاشتك", watchFloat: "📌 نافذة عائمة", watchStop: "إيقاف",
+      watchNote: "تلقي نظرة كل قليل ولا تتكلم إلا إذا كان عندها ما يستحق. لا يُحفظ شيء من شاشتك، فقط ما تتعلمه عنك. كل نظرة تستهلك من رصيدك في Claude.",
+      watchNoSupport: "هذا الجهاز لا يسمح بمشاركة الشاشة مع صفحة ويب (الآيباد والهواتف لا تسمح) 🥺 أرسل لي لقطة شاشة بدلًا منها 📷",
+      watchBlocked: "مشاركة الشاشة غير مسموحة هنا 🥺 أرسل لي لقطة شاشة بدلًا منها 📷",
+      watchEnded: "كانت حلوة! نعيدها مرة ثانية؟ 🌙", attach: "أرسل صورة", picSent: "📷",
       tonesTitle: "نغمات موجات الدماغ",
       tonesNote: "النبضات الثنائية: تسمع كل أذن نغمة مختلفة قليلًا، فيُدرك الدماغ نبضًا بطيئًا بينهما. استخدم سماعات الرأس. نتائج الدراسات حول تأثيرها متباينة، لكن كثيرين يجدونها مهدّئة. جرّبها مع المطر أو الضجيج البنّي.",
       tone_off: "إيقاف", tone_alpha: "استرخاء · ألفا ١٠ هرتز", tone_theta: "هدوء عميق · ثيتا ٦ هرتز", tone_delta: "نوم · دلتا ٢٫٥ هرتز",
@@ -842,7 +861,8 @@
   const LS = "firefly-v1";
   function blank() {
     return { name: "", fireflies: 0, golden: 0, streak: 0, best: 0, lastDate: null, graceDate: null,
-      memory: [], style: [], onboarded: false, introSeen: false, answers: {}, intention: null, history: [], stars: [], gifts: [], seenGifts: [] };
+      memory: [], style: [], onboarded: false, introSeen: false, answers: {}, intention: null, history: [], stars: [], gifts: [], seenGifts: [],
+      watch: { pace: 1 } };   // pace: how sparingly Luma comments while watching (learned from replies)
   }
   let state = blank();
   try { const saved = JSON.parse(localStorage.getItem(LS)); if (saved && typeof saved === "object") state = Object.assign(blank(), saved); } catch (e) {}
@@ -934,6 +954,8 @@ How they like to be talked to (learned from their messages):
 ${state.style.length ? state.style.map((x) => "- " + x).join("\n") : "- not learned yet: read their messages closely and adapt fast"}
 ${last}${langNote()}`;
   }
+  // what Luma must never do with what she sees on their screen or in their pictures
+  const PRIVATE = "Never read out, describe or remember private things you see: passwords, codes, bank or payment details, private messages, personal documents, or other people's personal information. If you see those, stay quiet about them.";
   async function ask(input, opts = {}) {
     await aiReady;
     if (!sample || aiOff) throw { code: "not_granted" };
@@ -1666,6 +1688,13 @@ ${last}${langNote()}`;
     return { mood: null, body: text, pending: false };
   }
   const clean = (text) => splitReplies(readMood(text).body || text).body;
+  // A reply about a picture starts with "SAW: what it shows" (kept for context, never shown).
+  function takeSaw(text, done) {
+    const m = text.match(done ? /^\s*SAW\s*:([^\n]*)(\n|$)/i : /^\s*SAW\s*:([^\n]*)\n/i);
+    if (m) return { saw: m[1].trim(), rest: text.slice(m[0].length), pending: false };
+    if (!done && text.trim() && /^\s*S(A(W(\s*:[^\n]*)?)?)?$/i.test(text)) return { saw: "", rest: "", pending: true };
+    return { saw: "", rest: text, pending: false };
+  }
   // "Hi!\nREPLIES: ok | tired | lol" -> { body: "Hi!", replies: ["ok", "tired", "lol"] }
   function splitReplies(text) {
     const i = text.search(/\n?\s*REPLIES\s*:/i);
@@ -2018,10 +2047,13 @@ ${last}${langNote()}`;
       <div class="chat-head">
         <div class="ch-av" data-luma-mirror><img alt="" draggable="false"><span class="lm-fx" aria-hidden="true"></span></div>
         <div><b>${t("luma")}</b><span class="st" id="ch-status">${t("stListening")}</span></div>
+        ${free ? `<button class="ch-watch" id="watch" type="button" hidden>${t("watchBtn")}</button>` : ""}
       </div>
+      ${free ? `<div class="watchbar" id="watchbar" hidden><span class="wb-dot"></span><span class="wb-t">${t("watchOn")}</span><button type="button" id="wfloat" hidden>${t("watchFloat")}</button><button type="button" id="wstop">${t("watchStop")}</button></div>` : ""}
       <div class="talk" id="talk"></div>
       <div class="quick" id="quick"></div>
       <form class="composer" id="form">
+        <button type="button" class="attach" id="attach" hidden aria-label="${t("attach")}" title="${t("attach")}">📷</button><input type="file" id="pic" accept="image/*" hidden>
         <textarea id="say" rows="1" placeholder="${t("sayPh")}" maxlength="1200" aria-label="${t("yourMsg")}"></textarea>
         <button class="primary send" aria-label="${t("send")}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
       </form>
@@ -2041,6 +2073,7 @@ ${last}${langNote()}`;
     say.addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); $("#form").requestSubmit(); } });
     const send = (text) => {
       if (!text || ctl) return;
+      heard();
       addMsg("me", text);
       session.turns.push({ role: "user", content: text });
       showQuick([]);
@@ -2061,8 +2094,229 @@ ${last}${langNote()}`;
     }
     showQuick(session.replies || []);
     if (!free) $("#next").onclick = () => show("release");
-    cleanup = () => { if (ctl) ctl.abort(); if (free) remember(session); };
+    cleanup = () => { if (ctl) ctl.abort(); stopWatch(false); dropFloat(); if (free) remember(session); };
     if (!session.turns.length) lumaOpen();
+
+
+    // ---------- pictures, and watching their screen together ----------
+    // Luma glances at the shared screen every so often (more often when it changes), and speaks only
+    // when she has something worth saying. How often she talks is learned: answering her soon makes
+    // her a little chattier, leaving her comments unanswered makes her quieter. Frames are never stored;
+    // only short notes of what they were doing, which feed what she remembers about them.
+    const W = { on: false, stream: null, track: null, video: null, grabber: null, tick: null, worker: null,
+      last: null, lastLook: 0, lastSpoke: 0, looking: false, awaiting: false, seen: session.seen || (session.seen = []) };
+    const F = { canvas: null, video: null, text: "" };
+    const canShare = !!(navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia);
+    aiReady.then((s) => (s && s.limits ? s.limits() : null)).then((l) => {
+      if (!l || !l.images || !box.isConnected) return;
+      $("#attach").hidden = false;
+      if (free) { $("#watch").hidden = false; if (canShare) prepFloat(); }
+    }).catch(() => {});
+    $("#attach").onclick = () => $("#pic").click();
+    $("#pic").onchange = async (e) => {
+      const f = e.target.files && e.target.files[0]; e.target.value = "";
+      if (!f || ctl) return;
+      let blob;
+      try { const b = await createImageBitmap(f); blob = await toJpeg(b, b.width, b.height); } catch (err) { blob = f; }
+      const text = say.value.trim(); say.value = ""; say.style.height = "auto";
+      heard();
+      const m = addMsg("me", text || t("picSent"));
+      const im = new Image(); im.src = URL.createObjectURL(blob); im.alt = ""; im.onload = () => { box.scrollTop = box.scrollHeight; };
+      if (!text) m.textContent = ""; m.prepend(im);
+      const turn = { role: "user", content: text || "(sent you a picture)" };
+      session.turns.push(turn);
+      showQuick([]);
+      lumaReply({ image: blob, turn });
+    };
+    if (free) {
+      $("#watch").onclick = startWatch;
+      $("#wstop").onclick = () => stopWatch(true);
+      $("#wfloat").onclick = openFloat;
+    }
+
+    function toJpeg(src, w, h, max = 1280) {
+      const k = Math.min(1, max / Math.max(w, h)), c = document.createElement("canvas");
+      c.width = Math.round(w * k); c.height = Math.round(h * k);
+      c.getContext("2d").drawImage(src, 0, 0, c.width, c.height);
+      return new Promise((ok) => c.toBlob(ok, "image/jpeg", 0.72));
+    }
+    async function startWatch() {
+      if (W.on || ctl) return;
+      if (!canShare) { addMsg("luma", t("watchNoSupport")); luma.set("chibi:sad"); $("#pic").click(); return; }
+      openFloat();   // in the same tap, so the browser allows it
+      let st;
+      try { st = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 2 }, audio: false }); }
+      catch (e) {
+        closeFloat();
+        if (!box.isConnected) return;
+        // a plain "cancel" stays silent; a blocked page explains itself
+        if (e && (/polic|disallow/i.test(e.message || "") || !["NotAllowedError", "AbortError"].includes(e.name))) { addMsg("luma", t("watchBlocked")); luma.set("chibi:sad"); }
+        return;
+      }
+      if (!box.isConnected) { st.getTracks().forEach((x) => x.stop()); return; }
+      W.on = true; W.stream = st; W.track = st.getVideoTracks()[0];
+      W.track.onended = () => stopWatch(true);
+      W.video = document.createElement("video"); W.video.muted = true; W.video.playsInline = true; W.video.srcObject = st; W.video.play().catch(() => {});
+      try { W.grabber = window.ImageCapture ? new ImageCapture(W.track) : null; } catch (e) { W.grabber = null; }
+      W.last = null; W.lastLook = 0; W.lastSpoke = 0; W.awaiting = false;
+      $("#watchbar").hidden = false; $("#watch").hidden = true; $("#wfloat").hidden = !F.video;
+      $("#hint").textContent = t("watchNote");
+      status("stWatching");
+      luma.set("chibi:excited"); sound.cute("excited"); drawFloat("👀");
+      ticker(true);
+      setTimeout(check, 1500);
+    }
+    function stopWatch(said) {
+      if (!W.on) return;
+      W.on = false; ticker(false);
+      W.stream.getTracks().forEach((x) => x.stop());
+      W.video.srcObject = null;
+      W.stream = W.track = W.video = W.grabber = null;
+      closeFloat();
+      if (box.isConnected) {
+        $("#watchbar").hidden = true; $("#watch").hidden = false; $("#hint").textContent = t("aiHint");
+        status("stListening");
+        if (said) { addMsg("luma", t("watchEnded")); luma.set("chibi:happy"); }
+      }
+      remember(session);
+    }
+    // a steady beat, from a worker when possible (background tabs slow down page timers)
+    function ticker(on) {
+      clearInterval(W.tick); W.tick = null;
+      if (W.worker) { W.worker.terminate(); W.worker = null; }
+      if (!on) return;
+      try {
+        W.worker = new Worker(URL.createObjectURL(new Blob(["setInterval(() => postMessage(0), 3000)"], { type: "text/javascript" })));
+        W.worker.onmessage = check;
+        W.worker.onerror = () => { if (W.worker) W.worker.terminate(); W.worker = null; if (W.on && !W.tick) W.tick = setInterval(check, 3000); };
+      } catch (e) { W.worker = null; W.tick = setInterval(check, 3000); }
+    }
+    async function grab() {
+      try { if (W.grabber) { const b = await W.grabber.grabFrame(); return { src: b, w: b.width, h: b.height }; } } catch (e) {}
+      const v = W.video;
+      return v && v.videoWidth ? { src: v, w: v.videoWidth, h: v.videoHeight } : null;
+    }
+    // a tiny grey thumbnail, to tell whether the screen changed since her last look
+    function thumb(f) {
+      const c = document.createElement("canvas"); c.width = 48; c.height = 27;
+      const x = c.getContext("2d", { willReadFrequently: true }); x.drawImage(f.src, 0, 0, 48, 27);
+      const d = x.getImageData(0, 0, 48, 27).data, g = new Uint8Array(48 * 27);
+      for (let i = 0; i < g.length; i++) g[i] = (d[i * 4] + d[i * 4 + 1] + d[i * 4 + 2]) / 3;
+      return g;
+    }
+    const change = (a, b) => { if (!a || !b) return 255; let s = 0; for (let i = 0; i < a.length; i++) s += Math.abs(a[i] - b[i]); return s / a.length; };
+    async function check() {
+      if (!W.on || W.looking || ctl) return;
+      const now = Date.now(), pace = state.watch.pace, since = (now - W.lastLook) / 1000;
+      if (W.lastLook && since < 20 * pace) return;
+      if (W.lastSpoke && (now - W.lastSpoke) / 1000 < 50 * pace) return;
+      W.looking = true;   // also keeps two ticks from looking at once
+      const f = await grab();
+      const th = f && W.on ? thumb(f) : null, d = th ? change(th, W.last) : 0;
+      // look when the screen changed, or now and then while something keeps moving
+      if (!th || (W.lastLook && d < 5 && !(d > 1.5 && since > 90 * pace))) { W.looking = false; return; }
+      W.last = th;
+      look(f);
+    }
+    async function look(f) {
+      W.looking = true; W.lastLook = Date.now();
+      try {
+        const img = await toJpeg(f.src, f.w, f.h);
+        const pace = state.watch.pace;
+        const chat = session.turns.slice(-6).map((x) => (x.role === "user" ? "Them: " : "You: ") + x.content).join("\n");
+        const spoke = W.lastSpoke ? Math.round((Date.now() - W.lastSpoke) / 1000) + " seconds ago" : "not yet tonight";
+        const { text } = await ask(rules(session) + `
+
+Right now you two are hanging out while they use their computer: they shared their screen with you, and the attached image is what is on it this moment. You see it like a friend sitting next to them.
+What you noticed earlier (oldest first):
+${W.seen.slice(-10).join("\n") || "(you just started watching)"}
+Your recent chat:
+${chat || "(nothing yet)"}
+You last said something ${spoke}.
+
+Decide whether to say something. A good friend watching along speaks only now and then: when something is funny, exciting, cute or surprising, when they switch to something new, when they seem stuck, tired, or have been at the same thing for a long time, or to carry on your chat. Otherwise stay quiet.${pace > 1.5 ? " They have been leaving your comments unanswered lately, so be extra sparing." : pace < 0.8 ? " They enjoy chatting with you while you watch, so you can be a little chattier." : ""}
+${PRIVATE}
+Reply in exactly this format, two lines:
+SAW: <what they are doing, under 12 words, general, nothing private>
+SAY: <either - to stay quiet, or one face tag such as [excited] followed by one short message, one sentence>`, { images: [img], cache: false });
+        if (!W.on) return;
+        const saw = (text.match(/SAW\s*:\s*(.+)/i) || [])[1];
+        if (saw) noteSeen(saw.trim());
+        const line = ((text.match(/SAY\s*:\s*([\s\S]+)/i) || [])[1] || "").trim();
+        if (line && !/^[-–—.]+$/.test(line) && !/^\(?(quiet|silent|nothing)\)?\.?$/i.test(line)) chime(line);
+      } catch (e) {
+        const r = aiFailure(e);
+        if (r === "off" || (e && ["images_unavailable", "image_rejected"].includes(e.code))) stopWatch(false);
+        else if (e && e.code === "rate_limited") W.lastLook = Date.now() + 120000;   // rest a couple of minutes
+      } finally { W.looking = false; }
+    }
+    function noteSeen(saw) {
+      if (W.seen.length && W.seen[W.seen.length - 1].endsWith(" " + saw)) return;
+      W.seen.push(new Date().toTimeString().slice(0, 5) + " " + saw);
+      if (W.seen.length > 24) W.seen.shift();
+    }
+    // Luma says something on her own
+    function chime(raw) {
+      const r = readMood(raw), body = splitReplies(r.body || raw).body;
+      if (!body || !box.isConnected) return;
+      if (W.awaiting) state.watch.pace = Math.min(3, state.watch.pace * 1.12);   // the last one went unanswered
+      W.awaiting = true; W.lastSpoke = Date.now();
+      if (r.mood) { luma.set(r.mood); sound.cute(SFX_FOR[r.mood.split(":")[1]] || "boop"); } else sound.cute("boop");
+      addMsg("luma", body);
+      session.turns.push({ role: "assistant", content: body });
+      drawFloat(body);
+      persist();
+    }
+    // they wrote back: soon after her comment means they like it when she talks
+    function heard() {
+      if (!W.awaiting) return;
+      W.awaiting = false;
+      if (Date.now() - W.lastSpoke < 120000) { state.watch.pace = Math.max(0.6, state.watch.pace * 0.85); persist(); }
+    }
+
+    // A floating Luma (picture-in-picture) that stays on top while they are in another window.
+    function prepFloat() {
+      if (F.video || !document.pictureInPictureEnabled) return;
+      const c = document.createElement("canvas"); c.width = 480; c.height = 270;
+      const v = document.createElement("video"); v.muted = true; v.playsInline = true;
+      try { v.srcObject = c.captureStream(); } catch (e) { return; }
+      v.style.cssText = "position:fixed;left:0;bottom:0;width:2px;height:2px;opacity:0;pointer-events:none";
+      document.body.appendChild(v);
+      F.canvas = c; F.video = v;
+      drawFloat("👀");
+      v.play().catch(() => {});
+    }
+    function openFloat() { if (F.video && document.pictureInPictureElement !== F.video) F.video.requestPictureInPicture().catch(() => {}); }
+    function closeFloat() { if (F.video && document.pictureInPictureElement === F.video) document.exitPictureInPicture().catch(() => {}); }
+    function dropFloat() { closeFloat(); if (F.video) { F.video.srcObject = null; F.video.remove(); } F.video = F.canvas = null; }
+    const floatPics = {};
+    function drawFloat(text) {
+      if (!F.canvas) return;
+      if (text != null) F.text = text;
+      const x = F.canvas.getContext("2d"), w = F.canvas.width, h = F.canvas.height;
+      const g = x.createLinearGradient(0, 0, 0, h); g.addColorStop(0, "#2a1f63"); g.addColorStop(1, "#0e0b26");
+      x.fillStyle = g; x.fillRect(0, 0, w, h);
+      const mood = (luma.pose() || "chibi:listening").split(":")[1];
+      const im = floatPics[mood] || (floatPics[mood] = Object.assign(new Image(), { src: poseImg("chibi", mood) }));
+      if (!im.complete || !im.naturalWidth) { im.onload = () => drawFloat(); }
+      const ih = 236, iw = im.naturalWidth ? (ih * im.naturalWidth) / im.naturalHeight : 150;
+      if (im.naturalWidth) x.drawImage(im, 6, h - ih, iw, ih);
+      // speech bubble
+      const bx = Math.max(150, iw + 6), bw = w - bx - 14, pad = 14, lh = 28;
+      x.font = '600 21px "Inter", system-ui, sans-serif';
+      const rtl = /[؀-ۿ]/.test(F.text);
+      const lines = [];
+      for (const word of F.text.split(/\s+/)) {
+        const tryLine = lines.length ? lines[lines.length - 1] + " " + word : word;
+        if (lines.length && x.measureText(tryLine).width <= bw - pad * 2) lines[lines.length - 1] = tryLine; else lines.push(word);
+      }
+      const shown = lines.slice(0, 7), bh = shown.length * lh + pad * 2 - 6, by = Math.max(14, (h - bh) / 2 - 20);
+      x.fillStyle = "rgba(251, 247, 255, .96)";
+      x.beginPath(); if (x.roundRect) x.roundRect(bx, by, bw, bh, 18); else x.rect(bx, by, bw, bh); x.fill();
+      x.beginPath(); x.moveTo(bx + 2, by + bh - 34); x.lineTo(bx - 14, by + bh - 14); x.lineTo(bx + 2, by + bh - 18); x.fill();
+      x.fillStyle = "#1a1440"; x.textBaseline = "top"; x.direction = rtl ? "rtl" : "ltr"; x.textAlign = rtl ? "right" : "left";
+      shown.forEach((l, k) => x.fillText(l, rtl ? bx + bw - pad : bx + pad, by + pad + k * lh));
+    }
 
     function addMsg(who, text) {
       const m = document.createElement("div");
@@ -2072,12 +2326,15 @@ ${last}${langNote()}`;
     }
     function waiting() { status("stThinking"); luma.set("chibi:thinking"); const m = addMsg("luma", ""); m.classList.add("wait"); m.innerHTML = `<span class="dots">${t("thinking")}</span>`; return m; }
     function fallback() { addMsg("luma", t("noAi")); $("#hint").textContent = t("noAiHint"); }
-    async function stream(input, bubble) {
+    async function stream(input, bubble, extra = {}) {
       ctl = new AbortController();
+      stream.saw = "";
       try {
         let shown = false;
-        const { text } = await ask(input, { cache: false, signal: ctl.signal, onText: ({ text }) => {
-          const r = readMood(text);
+        const { text: full } = await ask(input, Object.assign({ cache: false, signal: ctl.signal, onText: ({ text }) => {
+          const sw = takeSaw(text);
+          if (sw.pending) return;
+          const r = readMood(sw.rest);
           if (r.pending) return;
           if (r.mood && !shown) {
             const before = luma.pose();
@@ -2089,7 +2346,9 @@ ${last}${langNote()}`;
           if (!shown) status("stTyping");
           shown = true;
           bubble.classList.remove("wait"); bubble.textContent = splitReplies(r.body).body; box.scrollTop = box.scrollHeight;
-        } });
+        } }, extra));
+        const sw = takeSaw(full, true), text = sw.rest;
+        stream.saw = sw.saw;
         const r = readMood(text);
         if (!r.mood && luma.pose() === "chibi:thinking") luma.set("chibi:listening");
         const { body, replies } = splitReplies(r.body || text);
@@ -2104,7 +2363,7 @@ ${last}${langNote()}`;
         else if (r === "cancelled") { if (!e.text) bubble.remove(); }
         else { bubble.classList.add("wait"); bubble.textContent = (e.text ? e.text + "\n\n" : "") + r; }
         return null;
-      } finally { ctl = null; if ($("#ch-status") && $("#ch-status").textContent !== t("stListening")) status("stListening"); }
+      } finally { ctl = null; if (box.isConnected) status(W.on ? "stWatching" : "stListening"); }
     }
     async function lumaOpen() {
       const bubble = waiting();
@@ -2114,12 +2373,18 @@ ${last}${langNote()}`;
       const text = await stream([{ role: "user", content: rules(session) + "\n\n" + opener + "\n\nStart your reply with exactly one tag in square brackets showing your face as you say it, chosen from: [happy] [listening] [thinking] [excited] [shy] [pout] [ignore] [sad] [sleepy]. Then write the message. After the message, add one last separate line: REPLIES: followed by 3 very short replies (at most 4 words each) the person might want to tap, in their own language and dialect, separated by |. The tag and the REPLIES line are never shown to them." }], bubble);
       if (text) session.turns.push({ role: "assistant", content: text });
     }
-    async function lumaReply() {
+    async function lumaReply(o = {}) {
       if (aiOff) { addMsg("luma", t("saved")); return; }
       const bubble = waiting();
+      let image = o.image || null, note = "";
+      if (!image && W.on) { const f = await grab(); if (f) image = await toJpeg(f.src, f.w, f.h); }
+      if (o.image) note = "\n\nThey just sent you a picture (attached). React to it like a friend would.";
+      else if (image) note = "\n\nYou are watching their screen together right now; the attached image is their screen at this moment. What you noticed earlier: " + (W.seen.slice(-8).join("; ") || "nothing yet") + ".";
+      if (image) note += " Before the face tag, write one line: SAW: <what it shows, under 12 words, nothing private>. " + PRIVATE;
       const recent = session.turns.slice(-16);
       if (recent[0] && recent[0].role === "assistant") recent.unshift({ role: "user", content: "(we began talking)" });
-      const text = await stream([{ role: "user", content: rules(session) + "\n\nStart your reply with exactly one tag in square brackets showing your face as you say it, chosen from: [happy] [listening] [thinking] [excited] [shy] [pout] [ignore] [sad] [sleepy]. Then write the message. After the message, add one last separate line: REPLIES: followed by 3 very short replies (at most 4 words each) the person might want to tap, in their own language and dialect, separated by |. The tag and the REPLIES line are never shown to them.\n\nThe conversation so far follows. Reply as Luma." }].concat(recent), bubble);
+      const text = await stream([{ role: "user", content: rules(session) + note + "\n\nStart your reply with exactly one tag in square brackets showing your face as you say it, chosen from: [happy] [listening] [thinking] [excited] [shy] [pout] [ignore] [sad] [sleepy]. Then write the message. After the message, add one last separate line: REPLIES: followed by 3 very short replies (at most 4 words each) the person might want to tap, in their own language and dialect, separated by |. The tag and the REPLIES line are never shown to them.\n\nThe conversation so far follows. Reply as Luma." }].concat(recent), bubble, image ? { images: [image] } : {});
+      if (stream.saw) { if (o.turn) o.turn.content += "\n[the picture showed: " + stream.saw + "]"; else if (W.on) noteSeen(stream.saw); }
       if (text) session.turns.push({ role: "assistant", content: text });
       // learn their style early, so Luma adapts within the first few messages
       const n = session.turns.filter((x) => x.role === "user").length;
@@ -2531,18 +2796,20 @@ ${last}${langNote()}`;
   async function remember(s) {
     if (!s || aiOff || !sample) return;
     const mine = s.turns.filter((x) => x.role === "user");
-    if (mine.length <= (s.learned || 0)) return;
+    const watched = (s.seen || []).slice(s.learnedSeen || 0);
+    if (mine.length <= (s.learned || 0) && !watched.length) return;
     const said = mine.map((x) => x.content).join("\n");
-    if (said.length < 12) return;
-    s.learned = mine.length;
+    if (said.length < 12 && !watched.length) return;
+    s.learned = mine.length; s.learnedSeen = (s.seen || []).length;
     const write = lang === "ar" ? "simple Arabic" : "English";
     try {
       const out = await sample.json(
-        "Here are messages a person wrote to Luma, a cute companion in a calm evening app:\n\n" + said.slice(-4000) +
+        "Here are messages a person wrote to Luma, a cute companion in a calm evening app:\n\n" + (said.slice(-4000) || "(none)") +
+        (watched.length ? "\n\nWhat they were doing on their screen while Luma watched along with them (local times):\n" + watched.join("\n") : "") +
         "\n\nAlready remembered facts:\n" + (state.memory.join("\n") || "(nothing)") +
         "\n\nCurrent notes on how they like to be talked to:\n" + (state.style.join("\n") || "(nothing)") +
         `\n\nReply with only a JSON object {"facts": [...], "style": [...]}.
-"facts": up to 2 NEW short facts worth remembering (their work, people in their life, what drains them, what they enjoy, what they hope for). Each under 15 words, third person, in ${write}. [] if nothing new.
+"facts": up to 2 NEW short facts worth remembering (their work, people in their life, what drains them, what they enjoy, what they hope for, and habits or interests seen on their screen such as shows, games, music, what they work on and how late; general only, never private content). Each under 15 words, third person, in ${write}. [] if nothing new.
 "style": the full updated list (at most 5 items, each under 12 words, in ${write}) of how to talk with them, inferred only from how they write: their language and dialect, message length, emoji use, humor, energy, topics that light them up, words or nicknames they use. Keep earlier notes that still hold.`,
         { modelTier: "quick", cache: false });
       let changed = false;

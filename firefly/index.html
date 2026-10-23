@@ -229,7 +229,8 @@
   .i-hint { font-family: var(--body); font-size: 13px; color: rgba(251, 247, 255, .55); letter-spacing: 0; }
   .i-skip { position: absolute; z-index: 9; top: calc(env(safe-area-inset-top, 0px) + 14px); right: max(14px, env(safe-area-inset-right, 0px));
     font: 600 14px var(--body); color: var(--iw); background: rgba(255, 255, 255, .1); border: 1px solid rgba(255, 255, 255, .25); border-radius: 999px; padding: 8px 14px; }
-  .i-stage { position: absolute; inset: 0; }
+  .i-shake, .i-stage { position: absolute; inset: 0; }
+  .i-stage { transform-origin: 50% 50%; }
   .i-layer { position: absolute; inset: 0; pointer-events: none; }
   /* backgrounds */
   .i-bg-violet { background: var(--iv); }
@@ -1129,6 +1130,45 @@ ${last}${langNote()}`;
       auto: () => prefs.auto !== false,
       setAuto(v) { prefs.auto = v; savePrefs(); },
       cuteOn: () => prefs.cute !== false,
+      // ---- intro sound design: sample hits on the audio clock, plus a synthesized whoosh and riser ----
+      loadSfx(names) {
+        if (!ensure()) return;
+        names.forEach((n) => {
+          if (buffers["sfx:" + n]) return;
+          fetch("sfx/" + n + ".mp3").then((r) => r.arrayBuffer()).then((d) => ac.decodeAudioData(d)).then((b) => { buffers["sfx:" + n] = b; }).catch(() => {});
+        });
+      },
+      // play a loaded effect `delay` seconds from now
+      sfx(name, delay = 0, vol = 0.9) {
+        const buf = ac && buffers["sfx:" + name]; if (!buf) return;
+        const s = ac.createBufferSource(), g = ac.createGain();
+        s.buffer = buf; g.gain.value = vol; s.connect(g).connect(master); s.start(ac.currentTime + Math.max(0, delay));
+      },
+      // a noise sweep that ends `delay + dur` from now
+      whoosh(delay, dur = 0.26) {
+        if (!ac) return;
+        const t = ac.currentTime + Math.max(0, delay), s = ac.createBufferSource(), f = filt("bandpass", 400, 1.4), g = ac.createGain();
+        s.buffer = noise("white"); s.connect(f).connect(g).connect(master);
+        f.frequency.setValueAtTime(350, t); f.frequency.exponentialRampToValueAtTime(5200, t + dur);
+        g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.5, t + dur * 0.85); g.gain.exponentialRampToValueAtTime(0.0001, t + dur + 0.05);
+        s.start(t); s.stop(t + dur + 0.1);
+      },
+      // a rising build into the drop
+      riser(delay, dur = 2) {
+        if (!ac) return;
+        const t = ac.currentTime + Math.max(0, delay);
+        const s = ac.createBufferSource(), f = filt("bandpass", 300, 2), g = ac.createGain();
+        s.buffer = noise("white"); s.loop = true; s.connect(f).connect(g).connect(master);
+        f.frequency.setValueAtTime(300, t); f.frequency.exponentialRampToValueAtTime(7000, t + dur);
+        g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.28, t + dur); g.gain.exponentialRampToValueAtTime(0.0001, t + dur + 0.04);
+        s.start(t); s.stop(t + dur + 0.1);
+        const o = ac.createOscillator(), og = ac.createGain();
+        o.type = "sawtooth"; o.frequency.setValueAtTime(110, t); o.frequency.exponentialRampToValueAtTime(880, t + dur);
+        og.gain.setValueAtTime(0.0001, t); og.gain.exponentialRampToValueAtTime(0.05, t + dur); og.gain.exponentialRampToValueAtTime(0.0001, t + dur + 0.04);
+        o.connect(filt("lowpass", 2400)).connect(og).connect(master); o.start(t); o.stop(t + dur + 0.1);
+      },
+      // how long sound takes to reach the speaker (pictures wait this long)
+      latency() { if (!ac) return 0.03; return Math.min(0.3, (ac.outputLatency || 0) + (ac.baseLatency || 0)) || 0.03; },
       // Play a one-off track (the intro music). Returns its clock and a fade-out.
       clip(url, vol = 0.9) {
         if (!ensure()) return null;
@@ -2507,50 +2547,49 @@ ${last}${langNote()}`;
     show(screen);
   };
 
-  // ================= Intro: a 20-second Persona-style opening, cut to the song =================
-  // Cues are timed to the song itself ("Radio": quiet build until 6.15 s, then a hit every ~0.91 s),
-  // so the cuts stay on the beat even if the song starts late.
+  // ================= Intro: a Persona-style opening, cut to the beat =================
+  // "music/intro.mp3" was beat-tracked: 123 BPM, first beat at 0.478 s. Beats 0-22 are the build
+  // (a kick now and then), beats 23-45 are the drive (kick and snare on every beat).
+  // Every event below is placed on a beat number, scheduled a little ahead and offset by the
+  // device's audio output latency, so picture and sound land together.
   const intro = (() => {
     const IMG = (n) => "intro/" + n + ".webp";
-    // "music/intro.mp3" is cut so its first big hit lands at 6.15 s; at 123 BPM a cut every 2 beats.
-    const HIT = 6.15, BEAT = 0.9756;
-    let track = null;
-    const beat = (k) => HIT + k * BEAT;
-    let root = null, stage = null, raf = 0, cues = [], next = 0, clock0 = 0, onDone = null, ended = false;
+    const PHASE = 0.478, BEAT = 60 / 123, LOOKAHEAD = 0.12;
+    const B = (i) => PHASE + i * BEAT;
+    const KICKS = new Set([0, 3, 4, 8, 12, 14, 18, 25, 26, 30, 31, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45]);
+    const SNARES = new Set([23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 40, 41, 42, 43, 44]);
+    let track = null, root = null, shaker = null, stage = null, raf = 0, cues = [], next = 0, clock0 = 0, onDone = null, ended = false, timers = [];
 
     const add = (node) => { stage.appendChild(node); return node; };
     function layer(cls, style = "", html = "") { const d = document.createElement("div"); d.className = "i-layer " + cls; d.style.cssText = style; d.innerHTML = html; return add(d); }
     const clear = () => { stage.innerHTML = ""; };
     const anim = (node, frames, ms, opts = {}) => node.animate(frames, Object.assign({ duration: ms, easing: "cubic-bezier(.2,.9,.2,1)", fill: "forwards" }, opts));
-    // A word that slams in from big to its place
-    function word(text, cls, x = 50, y = 50, rot = -8, delay = 0) {
+    function word(text, cls, x = 50, y = 50, rot = -8, ms = 200) {
       const d = document.createElement("div");
       d.className = "i-word " + cls; d.textContent = text;
-      d.style.left = x + "%"; d.style.top = y + "%"; d.style.opacity = "0";
+      d.style.left = x + "%"; d.style.top = y + "%";
       const base = `translate(-50%, -50%) rotate(${rot}deg) skewX(-8deg)`;
       add(d);
-      anim(d, [{ transform: base + " scale(2.6)", opacity: 0 }, { transform: base + " scale(.95)", opacity: 1, offset: 0.7 }, { transform: base + " scale(1)", opacity: 1 }], 280, { delay });
+      anim(d, [{ transform: base + " scale(2.8)", opacity: 0 }, { transform: base + " scale(.94)", opacity: 1, offset: 0.65 }, { transform: base + " scale(1)", opacity: 1 }], ms);
       return d;
     }
-    // Small spaced-out caption that fades up
-    function caption(text, y, cls = "", delay = 0) {
+    function caption(text, y, cls = "") {
       const d = document.createElement("div");
-      d.className = "i-word i-s " + cls; d.textContent = text; d.style.left = "50%"; d.style.top = y + "%"; d.style.opacity = "0";
+      d.className = "i-word i-s " + cls; d.textContent = text; d.style.left = "50%"; d.style.top = y + "%";
       add(d);
-      anim(d, [{ transform: "translate(-50%, -30%)", opacity: 0, letterSpacing: ".6em" }, { transform: "translate(-50%, -50%)", opacity: 1, letterSpacing: ".28em" }], 900, { delay });
+      anim(d, [{ transform: "translate(-50%, -30%)", opacity: 0, letterSpacing: ".7em" }, { transform: "translate(-50%, -50%)", opacity: 1, letterSpacing: ".28em" }], 420);
       return d;
     }
-    function flash(o = 0.9) { anim(layer("i-flash"), [{ opacity: o }, { opacity: 0 }], 170); }
-    function slash(color, ms = 340) {
+    function flash(o = 0.9, ms = 150) { anim(layer("i-flash"), [{ opacity: o }, { opacity: 0 }], ms); }
+    function slash(color, ms = 300) {
       const d = layer("i-slash", `background:${color};inset:-10% auto -10% 0;width:55%`);
       anim(d, [{ transform: "skewX(-18deg) translateX(-140%)" }, { transform: "skewX(-18deg) translateX(260%)" }], ms, { easing: "cubic-bezier(.6,0,.3,1)" });
-      return d;
     }
-    function fig(name, side, fromVw, extra = "") {
+    function fig(name, side, fromVw, extra = "", ms = 300) {
       const im = new Image(); im.src = IMG(name); im.className = "i-fig"; im.alt = "";
       im.style.cssText = `bottom:-6vh;${side}:-8vw;${extra}`;
       add(im);
-      anim(im, [{ transform: `translateX(${fromVw}vw) skewX(-6deg)`, opacity: 0 }, { transform: "translateX(0) skewX(0deg)", opacity: 1 }], 380);
+      anim(im, [{ transform: `translateX(${fromVw}vw) skewX(-8deg)`, opacity: 0 }, { transform: "translateX(0) skewX(0deg)", opacity: 1 }], ms);
       return im;
     }
     function panel(name, x, y, w, h, rot, poly, from, pos = "50% 35%") {
@@ -2559,23 +2598,27 @@ ${last}${langNote()}`;
       d.style.cssText = `left:${x}%;top:${y}%;width:${w}%;height:${h}%;clip-path:polygon(${poly});`;
       d.innerHTML = `<img src="${IMG(name)}" alt="" style="object-position:${pos}">`;
       add(d);
-      anim(d, [{ transform: `translate(${from}) rotate(${rot}deg) scale(1.15)`, opacity: 0 }, { transform: `translate(0, 0) rotate(${rot}deg) scale(1)`, opacity: 1 }], 300);
+      anim(d, [{ transform: `translate(${from}) rotate(${rot}deg) scale(1.2)`, opacity: 0 }, { transform: `translate(0, 0) rotate(${rot}deg) scale(1)`, opacity: 1 }], 220);
+      // slow push-in while it is on screen
+      d.querySelector("img").animate([{ transform: "scale(1)" }, { transform: "scale(1.08)" }], { duration: 1100, fill: "forwards" });
       return d;
     }
-    // Letters cut out like a ransom note, each in its own box
     function ransom(text, y, rot) {
       const looks = [["#fbf7ff", "#07051a"], ["#07051a", "#fbf7ff"], ["#ffd27a", "#07051a"], ["#7b3cff", "#fbf7ff"]];
       const fonts = ['"Anton", Impact, sans-serif', '"Archivo Black", Impact, sans-serif', '"Instrument Serif", Georgia, serif'];
       const d = document.createElement("div");
       d.className = "i-word i-l"; d.style.left = "50%"; d.style.top = y + "%";
       d.style.transform = `translate(-50%, -50%) rotate(${rot}deg)`;
+      const STEP = 0.06;
       [...text].forEach((ch, k) => {
         const s = document.createElement("span");
         const [bg, fg] = looks[(k + text.length) % looks.length];
+        const font = fonts[(k * 7 + text.length) % 3];
+        const r = ((k * 37) % 15) - 7;
         s.className = "i-box"; s.textContent = ch;
-        s.style.cssText = `background:${bg};color:${fg};font-family:${fonts[(k * 7 + text.length) % 3]};${fonts[(k * 7 + text.length) % 3].includes("Serif") ? "font-style:italic;" : ""}transform:rotate(${((k * 37) % 15) - 7}deg);display:inline-block;opacity:0`;
+        s.style.cssText = `background:${bg};color:${fg};font-family:${font};${font.includes("Serif") ? "font-style:italic;" : ""}display:inline-block;opacity:0`;
         d.appendChild(s);
-        anim(s, [{ transform: s.style.transform + " scale(2)", opacity: 0 }, { transform: s.style.transform + " scale(1)", opacity: 1 }], 200, { delay: k * 45 });
+        anim(s, [{ transform: `rotate(${r}deg) scale(2.2)`, opacity: 0 }, { transform: `rotate(${r}deg) scale(1)`, opacity: 1 }], 110, { delay: k * STEP * 1000 });
       });
       add(d);
       return d;
@@ -2588,66 +2631,98 @@ ${last}${langNote()}`;
         add(d);
       }
     }
-    function moon(size, x, y) {
+    function moon(size, x, y, ms = 320) {
       const m = document.createElement("div");
-      m.className = "i-moon"; m.style.cssText = `width:${size}vmin;height:${size}vmin;left:${x}%;top:${y}%;transform:translate(-50%,-50%) scale(.2)`;
+      m.className = "i-moon"; m.style.cssText = `width:${size}vmin;height:${size}vmin;left:${x}%;top:${y}%`;
       add(m);
-      anim(m, [{ transform: "translate(-50%, -50%) scale(.2)", opacity: 0 }, { transform: "translate(-50%, -50%) scale(1)", opacity: 1 }], 2400);
+      anim(m, [{ transform: "translate(-50%, -50%) scale(.2)", opacity: 0 }, { transform: "translate(-50%, -50%) scale(1.06)", opacity: 1, offset: 0.7 }, { transform: "translate(-50%, -50%) scale(1)", opacity: 1 }], ms);
       return m;
     }
-
-    const SCENES = [
-      // the quiet build: night, fireflies, a silhouette
-      [0.0, () => { clear(); layer("i-bg-deep", "opacity:.0").animate([{ opacity: 0 }, { opacity: 1 }], { duration: 2500, fill: "forwards" }); fireflies(16); caption("SOMEWHERE,", 30); }],
-      [1.8, () => caption("THE NIGHT IS STILL AWAKE", 37)],
-      [3.0, () => { moon(46, 72, 24); const f = fig("side", "right", 10, "filter:brightness(0);opacity:0;right:-30vw;bottom:-14vh;"); f.animate([{ filter: "brightness(0)" }, { filter: "brightness(.85)" }], { duration: 3000, fill: "forwards" }); }],
-      [5.0, () => caption("…AND SO IS SHE.", 82, "i-gold")],
-      // the hits
-      [HIT, () => { clear(); layer("i-stripes"); flash(); slash("#ffd27a"); setTimeout(() => slash("#07051a"), 90); word("WELCOME", "i-xl i-shadow", 50, 46, -8, 140); }],
-      [beat(1), () => { clear(); layer("i-bg-violet i-halftone"); word("LUMA", "i-xl i-outline i-back", 50, 13, -8); fig("front", "left", -40, "bottom:-20vh;"); caption("YOUR NIGHT FRIEND", 92, "i-gold"); }],
-      [beat(2), () => { flash(.5); const l = stage.querySelector(".i-outline"); if (l) l.animate([{ marginLeft: "-8px" }, { marginLeft: "8px" }, { marginLeft: "0" }], { duration: 180 }); }],
-      [beat(3), () => { const r = layer("i-rays", "opacity:.0;z-index:-1"); stage.prepend(r); r.animate([{ opacity: 0, transform: "rotate(0)" }, { opacity: .55, transform: "rotate(12deg)" }], { duration: 900, fill: "forwards" }); }],
-      [beat(4), () => { clear(); layer("i-bg-deep i-halftone"); const s = document.createElement("div"); s.className = "i-strip"; s.style.cssText = "top:26%;height:24%"; s.innerHTML = `<img src="${IMG("face_smirk")}" alt="" style="object-position:50% 46%">`; add(s); anim(s, [{ transform: "translateX(-100%) skewY(-4deg)" }, { transform: "translateX(0) skewY(-4deg)" }], 260); word("SHE LISTENS.", "i-l i-shadow", 50, 70, -6, 120); }],
-      [beat(5), () => { clear(); layer("i-bg-violet"); panel("face_smile", 6, 10, 62, 58, -4, "0 4%,100% 0,94% 100%,4% 92%", "-60vw, 0"); word("SHE REMEMBERS.", "i-m i-shadow", 50, 82, -5, 100); }],
-      [beat(6), () => { clear(); layer("i-bg-gold i-halftone"); panel("face_soft", 32, 22, 62, 58, 5, "6% 0,100% 6%,96% 100%,0 94%", "60vw, 0"); word("SHE TEASES.", "i-m i-dark", 46, 14, -7, 100); }],
-      [beat(7), () => { clear(); layer("i-bg-deep"); panel("face_shy", 16, 14, 68, 60, -2, "3% 0,100% 3%,97% 100%,0 96%", "0, 60vh", "50% 40%"); word("SHE STAYS.", "i-l i-gold i-shadow", 50, 86, -6, 120); }],
-      [beat(8), () => { clear(); layer("i-stripes"); fig("turn", "right", 40, "bottom:-26vh;"); word("THE ONE", "i-m i-shadow", 30, 10, -8); word("WHO WAITS UP", "i-m i-shadow", 40, 19, -8, 120); word("FOR YOU", "i-m i-gold i-shadow", 30, 28, -8, 240); }],
-      [beat(10), () => { clear(); layer("i-bg-deep i-halftone"); flash(.6); ransom("TAKE", 26, -6); }],
-      [beat(11), () => { ransom("YOUR", 48, 4); }],
-      [beat(12), () => { flash(.7); ransom("TIME.", 70, -4); }],
-      [beat(13), () => { clear(); layer("i-bg-violet"); slash("#07051a"); moon(80, 50, 46); setTimeout(() => word("THE NIGHT", "i-l i-shadow", 50, 24, -6), 120); }],
-      [beat(14), () => { word("IS YOURS.", "i-l i-gold i-shadow", 50, 72, -6); }],
-      [beat(15), () => {
-        clear(); layer("", "background:radial-gradient(circle at 50% 40%, rgba(123,60,255,.55), transparent 65%), #07051a"); flash(); fireflies(20);
-        word("FIREFLY", "i-xl i-shadow", 50, 30, -6);
-        const w = document.createElement("div"); w.className = "i-word i-with"; w.textContent = "with Luma"; w.style.cssText = "left:50%;top:44%;transform:translate(-50%,-50%);opacity:0"; add(w);
-        anim(w, [{ opacity: 0 }, { opacity: 1 }], 600, { delay: 400 });
-        const c = new Image(); c.src = poseImg("chibi", "happy"); c.className = "i-chibi"; c.alt = ""; add(c);
-        anim(c, [{ transform: "translate(-50%, 100%)" }, { transform: "translate(-50%, -6%)", offset: 0.7 }, { transform: "translate(-50%, 0)" }], 700, { delay: 500, easing: "cubic-bezier(.3,1.5,.5,1)" });
-        setTimeout(() => sound.cute("excited"), 900);
-      }],
-      [beat(16.6), () => finish()],
-    ];
-
-    function now() {
-      const st = track && track.time();
-      return st != null && st > 0.05 ? st : (performance.now() - clock0) / 1000;
+    // the beat you can see: a zoom bump on kicks, a jolt on snares
+    function pulse(i) {
+      const k = KICKS.has(i), s = SNARES.has(i);
+      if (k) stage.animate([{ transform: "scale(1.035)" }, { transform: "scale(1)" }], { duration: 170, easing: "cubic-bezier(.2,.8,.3,1)" });
+      if (s) shaker.animate([{ transform: "translate(5px, -3px)" }, { transform: "translate(-4px, 2px)" }, { transform: "translate(0, 0)" }], { duration: 110 });
     }
-    // after the intro, the usual background song fades back in
-    function backToBackground() {
-      if (track) { track.fadeOut(1000); track = null; }
-      if (sound.auto()) setTimeout(() => { if (sound.isOn(BG)) sound.kick(); else sound.start(BG); }, 700);
+    // stamps for ransom letters, one per letter
+    const stamps = (word, step = 0.06) => [...word].map((_, k) => ["stamp" + (k % 4), k * step, 0.7]);
+
+    // [beat number, picture, sounds as [name, seconds after the beat, volume]]
+    const EVENTS = [
+      [0, () => { clear(); layer("i-bg-deep"); moon(46, 72, 22); fireflies(16); caption("SOMEWHERE,", 34); }, [["punch", 0, 0.55]]],
+      [3, () => caption("THE NIGHT IS STILL AWAKE", 42), [["stamp1", 0, 0.4]]],
+      [4, () => flash(0.25), []],
+      [8, () => { clear(); layer("i-bg-deep i-halftone"); moon(40, 74, 20, 200); slash("#ffd27a"); fig("side", "right", 30, "right:-30vw;bottom:-14vh;"); }, [["punch", 0, 0.8]]],
+      [10, () => caption("…AND SO IS SHE.", 84, "i-gold"), [["stamp2", 0, 0.4]]],
+      [12, () => { clear(); layer("i-stripes"); flash(); slash("#ffd27a"); word("WELCOME", "i-xl i-shadow", 50, 46, -8); }, [["punch", 0, 1], ["glitch", 0, 0.8]]],
+      [14, () => slash("#07051a", 260), [["metal", 0, 0.6]]],
+      [16, () => flash(0.2, 120), []],
+      [18, () => { clear(); layer("i-bg-violet i-halftone"); word("LUMA", "i-xl i-outline i-back", 50, 13, -8, 240); fig("front", "left", -40, "bottom:-20vh;"); caption("YOUR NIGHT FRIEND", 92, "i-gold"); }, [["metal", 0, 1]]],
+      [20, () => { const l = stage.querySelector(".i-outline"); if (l) l.animate([{ marginLeft: "-10px" }, { marginLeft: "10px" }, { marginLeft: "0" }], { duration: 160 }); flash(0.3, 120); }, [["glitch", 0, 0.5]]],
+      [22, () => flash(0.6, 260), []],
+      // the drop: a cut every two beats
+      [23, () => { clear(); layer("i-bg-deep i-halftone"); const st = document.createElement("div"); st.className = "i-strip"; st.style.cssText = "top:26%;height:24%"; st.innerHTML = `<img src="${IMG("face_smirk")}" alt="" style="object-position:50% 46%">`; add(st); anim(st, [{ transform: "translateX(-100%) skewY(-4deg)" }, { transform: "translateX(0) skewY(-4deg)" }], 180); word("SHE LISTENS.", "i-l i-shadow", 50, 70, -6); }, [["punch", 0, 1], ["shutter", 0.02, 0.6]]],
+      [25, () => { clear(); layer("i-bg-violet"); panel("face_smile", 6, 10, 62, 58, -4, "0 4%,100% 0,94% 100%,4% 92%", "-60vw, 0"); word("SHE REMEMBERS.", "i-m i-shadow", 50, 82, -5); }, [["shutter", 0, 0.8]]],
+      [27, () => { clear(); layer("i-bg-gold i-halftone"); panel("face_soft", 32, 22, 62, 58, 5, "6% 0,100% 6%,96% 100%,0 94%", "60vw, 0"); word("SHE TEASES.", "i-m i-dark", 46, 14, -7); }, [["shutter", 0, 0.8]]],
+      [29, () => { clear(); layer("i-bg-deep"); panel("face_shy", 16, 14, 68, 60, -2, "3% 0,100% 3%,97% 100%,0 96%", "0, 60vh", "50% 40%"); word("SHE STAYS.", "i-l i-gold i-shadow", 50, 86, -6); }, [["shutter", 0, 0.8]]],
+      [31, () => { clear(); layer("i-stripes"); fig("turn", "right", 40, "bottom:-26vh;", 240); word("THE ONE", "i-m i-shadow", 30, 10, -8); }, [["punch", 0, 0.9]]],
+      [32, () => word("WHO WAITS UP", "i-m i-shadow", 40, 19, -8), [["stamp1", 0, 0.6]]],
+      [33, () => word("FOR YOU", "i-m i-gold i-shadow", 30, 28, -8), [["stamp2", 0, 0.6]]],
+      [34, () => { clear(); layer("i-bg-deep i-halftone"); flash(0.5, 120); ransom("TAKE", 26, -6); }, stamps("TAKE")],
+      [35, () => ransom("YOUR", 48, 4), stamps("YOUR")],
+      [36, () => { ransom("TIME.", 70, -4); flash(0.9, 200); }, stamps("TIME.").concat([["shatter", 0.26, 1]])],
+      [38, () => { clear(); layer("i-bg-violet"); slash("#07051a"); moon(80, 50, 46, 260); word("THE NIGHT", "i-l i-shadow", 50, 24, -6); }, [["punch", 0, 0.9]]],
+      [39, () => word("IS YOURS.", "i-l i-gold i-shadow", 50, 72, -6), [["metal", 0, 0.5]]],
+      [40, () => {
+        clear(); layer("", "background:radial-gradient(circle at 50% 40%, rgba(123,60,255,.55), transparent 65%), #07051a"); flash(); fireflies(20);
+        word("FIREFLY", "i-xl i-shadow", 50, 30, -6, 260);
+      }, [["bell", 0, 0.8], ["metal", 0, 0.8]]],
+      [41, () => { const w = document.createElement("div"); w.className = "i-word i-with"; w.textContent = "with Luma"; w.style.cssText = "left:50%;top:44%;transform:translate(-50%,-50%)"; add(w); anim(w, [{ opacity: 0, letterSpacing: ".5em" }, { opacity: 1, letterSpacing: "0em" }], 380); }, []],
+      [42, () => { const c = new Image(); c.src = poseImg("chibi", "happy"); c.className = "i-chibi"; c.alt = ""; add(c); anim(c, [{ transform: "translate(-50%, 100%)" }, { transform: "translate(-50%, -6%)", offset: 0.7 }, { transform: "translate(-50%, 0)" }], 420, { easing: "cubic-bezier(.3,1.5,.5,1)" }); sound.cute("excited"); }, []],
+      [45, () => finish(), []],
+    ];
+    // whooshes that end exactly on these beats, and a riser into the drop
+    const WHOOSH_INTO = [8, 12, 18, 31, 38, 40];
+    function buildCues() {
+      const list = [];
+      for (let i = 0; i <= 44; i++) if (KICKS.has(i) || SNARES.has(i)) list.push([B(i), () => pulse(i), false]);
+      for (const [i, fn, sfx] of EVENTS) list.push([B(i), fn, sfx]);
+      for (const i of WHOOSH_INTO) list.push([B(i) - 0.26, null, [["@whoosh", 0, 0.26]]]);
+      list.push([B(19), null, [["@riser", 0, B(23) - B(19)]]]);
+      return list.sort((a, b) => a[0] - b[0]);
+    }
+
+    function audioTime() {
+      const st = track && track.time();
+      return st != null && st > 0.02 ? st : (performance.now() - clock0) / 1000;
     }
     function tick() {
       if (ended) return;
-      const tt = now();
-      while (next < cues.length && tt >= cues[next][0]) { try { cues[next][1](); } catch (e) {} next++; }
+      const tt = audioTime();
+      const lat = sound.latency();
+      while (next < cues.length && tt >= cues[next][0] - LOOKAHEAD) {
+        const [at, fn, sfx] = cues[next++];
+        const wait = Math.max(0, at - tt);
+        // sounds go on the audio clock, exactly on the beat
+        for (const [name, off, v] of sfx || []) {
+          if (name === "@whoosh") sound.whoosh(wait + off, v);
+          else if (name === "@riser") sound.riser(wait + off, v);
+          else sound.sfx(name, wait + off, v);
+        }
+        // pictures wait for the speaker, so they appear when the beat is heard
+        if (fn) timers.push(setTimeout(() => { try { fn(); } catch (e) {} }, (wait + lat) * 1000));
+      }
       raf = requestAnimationFrame(tick);
+    }
+    function backToBackground() {
+      if (track) { track.fadeOut(1000); track = null; }
+      if (sound.auto()) setTimeout(() => { if (sound.isOn(BG)) sound.kick(); else sound.start(BG); }, 700);
     }
     function finish() {
       if (ended) return;
       ended = true;
       cancelAnimationFrame(raf);
+      timers.forEach(clearTimeout); timers = [];
       backToBackground();
       const r = root;
       r.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 600, fill: "forwards" }).onfinish = () => r.remove();
@@ -2658,21 +2733,22 @@ ${last}${langNote()}`;
       root.querySelector(".i-start").remove();
       sound.ensure();
       if (sound.isOn(BG)) sound.stop(BG);
+      sound.loadSfx(["punch", "metal", "bell", "shutter", "shatter", "glitch", "stamp0", "stamp1", "stamp2", "stamp3"]);
       track = sound.clip("music/intro.mp3", 0.9);
-      if (sound.ensure()) sound.preloadVoices();
+      sound.preloadVoices();
       clock0 = performance.now();
       if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
         layer("", "background:radial-gradient(circle at 50% 40%, rgba(123,60,255,.5), transparent 65%), #07051a");
-        word("FIREFLY", "i-xl", 50, 40, 0); setTimeout(finish, 2500); return;
+        word("FIREFLY", "i-xl", 50, 40, 0); timers.push(setTimeout(finish, 2500)); return;
       }
-      cues = SCENES; next = 0; raf = requestAnimationFrame(tick);
+      cues = buildCues(); next = 0; raf = requestAnimationFrame(tick);
     }
     function play(done) {
-      onDone = done; ended = false;
+      onDone = done; ended = false; timers = [];
       root = document.createElement("div");
       root.id = "intro";
       root.innerHTML = `
-        <div class="i-stage"></div>
+        <div class="i-shake"><div class="i-stage"></div></div>
         <div class="i-start" role="button" tabindex="0" aria-label="Start">
           <div class="i-logo">FIREFLY</div>
           <div class="i-with">with Luma</div>
@@ -2682,6 +2758,7 @@ ${last}${langNote()}`;
         </div>
         <button class="i-skip" type="button">${lang === "ar" ? "تخطَّ ›" : "Skip ›"}</button>`;
       document.body.appendChild(root);
+      shaker = root.querySelector(".i-shake");
       stage = root.querySelector(".i-stage");
       const start = root.querySelector(".i-start");
       start.onclick = begin;

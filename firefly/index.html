@@ -973,9 +973,7 @@
   const installed = () => matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
   if (ownSite) {
     const addHead = (tag, attrs) => { const e = document.createElement(tag); Object.assign(e, attrs); document.head.appendChild(e); };
-    addHead("link", { rel: "manifest", href: "/manifest.webmanifest" });
-    addHead("link", { rel: "apple-touch-icon", href: "/icons/apple-touch-icon.png" });
-    addHead("meta", { name: "theme-color", content: "#0e0b26" });
+    // (the manifest, icon and viewport are in the page head written by site/build.sh)
     addHead("meta", { name: "apple-mobile-web-app-capable", content: "yes" });
     addHead("meta", { name: "apple-mobile-web-app-title", content: "Firefly" });
     if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(() => {});

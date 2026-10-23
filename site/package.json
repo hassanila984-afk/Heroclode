@@ -3,7 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "deploy": "wrangler pages deploy ../firefly --project-name firefly",
+    "build": "sh build.sh dist",
+    "deploy": "sh build.sh dist && wrangler pages deploy dist --project-name firefly",
     "dev": "wrangler pages dev ../firefly"
   },
   "dependencies": {

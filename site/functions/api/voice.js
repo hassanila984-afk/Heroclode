@@ -1,7 +1,7 @@
-import { configured, sessionFrom, sameOrigin, json } from "../../lib/auth.js";
+import { configured, sessionFrom, sameOrigin, json, voiceKey } from "../../lib/auth.js";
 
 // Luma's voice. Signed-in devices only, short lines only. Returns audio.
-// Orpheus voices (human, with <giggle> <sigh> <laugh>...) when a DeepInfra key is set as the DEEPINFRA_KEY secret;
+// Orpheus voices (human, with <giggle> <sigh> <laugh>...) when a DeepInfra key is saved (setup page or DEEPINFRA_KEY);
 // otherwise Cloudflare Workers AI (Deepgram Aura 2), with the sound tags taken out.
 const ORPHEUS = ["tara", "leah", "jess", "mia", "zoe"];
 const VOICES = ["luna", "aurora", "iris", "thalia", "callista", "pandora", "selene", "andromeda", "amalthea", "asteria", "athena", "cora", "delia", "harmonia", "helena", "hera", "juno", "ophelia", "phoebe", "theia", "vesta"];
@@ -14,11 +14,12 @@ export async function onRequestPost({ request, env }) {
   try { body = await request.json(); } catch (e) {}
   const text = String(body.text || "").trim().slice(0, 600);
   if (!text) return json({ error: "bad_request" }, 400);
-  if (ORPHEUS.includes(body.voice) && env.DEEPINFRA_KEY) {
+  const vkey = ORPHEUS.includes(body.voice) ? await voiceKey(env) : null;
+  if (vkey) {
     try {
       const r = await fetch("https://api.deepinfra.com/v1/openai/audio/speech", {
         method: "POST",
-        headers: { authorization: "Bearer " + env.DEEPINFRA_KEY, "content-type": "application/json" },
+        headers: { authorization: "Bearer " + vkey, "content-type": "application/json" },
         body: JSON.stringify({ model: "canopylabs/orpheus-3b-0.1-ft", input: text, voice: body.voice, response_format: "mp3" }),
       });
       if (r.ok) return new Response(r.body, { headers: { "content-type": r.headers.get("content-type") || "audio/mpeg", "cache-control": "no-store" } });

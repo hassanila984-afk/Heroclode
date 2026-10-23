@@ -31,15 +31,22 @@ async function vaultKey(env) {
   const raw = await crypto.subtle.digest("SHA-256", enc.encode("firefly-vault\u0000" + env.SESSION_SECRET));
   return crypto.subtle.importKey("raw", raw, "AES-GCM", false, ["encrypt", "decrypt"]);
 }
-export async function saveApiKey(env, apiKey) {
+// keys kept encrypted in KV: "anthropic" (Claude) and "deepinfra" (Luma's voice)
+export async function saveSecret(env, name, value) {
   const iv = crypto.getRandomValues(new Uint8Array(12));
-  const ct = new Uint8Array(await crypto.subtle.encrypt({ name: "AES-GCM", iv }, await vaultKey(env), enc.encode(apiKey)));
+  const ct = new Uint8Array(await crypto.subtle.encrypt({ name: "AES-GCM", iv }, await vaultKey(env), enc.encode(value)));
   const all = new Uint8Array(iv.length + ct.length); all.set(iv); all.set(ct, iv.length);
-  await env.FIREFLY_KV.put("vault:anthropic", btoa(String.fromCharCode(...all)));
+  await env.FIREFLY_KV.put("vault:" + name, btoa(String.fromCharCode(...all)));
 }
+export const saveApiKey = (env, key) => saveSecret(env, "anthropic", key);
 export async function apiKey(env) {
-  if (env.ANTHROPIC_API_KEY) return env.ANTHROPIC_API_KEY;
-  const stored = env.FIREFLY_KV && (await env.FIREFLY_KV.get("vault:anthropic"));
+  return env.ANTHROPIC_API_KEY || secret(env, "anthropic");
+}
+export async function voiceKey(env) {
+  return env.DEEPINFRA_KEY || secret(env, "deepinfra");
+}
+async function secret(env, name) {
+  const stored = env.FIREFLY_KV && (await env.FIREFLY_KV.get("vault:" + name));
   if (!stored) return null;
   try {
     const all = Uint8Array.from(atob(stored), (c) => c.charCodeAt(0));

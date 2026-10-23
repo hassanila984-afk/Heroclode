@@ -2278,9 +2278,9 @@ ${last}${langNote()}`;
     };
   }
   // her voice (picked on the You page): an Aura voice name, optionally pitched up a little
-  const VOICES = [["luna", false], ["luna", true], ["aurora", false], ["aurora", true], ["iris", false], ["thalia", false], ["callista", false], ["pandora", false]];
+  const VOICES = [["tara", false], ["luna", false], ["luna", true], ["aurora", false], ["aurora", true], ["iris", false], ["thalia", false], ["callista", false], ["pandora", false]];
   const ORPHEUS = ["tara", "leah", "jess", "mia", "zoe"];   // the human voices with giggles and sighs (need the DeepInfra key on the site)
-  function voicePick() { try { return JSON.parse(localStorage.getItem("firefly-voice-pick")) || { name: "luna", cute: false }; } catch (e) { return { name: "luna", cute: false }; } }
+  function voicePick() { try { return JSON.parse(localStorage.getItem("firefly-voice-pick")) || { name: "tara", cute: false }; } catch (e) { return { name: "tara", cute: false }; } }
   // a message typed in the bubble while Firefly isn't on the chat: open it and send
   let pendingSend = null;
   window.__nativeBubbleSend = (txt) => { pendingSend = txt; show("talk-free"); };

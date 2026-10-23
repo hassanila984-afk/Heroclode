@@ -30,7 +30,9 @@
     <label for="code">رمز الدخول</label>
     <input id="code" autocomplete="off" required placeholder="luma-…">
     <label for="key">مفتاح Anthropic (من console.anthropic.com، يبدأ بـ sk-ant-)</label>
-    <input id="key" type="password" autocomplete="off" required placeholder="sk-ant-…">
+    <input id="key" type="password" autocomplete="off" placeholder="sk-ant-…">
+    <label for="vkey">مفتاح DeepInfra لصوت لُمى (اختياري، من deepinfra.com ← API Keys)</label>
+    <input id="vkey" type="password" autocomplete="off" placeholder="…">
     <button id="go">احفظ</button>
   </form>
   <div id="msg"></div>
@@ -42,18 +44,19 @@
     wrong_code: "رمز الدخول غير صحيح.",
     not_an_api_key: "هذا مو مفتاح API. انسخه كامل من console.anthropic.com ← API Keys.",
     key_rejected: "Anthropic رفض هذا المفتاح. تأكد إنك نسخته كامل.",
+    voice_key_rejected: "DeepInfra رفض مفتاح الصوت. تأكد إنك نسخته كامل وإن عندك رصيد.",
     check_failed: "ما گدرت أتأكد من المفتاح هسه، جرّب بعد شوية.",
     not_configured: "الخادم بعده مو جاهز.",
   };
-  fetch("/api/setup").then((r) => r.json()).then((d) => { if (d.ready) say("لُمى جاهزة من قبل ✨ تقدر تغيّر المفتاح من هنا إذا تريد.", "good"); }).catch(() => {});
+  fetch("/api/setup").then((r) => r.json()).then((d) => { if (d.ready) say("لُمى جاهزة من قبل ✨" + (d.voice ? " وصوتها شغّال 🎀" : " ضيف مفتاح الصوت إذا تريد.") , "good"); }).catch(() => {});
   document.getElementById("f").onsubmit = async (e) => {
     e.preventDefault();
     go.disabled = true; say("لحظة، أتأكد من المفتاح…");
     try {
       const r = await fetch("/api/setup", { method: "POST", headers: { "content-type": "application/json" },
-        body: JSON.stringify({ code: document.getElementById("code").value.trim(), key: document.getElementById("key").value.trim() }) });
+        body: JSON.stringify({ code: document.getElementById("code").value.trim(), key: document.getElementById("key").value.trim(), voiceKey: document.getElementById("vkey").value.trim() }) });
       const d = await r.json().catch(() => ({}));
-      if (d.ok) { document.getElementById("key").value = ""; msg.className = "good"; msg.innerHTML = 'تم! لُمى جاهزة ✨ <a href="./">افتح Firefly</a>'; }
+      if (d.ok) { document.getElementById("key").value = ""; document.getElementById("vkey").value = ""; msg.className = "good"; msg.innerHTML = 'تم! لُمى جاهزة ✨ <a href="./">افتح Firefly</a>'; }
       else say(ERR[d.error] || "صار خطأ، جرّب مرة ثانية.", "bad");
     } catch (err) { say("ما وصلت للخادم، تأكد من النت.", "bad"); }
     go.disabled = false;

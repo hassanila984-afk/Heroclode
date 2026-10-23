@@ -21,7 +21,7 @@ export async function onRequestPost({ request, env }) {
   const key = String(body.key || "").trim();
   if (!/^sk-ant-(api\d\d|usr)-[\w-]{20,400}$/.test(key)) return json({ ok: false, error: "not_an_api_key" }, 400);
   // make sure the key really works before saving it
-  try { await new Anthropic({ apiKey: key }).models.list({ limit: 1 }); }
+  try { await new Anthropic({ apiKey: key, defaultHeaders: { "x-api-key": key } }).models.list({ limit: 1 }); }
   catch (e) { return json({ ok: false, error: e instanceof Anthropic.AuthenticationError ? "key_rejected" : "check_failed" }, 400); }
   await saveApiKey(env, key);
   return json({ ok: true });

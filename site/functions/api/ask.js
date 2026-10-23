@@ -40,7 +40,7 @@ export async function onRequestPost({ request, env }) {
   images.forEach((data) => lastTurn.unshift({ type: "image", source: { type: "base64", media_type: "image/jpeg", data } }));
 
   const model = MODELS.includes(env.MODEL) ? env.MODEL : "claude-haiku-5-5";
-  const client = new Anthropic({ apiKey: key });
+  const client = new Anthropic({ apiKey: key, defaultHeaders: { "x-api-key": key } });
   const params = { model, max_tokens: 1500, output_config: { effort: "low" }, messages };
   // Opus and Sonnet can hand a refused reply to another model instead of failing
   const stream = model === "claude-haiku-5-5"
@@ -62,7 +62,7 @@ export async function onRequestPost({ request, env }) {
         : e instanceof Anthropic.AuthenticationError ? "not_configured"
         : e instanceof Anthropic.BadRequestError ? "bad_request"
         : "upstream";
-      await send({ error: code, debug: String(e && e.status) + " " + String(e && e.message).slice(0, 300) });
+      await send({ error: code });
     } finally { await w.close(); }
   })();
   return new Response(out.readable, { headers: { "content-type": "text/event-stream", "cache-control": "no-store" } });

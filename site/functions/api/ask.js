@@ -37,7 +37,7 @@ export async function onRequestPost({ request, env }) {
   const lastTurn = messages[messages.length - 1].content;
   images.forEach((data) => lastTurn.unshift({ type: "image", source: { type: "base64", media_type: "image/jpeg", data } }));
 
-  const model = MODELS.includes(env.MODEL) ? env.MODEL : "claude-opus-5-5";
+  const model = MODELS.includes(env.MODEL) ? env.MODEL : "claude-haiku-5-5";
   const client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
   const params = { model, max_tokens: 1500, output_config: { effort: "low" }, messages };
   // Opus and Sonnet can hand a refused reply to another model instead of failing

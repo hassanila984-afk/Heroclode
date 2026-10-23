@@ -13,6 +13,7 @@
     <!-- to find the phone's speech recognizer (package visibility, Android 11+) -->
     <queries>
         <intent><action android:name="android.speech.RecognitionService" /></intent>
+        <intent><action android:name="android.intent.action.TTS_SERVICE" /></intent>
     </queries>
 
     <application

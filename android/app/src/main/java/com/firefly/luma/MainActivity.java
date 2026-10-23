@@ -10,6 +10,9 @@ import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.speech.SpeechRecognizer;
+import android.speech.tts.TextToSpeech;
+import android.speech.tts.UtteranceProgressListener;
+import java.util.Locale;
 import android.webkit.CookieManager;
 import android.webkit.JavascriptInterface;
 import android.webkit.PermissionRequest;
@@ -35,6 +38,9 @@ public class MainActivity extends Activity {
 
     WebView web;
     Speech speech;
+    /** Luma's voice on a call. */
+    TextToSpeech voice;
+    boolean voiceReady;
     private ValueCallback<Uri[]> fileCallback;
     private PermissionRequest pendingWebMic;
     private String pendingListenLang;
@@ -44,6 +50,12 @@ public class MainActivity extends Activity {
         super.onCreate(state);
         current = this;
         speech = new Speech(this);
+        voice = new TextToSpeech(this, status -> voiceReady = status == TextToSpeech.SUCCESS);
+        voice.setOnUtteranceProgressListener(new UtteranceProgressListener() {
+            @Override public void onStart(String id) { }
+            @Override public void onDone(String id) { js("window.__nativeSpoken && __nativeSpoken()"); }
+            @Override public void onError(String id) { js("window.__nativeSpoken && __nativeSpoken()"); }
+        });
 
         web = new WebView(this);
         web.setBackgroundColor(0xFF0E0B26);
@@ -119,6 +131,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onDestroy() {
         speech.destroy();
+        if (voice != null) voice.shutdown();
         if (current == this) current = null;
         web.destroy();
         super.onDestroy();
@@ -215,5 +228,17 @@ public class MainActivity extends Activity {
             });
         }
         @JavascriptInterface public void stopListen() { runOnUiThread(() -> speech.stop()); }
+
+        // ----- her voice -----
+        @JavascriptInterface public void speak(String text, String lang) {
+            runOnUiThread(() -> {
+                if (!voiceReady) { js("window.__nativeSpoken && __nativeSpoken()"); return; }
+                voice.setLanguage(Locale.forLanguageTag(lang == null || lang.isEmpty() ? "en-US" : lang));
+                voice.setPitch(1.3f);
+                voice.setSpeechRate(1.02f);
+                voice.speak(text, TextToSpeech.QUEUE_FLUSH, null, "luma");
+            });
+        }
+        @JavascriptInterface public void stopSpeaking() { runOnUiThread(() -> { if (voice != null) voice.stop(); }); }
     }
 }

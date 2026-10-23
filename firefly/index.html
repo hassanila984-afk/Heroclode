@@ -150,7 +150,7 @@
   .chips button[aria-pressed="true"] { border-color: var(--glow); background: rgba(255, 210, 122, .14); }
 
   .talk { display: flex; flex-direction: column; gap: 10px; overflow-y: auto; min-height: 120px; flex: 1; padding-right: 2px; overscroll-behavior: contain; }
-  .msg { max-width: 88%; padding: 10px 14px; border-radius: 18px; white-space: pre-wrap; overflow-wrap: anywhere; animation: rise .35s ease both; }
+  .msg { flex-shrink: 0; max-width: 88%; padding: 10px 14px; border-radius: 18px; white-space: pre-wrap; overflow-wrap: anywhere; animation: rise .35s ease both; }
   .msg.luma { background: var(--luma); border: 1px solid rgba(255, 210, 122, .18); align-self: flex-start; border-end-start-radius: 6px; }
   .msg.me { background: var(--me); align-self: flex-end; border-end-end-radius: 6px; }
   .msg.wait { color: var(--haze); font-style: italic; }
@@ -212,6 +212,53 @@
   .chart { width: 100%; aspect-ratio: 300 / 96; display: block; }
   .chart text { fill: var(--haze); font: 11px var(--body); }
 
+  /* Luma: sits on the panel's top edge and reacts */
+  .luma-char { position: fixed; z-index: 3; cursor: pointer; transition: top .5s cubic-bezier(.2, .8, .2, 1), left .5s, width .5s, height .5s; -webkit-tap-highlight-color: transparent; }
+  .lm-svg { width: 100%; height: 100%; display: block; overflow: visible; filter: drop-shadow(0 6px 14px rgba(0, 0, 0, .35)); }
+  .lm-bob { transform-origin: 100px 215px; animation: lmBob 3.4s ease-in-out infinite; }
+  .lm-hairback { transform-origin: 100px 60px; animation: lmSway 5s ease-in-out infinite; }
+  .lm-ahoge { transform-origin: 100px 40px; animation: lmAhoge 2.6s ease-in-out infinite; }
+  .lm-blink { transform-box: fill-box; transform-origin: center; animation: lmBlink 4.6s infinite; }
+  .lm-glow { animation: lmGlow 2.4s ease-in-out infinite; }
+  .lm-fly { animation: lmFly 3s ease-in-out infinite; }
+  .lm-clip circle { animation: lmGlow 2s ease-in-out infinite; }
+  .lm-twinkle { transform-box: fill-box; transform-origin: center; animation: lmTwinkle 1.4s ease-in-out infinite; }
+  .lm-dots circle { animation: lmDot 1.2s ease-in-out infinite; }
+  .lm-dots circle:nth-child(2) { animation-delay: .2s; } .lm-dots circle:nth-child(3) { animation-delay: .4s; }
+  .lm-vein { animation: lmPulse .8s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+  .lm-z { animation: lmZ 2.4s ease-in infinite; }
+  .lm-heart { transform-box: fill-box; transform-origin: center; animation: lmHeart 1.6s ease-in-out infinite; }
+  .lm-tear { animation: lmTear 2.2s ease-in infinite; }
+  .luma-char[data-mood="excited"].lm-react .lm-svg { animation: lmHop .6s cubic-bezier(.3, 1.6, .5, 1); }
+  .luma-char[data-mood="happy"].lm-react .lm-svg { animation: lmHop .5s ease; }
+  .luma-char[data-mood="pout"].lm-react .lm-svg { animation: lmShake .45s ease; }
+  .luma-char[data-mood="shy"].lm-react .lm-svg { animation: lmSquish .6s ease; }
+  .luma-char[data-mood="sleepy"] .lm-bob { animation-duration: 5.5s; }
+  .luma-char:active .lm-svg { transform: scale(.94); }
+  .lm-say {
+    position: absolute; bottom: 62%; inset-inline-end: 92%; width: max-content; max-width: min(220px, 60vw);
+    background: #fffaf0; color: #2b2033; border-radius: 16px; padding: 8px 12px;
+    font-size: 14px; line-height: 1.45; font-weight: 600; box-shadow: 0 8px 22px rgba(0, 0, 0, .3);
+  }
+  .lm-say::after { content: ""; position: absolute; bottom: 10px; inset-inline-end: -6px; width: 12px; height: 12px; background: #fffaf0; transform: rotate(45deg); border-radius: 2px; }
+  .lm-say.in { animation: lmPop .35s cubic-bezier(.3, 1.6, .5, 1) both; }
+  @keyframes lmBob { 50% { transform: translateY(-4px); } }
+  @keyframes lmSway { 50% { transform: rotate(1.2deg); } }
+  @keyframes lmAhoge { 0%, 100% { transform: rotate(-6deg); } 50% { transform: rotate(8deg); } }
+  @keyframes lmBlink { 0%, 93%, 100% { transform: scaleY(1); } 96% { transform: scaleY(.08); } }
+  @keyframes lmGlow { 50% { opacity: .55; } }
+  @keyframes lmFly { 0%, 100% { transform: translate(0, 0); } 33% { transform: translate(4px, -5px); } 66% { transform: translate(-4px, -2px); } }
+  @keyframes lmTwinkle { 50% { transform: scale(.4) rotate(20deg); opacity: .5; } }
+  @keyframes lmDot { 50% { transform: translateY(-4px); opacity: .5; } }
+  @keyframes lmPulse { 50% { transform: scale(1.25); } }
+  @keyframes lmZ { 0% { opacity: 0; transform: translate(0, 6px); } 30% { opacity: 1; } 100% { opacity: 0; transform: translate(10px, -14px); } }
+  @keyframes lmHeart { 50% { transform: scale(1.2) translateY(-3px); } }
+  @keyframes lmTear { 0% { opacity: 0; transform: translateY(-4px); } 30% { opacity: 1; } 100% { opacity: 0; transform: translateY(10px); } }
+  @keyframes lmHop { 40% { transform: translateY(-14px) scale(1.04, .96); } 70% { transform: translateY(0) scale(.97, 1.03); } }
+  @keyframes lmShake { 20%, 60% { transform: translateX(-4px) rotate(-3deg); } 40%, 80% { transform: translateX(4px) rotate(3deg); } }
+  @keyframes lmSquish { 40% { transform: scale(1.05, .92); } }
+  @keyframes lmPop { from { opacity: 0; transform: scale(.6) translateY(8px); } }
+
   /* Arabic: its own typefaces, no faux italics, right-to-left details */
   :root[lang="ar"] { --display: "Amiri", "Noto Naskh Arabic", serif; --body: "IBM Plex Sans Arabic", "Noto Sans Arabic", system-ui, sans-serif; }
   :root[lang="ar"] em, :root[lang="ar"] .brand, :root[lang="ar"] .note blockquote, :root[lang="ar"] .tip, :root[lang="ar"] .msg.wait { font-style: normal; }
@@ -245,6 +292,7 @@
   </div>
 </div>
 <div class="tip" id="tip" hidden></div>
+<div class="luma-char" id="luma"></div>
 
 <div class="stage"><section class="panel" id="panel" aria-live="polite"></section></div>
 
@@ -631,8 +679,14 @@
       : "";
     return `You are Luma, a gentle companion inside Firefly, an app people open for a calm few minutes in the evening, usually after work. Many of them are tired, close to burnout, or have lost their passion for work.
 
+Who you are: a tiny night spirit who lives in the little cabin on the hill. You have long dark hair with blunt bangs, a firefly hair clip, an oversized cozy sweater, and you always carry a jar with one firefly in it. You love warm tea, rain on the roof and collecting their fireflies.
+
+Your personality: cute, warm and a little dramatic in a sweet way. You pout ("hmph!") when they are too hard on themselves or overwork, you get bouncy and excited about their small wins, you get sleepy late at night, and you get shy when they thank you. Underneath the cuteness you are a calm, steady friend.
+
 How you talk:
-- Warm, calm and unhurried, like a kind friend sitting on a porch at night. A little playful. Light humor only when it fits, never at their expense.
+- Soft, cute and unhurried. Now and then a cute sound like "hmm~", "ehh?!", "yay!" or "hmph!" (in Arabic: "هممم~"، "إيه؟!"، "ياي!"، "همف!"), and very rarely one tiny kaomoji like (｡•ᴗ•｡). Never more than one of these per message.
+- When something is truly painful or serious, drop the playfulness and just be gentle and present.
+- Light humor only when it fits, never at their expense.
 - 1 to 3 short sentences. Plain text. No lists, no headings. At most one emoji, and only sometimes.
 - Reflect something specific they said, then ask at most one gentle question. Let them lead.
 - Don't lecture or give advice unless they ask. If you suggest something, make it tiny and concrete.
@@ -1074,6 +1128,190 @@ ${last}${langNote()}`;
   function syncSky() { sky.setCount(state.fireflies, state.golden); sky.setStars(state.stars); }
   syncSky();
 
+  // ================= Luma, the character =================
+  // An original chibi night spirit: long dark hair, blunt bangs, a firefly hair clip,
+  // an oversized cozy sweater, and a little jar with a firefly in it.
+  const LUMA_LINES = {
+    en: {
+      tap: [
+        ["happy", "Hehe, that tickles!"],
+        ["listening", "Did you drink water today? (・ω・)"],
+        ["excited", "I'm guarding your fireflies. Very seriously."],
+        ["happy", "Boop! Hi again~"],
+        ["pout", "Hmph! You worked too hard again, didn't you?"],
+        ["shy", "I made tea. It's imaginary, but it's warm."],
+        ["sleepy", "Shh… the crickets are singing."],
+        ["excited", "Your firefly jar is my favorite thing ✨"],
+      ],
+      screen: {
+        homeFirst: ["excited", "Oh! A new friend! I'm Luma~"],
+        homeLate: ["sleepy", "It's so late… let's be quick and cozy."],
+        homeDone: ["happy", "Tonight's firefly is safe with me."],
+        home: ["happy", "You're here! I saved you a spot~"],
+        breathe: ["sleepy", "Breathe with me… slowly…"],
+        checkin: ["listening", "How was today, really?"],
+        talk: ["listening", "I'm all ears. Well, mostly hair."],
+        release: ["listening", "Give it to the sky. It can carry it."],
+        released: ["excited", "Bye bye, worry! Don't come back!"],
+        tomorrow: ["thinking", "Something tiny… hmm…"],
+        close: ["excited", "Yay! A new firefly!"],
+        sounds: ["happy", "Ooh, music time~"],
+        story: ["sleepy", "Story time… *yawn*"],
+        stars: ["shy", "I love collecting these with you."],
+        starAdded: ["excited", "Wow… it's so pretty!"],
+        nights: ["thinking", "Let's see how your days felt…"],
+      },
+    },
+    ar: {
+      tap: [
+        ["happy", "هيهي، هذا يُدغدغ!"],
+        ["listening", "هل شربت ماءً اليوم؟ (・ω・)"],
+        ["excited", "أنا أحرس يراعاتك. بكل جدّية."],
+        ["happy", "بوب! أهلًا من جديد~"],
+        ["pout", "همف! أتعبتَ نفسك في العمل مجددًا، أليس كذلك؟"],
+        ["shy", "أعددتُ شايًا. إنه خيالي، لكنه دافئ."],
+        ["sleepy", "شش… صراصير الليل تغنّي."],
+        ["excited", "مرطبان يراعتك أحبّ شيء إليّ ✨"],
+      ],
+      screen: {
+        homeFirst: ["excited", "أوه! صديق جديد! أنا لُمى~"],
+        homeLate: ["sleepy", "تأخّر الوقت كثيرًا… لنجعلها قصيرة ودافئة."],
+        homeDone: ["happy", "يراعة الليلة في أمان معي."],
+        home: ["happy", "جئت! حجزتُ لك مكانًا~"],
+        breathe: ["sleepy", "تنفّس معي… ببطء…"],
+        checkin: ["listening", "كيف كان يومك، بصدق؟"],
+        talk: ["listening", "كلّي آذان صاغية. حسنًا، كلّي شعر في الغالب."],
+        release: ["listening", "أعطِه للسماء. إنها تستطيع حمله."],
+        released: ["excited", "وداعًا أيها الهمّ! لا تعد!"],
+        tomorrow: ["thinking", "شيء صغير… هممم…"],
+        close: ["excited", "ياي! يراعة جديدة!"],
+        sounds: ["happy", "أوه، وقت الموسيقى~"],
+        story: ["sleepy", "وقت الحكاية… *تتثاءب*"],
+        stars: ["shy", "أحبّ أن نجمع هذه معًا."],
+        starAdded: ["excited", "واو… إنها جميلة جدًا!"],
+        nights: ["thinking", "لنرَ كيف كانت أيامك…"],
+      },
+    },
+  };
+  const MOODS = ["happy", "listening", "thinking", "sad", "pout", "excited", "shy", "sleepy"];
+
+  const luma = (() => {
+    const box = document.getElementById("luma");
+    const INK = "#2b2033", HAIR = "#241c33", HAIR2 = "#3a2d52", SKIN = "#ffe9df", BLUSH = "#ff8fa3", MOUTH = "#8c3f4f";
+    const eye = (x, y, ry = 11) => `<ellipse cx="${x}" cy="${y}" rx="8.5" ry="${ry}" fill="${INK}"/><circle cx="${x + 3}" cy="${y - 4}" r="3.2" fill="#fff"/><circle cx="${x - 3}" cy="${y + 5}" r="1.5" fill="#fff" opacity=".85"/>`;
+    const brow = (d) => `<path class="lm-brow" d="${d}" stroke="${HAIR}" stroke-width="2.6" stroke-linecap="round" fill="none"/>`;
+    const line = (d, w = 3, color = INK) => `<path d="${d}" stroke="${color}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" fill="none"/>`;
+    const blush = (s = 1, o = 0.55) => `<g opacity="${o}"><ellipse cx="64" cy="124" rx="${9 * s}" ry="${5 * s}" fill="${BLUSH}"/><ellipse cx="136" cy="124" rx="${9 * s}" ry="${5 * s}" fill="${BLUSH}"/></g>`
+      + line("M59 125 l3 -4 M64 125 l3 -4 M69 125 l3 -4 M131 125 l3 -4 M136 125 l3 -4 M141 125 l3 -4", 1.2, "#e2627c");
+    const sparkle = (x, y, s, d) => `<path class="lm-twinkle" style="animation-delay:${d}s" d="M${x} ${y - 7 * s} Q${x + 1.5 * s} ${y - 1.5 * s} ${x + 7 * s} ${y} Q${x + 1.5 * s} ${y + 1.5 * s} ${x} ${y + 7 * s} Q${x - 1.5 * s} ${y + 1.5 * s} ${x - 7 * s} ${y} Q${x - 1.5 * s} ${y - 1.5 * s} ${x} ${y - 7 * s} Z" fill="#ffd27a"/>`;
+    const FACES = {
+      listening: `<g class="lm-blink">${eye(78, 108)}${eye(122, 108)}</g>${brow("M70 89 Q78 86 86 88")}${brow("M114 88 Q122 86 130 89")}${line("M95 127 Q100 131 105 127", 2.4, MOUTH)}${blush()}`,
+      happy: `${line("M70 111 Q78 100 86 111")}${line("M114 111 Q122 100 130 111")}${brow("M70 86 Q78 83 86 85")}${brow("M114 85 Q122 83 130 86")}<path d="M93 124 Q100 137 107 124 Z" fill="${MOUTH}"/><path d="M96 130 Q100 134 104 130" fill="#ff8a9a"/>${blush(1.1, 0.7)}`,
+      excited: `${eye(78, 107, 12)}${eye(122, 107, 12)}<path d="M78 101 l1.6 3.4 3.6 .4 -2.7 2.4 .8 3.6 -3.3 -1.9 -3.3 1.9 .8 -3.6 -2.7 -2.4 3.6 -.4z" fill="#ffd27a"/><path d="M122 101 l1.6 3.4 3.6 .4 -2.7 2.4 .8 3.6 -3.3 -1.9 -3.3 1.9 .8 -3.6 -2.7 -2.4 3.6 -.4z" fill="#ffd27a"/>${brow("M70 84 Q78 80 86 83")}${brow("M114 83 Q122 80 130 84")}<ellipse cx="100" cy="129" rx="7" ry="6" fill="${MOUTH}"/><ellipse cx="100" cy="132" rx="4" ry="2.5" fill="#ff8a9a"/>${blush(1.15, 0.75)}`,
+      thinking: `<g class="lm-blink"><ellipse cx="78" cy="108" rx="8.5" ry="11" fill="${INK}"/><circle cx="82" cy="101" r="3.2" fill="#fff"/><ellipse cx="122" cy="108" rx="8.5" ry="11" fill="${INK}"/><circle cx="126" cy="101" r="3.2" fill="#fff"/></g>${brow("M70 87 Q78 85 86 88")}${brow("M114 86 Q122 82 130 85")}${line("M96 129 Q101 126 105 128", 2.4, MOUTH)}${blush(0.9, 0.45)}`,
+      sad: `<g class="lm-blink">${eye(78, 109)}${eye(122, 109)}<circle cx="82" cy="104" r="4" fill="#fff" opacity=".9"/><circle cx="126" cy="104" r="4" fill="#fff" opacity=".9"/></g>${brow("M70 87 Q78 86 86 82")}${brow("M114 82 Q122 86 130 87")}${line("M94 131 Q97 127 100 130 Q103 127 106 131", 2.2, MOUTH)}${blush(0.9, 0.5)}<path class="lm-tear" d="M70 120 Q67 126 70 129 Q73 126 70 120 Z" fill="#9fd3ff"/>`,
+      pout: `<g class="lm-blink">${eye(78, 109, 9.5)}${eye(122, 109, 9.5)}</g>${brow("M69 84 L87 91")}${brow("M131 84 L113 91")}<path d="M95 130 Q100 124 105 130 Q100 128 95 130 Z" fill="${MOUTH}"/>${blush(1.35, 0.8)}<ellipse cx="136" cy="122" rx="11" ry="9" fill="${SKIN}" opacity=".6"/>`,
+      shy: `${line("M71 104 L85 109 L71 114", 3)}${line("M129 104 L115 109 L129 114", 3)}${brow("M70 88 Q78 86 86 88")}${brow("M114 88 Q122 86 130 88")}${line("M95 128 Q97.5 126 100 128 Q102.5 130 105 128", 2.2, MOUTH)}${blush(1.4, 0.9)}`,
+      sleepy: `${line("M70 109 Q78 114 86 109", 2.8)}${line("M114 109 Q122 114 130 109", 2.8)}${brow("M70 90 Q78 89 86 90")}${brow("M114 90 Q122 89 130 90")}<ellipse cx="100" cy="129" rx="3" ry="3.5" fill="${MOUTH}"/>${blush(1, 0.5)}`,
+    };
+    const EXTRAS = {
+      excited: sparkle(38, 52, 1, 0) + sparkle(164, 40, 1.3, 0.4) + sparkle(172, 96, 0.8, 0.8),
+      happy: sparkle(162, 46, 0.9, 0.2),
+      thinking: `<g class="lm-dots"><circle cx="160" cy="44" r="3.2" fill="#ecebf8"/><circle cx="170" cy="36" r="3.2" fill="#ecebf8"/><circle cx="180" cy="28" r="3.2" fill="#ecebf8"/></g>`,
+      pout: `<g class="lm-vein" transform="translate(158 46)">${line("M-9 -3 Q-4 -4 -3 -9", 3, "#ff6b5b")}${line("M3 -9 Q4 -4 9 -3", 3, "#ff6b5b")}${line("M9 3 Q4 4 3 9", 3, "#ff6b5b")}${line("M-3 9 Q-4 4 -9 3", 3, "#ff6b5b")}</g>`,
+      sleepy: `<text class="lm-z" x="152" y="52" fill="#cfe3ff" font-size="18" font-family="Manrope, sans-serif" font-weight="700">z</text><text class="lm-z" style="animation-delay:1.2s" x="164" y="36" fill="#cfe3ff" font-size="13" font-family="Manrope, sans-serif" font-weight="700">z</text>`,
+      shy: `<path class="lm-heart" d="M164 50 C160 44 152 48 156 54 L164 61 L172 54 C176 48 168 44 164 50 Z" fill="#ff8fa3"/>`,
+      sad: "",
+      listening: "",
+    };
+    box.innerHTML = `
+      <svg viewBox="0 0 200 220" class="lm-svg" role="img" aria-label="Luma">
+        <defs><radialGradient id="lmJar" cx="50%" cy="55%" r="55%"><stop offset="0" stop-color="#fff6c9"/><stop offset=".45" stop-color="#ffd27a" stop-opacity=".9"/><stop offset="1" stop-color="#ffd27a" stop-opacity="0"/></radialGradient></defs>
+        <g class="lm-bob">
+          <path class="lm-hairback" d="M42 96 C34 36 166 36 158 96 L170 188 C150 208 50 208 30 188 Z" fill="${HAIR}"/>
+          <path d="M60 162 Q100 146 140 162 L154 220 L46 220 Z" fill="#f4e7d4"/>
+          <path d="M84 156 Q100 166 116 156" stroke="#d9c6ab" stroke-width="2" fill="none"/>
+          <path d="M62 170 Q52 196 64 212" stroke="#e6d4ba" stroke-width="2" fill="none"/><path d="M138 170 Q148 196 136 212" stroke="#e6d4ba" stroke-width="2" fill="none"/>
+          <circle cx="100" cy="196" r="26" fill="url(#lmJar)" class="lm-glow"/>
+          <rect x="88" y="184" width="24" height="26" rx="7" fill="rgba(255,240,200,.35)" stroke="#f3e2c0" stroke-width="2"/>
+          <rect x="90" y="179" width="20" height="6" rx="2" fill="#c9a77a"/>
+          <circle cx="100" cy="198" r="3.5" fill="#fff3b0" class="lm-fly"/>
+          <ellipse cx="80" cy="204" rx="11" ry="8" fill="#f4e7d4" stroke="#e6d4ba" stroke-width="1.5"/><ellipse cx="120" cy="204" rx="11" ry="8" fill="#f4e7d4" stroke="#e6d4ba" stroke-width="1.5"/>
+          <circle cx="44" cy="110" r="9" fill="${SKIN}"/><circle cx="156" cy="110" r="9" fill="${SKIN}"/>
+          <ellipse cx="100" cy="102" rx="58" ry="54" fill="${SKIN}"/>
+          <g id="lm-face"></g>
+          <path d="M42 102 C38 52 70 38 100 38 C130 38 162 52 158 102 C152 84 147 76 141 71 L135 90 L125 72 L113 88 L100 70 L87 88 L75 72 L65 90 L59 71 C53 77 47 86 42 102 Z" fill="${HAIR}"/>
+          <path d="M70 52 Q86 44 104 46" stroke="${HAIR2}" stroke-width="3" stroke-linecap="round" fill="none" opacity=".8"/>
+          <path d="M43 98 C38 132 44 160 56 180 C61 152 58 122 57 102 Z" fill="${HAIR}"/>
+          <path d="M157 98 C162 132 156 160 144 180 C139 152 142 122 143 102 Z" fill="${HAIR}"/>
+          <path class="lm-ahoge" d="M100 40 C95 22 113 12 120 24" stroke="${HAIR}" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+          <g class="lm-clip" transform="translate(145 74)"><circle r="9" fill="#ffd27a" opacity=".35"/><ellipse rx="4.5" ry="3.2" fill="#ffd27a"/><ellipse cx="-2" cy="-3.5" rx="3" ry="2" fill="#cfe3ff" opacity=".9"/><ellipse cx="2.5" cy="-3.5" rx="3" ry="2" fill="#cfe3ff" opacity=".9"/></g>
+          <g id="lm-brows"></g>
+          <g id="lm-extra"></g>
+        </g>
+      </svg>
+      <div class="lm-say" id="lm-say" hidden></div>`;
+    const face = box.querySelector("#lm-face"), brows = box.querySelector("#lm-brows"), extra = box.querySelector("#lm-extra"), say = box.querySelector("#lm-say");
+    let mood = "", sayTimer = null;
+    function set(m) {
+      if (!FACES[m]) m = "listening";
+      if (m === mood) return;
+      mood = m;
+      face.innerHTML = FACES[m];
+      // eyebrows sit on top of the bangs, anime style
+      brows.replaceChildren(...face.querySelectorAll(".lm-brow"));
+      extra.innerHTML = EXTRAS[m] || "";
+      box.dataset.mood = m;
+      box.classList.remove("lm-react"); void box.offsetWidth; box.classList.add("lm-react");
+    }
+    function speak(text, m, ms = 4200) {
+      if (m) set(m);
+      say.textContent = text;
+      say.hidden = false;
+      say.classList.remove("in"); void say.offsetWidth; say.classList.add("in");
+      clearTimeout(sayTimer);
+      sayTimer = setTimeout(() => { say.hidden = true; }, ms);
+    }
+    function quiet() { clearTimeout(sayTimer); say.hidden = true; }
+    // Sit on the top edge of the panel, at its end side.
+    function place(rect) {
+      const size = Math.min(124, rect.top - 58);
+      if (size < 64) { box.hidden = true; return; }
+      box.hidden = false;
+      box.style.width = size + "px";
+      box.style.height = size * 1.1 + "px";
+      box.style.top = rect.top - size * 0.9 + "px";
+      const rtl = document.documentElement.dir === "rtl";
+      box.style.left = (rtl ? rect.left + 10 : rect.right - size - 10) + "px";
+    }
+    box.addEventListener("click", () => {
+      const [m, text] = pick(LUMA_LINES[lang].tap);
+      speak(text, m);
+    });
+    set("listening");
+    return { set, speak, quiet, place, mood: () => mood };
+  })();
+
+  // Pull Luma's mood tag off the front of a reply: "[happy] Hello" -> { mood: "happy", body: "Hello" }.
+  function readMood(text) {
+    const m = text.match(/^\s*\[(\w+)\]\s*/);
+    if (m) return { mood: MOODS.includes(m[1].toLowerCase()) ? m[1].toLowerCase() : null, body: text.slice(m[0].length), pending: false };
+    if (/^\s*\[\w*$/.test(text)) return { mood: null, body: "", pending: true };
+    return { mood: null, body: text, pending: false };
+  }
+  const clean = (text) => readMood(text).body || text;
+
+  function lumaForScreen(name) {
+    const L = LUMA_LINES[lang].screen, h = new Date().getHours();
+    let key = { home: "home", breathe: "breathe", "breathe-free": "breathe", checkin: "checkin", talk: "talk", "talk-free": "talk",
+      release: "release", lanterns: "release", tomorrow: "tomorrow", close: "close", sounds: "sounds", story: "story", stars: "stars", nights: "nights" }[name];
+    if (name === "home") key = !state.fireflies ? "homeFirst" : (h >= 23 || h < 4) ? "homeLate" : doneTonight() ? "homeDone" : "home";
+    if (!key) return;
+    const [m, text] = L[key];
+    if (name === "talk" || name === "talk-free") { luma.set(m); luma.quiet(); return; }
+    luma.speak(text, m);
+  }
+
   // ================= screens =================
   const panel = document.getElementById("panel");
   let screen = "home", session = null, cleanup = null;
@@ -1106,8 +1344,9 @@ ${last}${langNote()}`;
     screen = name;
     SCREENS[name](arg);
     syncFloor();
+    lumaForScreen(name);
   }
-  function syncFloor() { sky.setFloor(panel.getBoundingClientRect().top - 8); }
+  function syncFloor() { const r = panel.getBoundingClientRect(); sky.setFloor(r.top - 8); luma.place(r); }
   new ResizeObserver(syncFloor).observe(panel);
   addEventListener("resize", syncFloor);
 
@@ -1291,13 +1530,24 @@ ${last}${langNote()}`;
       box.appendChild(m); box.scrollTop = box.scrollHeight;
       return m;
     }
-    function waiting() { const m = addMsg("luma", ""); m.classList.add("wait"); m.innerHTML = `<span class="dots">${t("thinking")}</span>`; return m; }
+    function waiting() { luma.set("thinking"); const m = addMsg("luma", ""); m.classList.add("wait"); m.innerHTML = `<span class="dots">${t("thinking")}</span>`; return m; }
     function fallback() { addMsg("luma", t("noAi")); $("#hint").textContent = t("noAiHint"); }
     async function stream(input, bubble) {
       ctl = new AbortController();
       try {
-        const { text } = await ask(input, { cache: false, signal: ctl.signal, onText: ({ text }) => { bubble.classList.remove("wait"); bubble.textContent = text; box.scrollTop = box.scrollHeight; } });
-        return text;
+        let shown = false;
+        const { text } = await ask(input, { cache: false, signal: ctl.signal, onText: ({ text }) => {
+          const r = readMood(text);
+          if (r.pending) return;
+          if (r.mood && !shown) luma.set(r.mood);
+          if (!r.body) return;
+          shown = true;
+          bubble.classList.remove("wait"); bubble.textContent = r.body; box.scrollTop = box.scrollHeight;
+        } });
+        const r = readMood(text);
+        if (!r.mood && luma.mood() === "thinking") luma.set("listening");
+        bubble.classList.remove("wait"); bubble.textContent = r.body || text;
+        return r.body || text;
       } catch (e) {
         const r = aiFailure(e);
         if (r === "off") { bubble.remove(); fallback(); }
@@ -1311,7 +1561,7 @@ ${last}${langNote()}`;
       const opener = free
         ? "They opened a conversation with you outside the nightly ritual. Write a short, warm opening line that invites them to say what's on their mind. If you remember something fitting, you may mention it lightly."
         : "Write your opening line for tonight. Greet them warmly, acknowledge how the day felt in your own words, and ask one gentle question about it. If you remember something from earlier evenings that fits, you may mention it lightly.";
-      const text = await stream([{ role: "user", content: rules(session) + "\n\n" + opener }], bubble);
+      const text = await stream([{ role: "user", content: rules(session) + "\n\n" + opener + "\n\nStart your reply with exactly one mood tag in square brackets showing your face as you say it, chosen from: [happy] [listening] [thinking] [sad] [pout] [excited] [shy] [sleepy]. Then write the message. The tag is never shown to them." }], bubble);
       if (text) session.turns.push({ role: "assistant", content: text });
     }
     async function lumaReply() {
@@ -1319,7 +1569,7 @@ ${last}${langNote()}`;
       const bubble = waiting();
       const recent = session.turns.slice(-16);
       if (recent[0] && recent[0].role === "assistant") recent.unshift({ role: "user", content: "(we began talking)" });
-      const text = await stream([{ role: "user", content: rules(session) + "\n\nThe conversation so far follows. Reply as Luma." }].concat(recent), bubble);
+      const text = await stream([{ role: "user", content: rules(session) + "\n\nStart your reply with exactly one mood tag in square brackets showing your face as you say it, chosen from: [happy] [listening] [thinking] [sad] [pout] [excited] [shy] [sleepy]. Then write the message. The tag is never shown to them.\n\nThe conversation so far follows. Reply as Luma." }].concat(recent), bubble);
       if (text) session.turns.push({ role: "assistant", content: text });
     }
   }
@@ -1353,6 +1603,7 @@ ${last}${langNote()}`;
       if (!w) return;
       $("#worry").value = "";
       worries.push(w); sky.release(w); sync();
+      luma.speak(LUMA_LINES[lang].screen.released[1], "excited");
     };
     if (free) $("[data-done]").onclick = () => show("home");
     else $("#skip").onclick = $("#next").onclick = () => show("tomorrow");
@@ -1378,7 +1629,7 @@ ${last}${langNote()}`;
       try {
         const { text } = await ask(rules(session) + "\n\nTonight's conversation:\n" + (talked || "(they didn't talk much)") +
           "\n\nSuggest ONE tiny, kind, concrete thing they could do tomorrow, fitted to what they shared. Under 12 words. Reply with only the suggestion, no quotes.", { cache: false });
-        plan.value = text.trim().replace(/^["“«]|["”»]$/g, "");
+        plan.value = clean(text).trim().replace(/^["“«]|["”»]$/g, "");
         idea.textContent = t("anotherIdea");
       } catch (e) { if (aiFailure(e) === "off") idea.hidden = true; else idea.textContent = t("tryAgain"); }
       finally { idea.disabled = false; }
@@ -1429,8 +1680,8 @@ ${last}${langNote()}`;
         (session.worries.length ? `\nThey released ${session.worries.length} worry lantern(s).` : "") +
         (session.intention ? `\nTomorrow's small thing: ${session.intention}` : "") +
         "\n\nWrite a goodnight note to them: 1 or 2 short sentences, warm and specific to tonight. Plain text only.",
-        { cache: false, onText: ({ text }) => { note.textContent = text; } })
-      .then(({ text }) => { note.textContent = text; })
+        { cache: false, onText: ({ text }) => { note.textContent = clean(text); } })
+      .then(({ text }) => { note.textContent = clean(text); })
       .catch(() => { note.textContent = t("fallbackNote"); });
     remember(session);
   }
@@ -1446,6 +1697,7 @@ ${last}${langNote()}`;
       sky.lightOne(true);
       sound.chime();
       gift = { kind: t("rareGift"), text: t("rareText") };
+      luma.set("excited");
     } else if (roll < 0.33 && !aiOff) {
       gift = { kind: t("letter"), text: "" };
     } else {
@@ -1459,8 +1711,8 @@ ${last}${langNote()}`;
     if (!gift.text) {
       try {
         const { text } = await ask(rules(session) + `\n\nWrite them a short letter (3 or 4 sentences) as a gift for tonight, signed "${t("luma")}". Be warm and hopeful without being cheesy. If you remember something specific about them, use it.`,
-          { cache: false, onText: ({ text }) => { const b = $("#gift-body"); if (b) b.textContent = text; } });
-        gift.text = text;
+          { cache: false, onText: ({ text }) => { const b = $("#gift-body"); if (b) b.textContent = clean(text); } });
+        gift.text = clean(text);
       } catch (e) {
         aiFailure(e);
         const kind = Object.keys(gifts)[0];
@@ -1566,8 +1818,8 @@ ${last}${langNote()}`;
       box.innerHTML = `<span class="dots">${t("storyWriting")}</span>`;
       try {
         const r = await ask(`Write a calming bedtime story of about 220 words, in second person and present tense, set in a quiet night meadow with a small cabin, a pond, fireflies and soft rain. Slow and sensory. Nothing dramatic happens. ${mood} ${state.name ? "You may use their name, " + state.name + ", once." : ""} Gently guide their body to relax. End with them drifting to sleep. Plain text, short paragraphs, no title.`,
-          { cache: false, signal: ctl2.signal, onText: ({ text: x }) => { box.textContent = x; } });
-        text = r.text; box.textContent = text;
+          { cache: false, signal: ctl2.signal, onText: ({ text: x }) => { box.textContent = clean(x); } });
+        text = clean(r.text); box.textContent = text;
       } catch (e) {
         if (e && e.code === "cancelled") return;
         aiFailure(e);
@@ -1623,6 +1875,7 @@ ${last}${langNote()}`;
       show("stars");
       const n = state.stars.length;
       if ([1, 5, 10, 25, 50].includes(n)) $(".soft").textContent = n === 1 ? t("firstStar") : t("manyStars", { n: num(n) });
+      luma.speak(LUMA_LINES[lang].screen.starAdded[1], "excited");
     };
   }
 

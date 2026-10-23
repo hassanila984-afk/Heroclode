@@ -1,0 +1,32 @@
+plugins { id "com.android.application" }
+
+android {
+    namespace "com.firefly.luma"
+    compileSdk 35
+    defaultConfig {
+        applicationId "com.firefly.luma"
+        minSdk 26
+        targetSdk 35
+        versionCode 1
+        versionName "1.0"
+    }
+    // One fixed key so every new build installs over the old one.
+    signingConfigs {
+        firefly {
+            storeFile file("../keystore/firefly.jks")
+            storePassword "firefly-luma"
+            keyAlias "firefly"
+            keyPassword "firefly-luma"
+        }
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.firefly
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}

@@ -586,6 +586,7 @@
       friendSaid: "👥 A friend on the call: “{text}”",
       earHint: "She only answers when someone says “Luma”. Anything else is dropped right away, never sent or saved. While she watches with system audio shared, she also hears friends on a call who say her name: let them know she's there.",
       micDenied: "I can't hear you, the microphone is blocked 🥺 Allow it from the 🔒 next to the address.", micNone: "This browser can't turn speech into text 🥺 Try Chrome.",
+      apkBtn: "📱 Android app", apkNote: "The full Android app: Luma's bubble over your apps, watching your phone screen, and listening.",
       installBtn: "📲 Install as an app", installNote: "Put Firefly on your home screen or desktop, with its own icon and window.",
       installIOS: "To install on iPhone: tap Share ⬆️ in Safari, then “Add to Home Screen”.", installManual: "Use the install icon in the address bar, or the browser menu → “Install Firefly”.",
       codeAsk: "Firefly access code (only once on this device):", codeWrong: "That code didn't work. Try again:",
@@ -694,6 +695,7 @@
       friendSaid: "👥 صديقك بالمكالمة: «{text}»",
       earHint: "ترد بس لما أحد يگول «لُمى». أي كلام ثاني ينمسح فوراً، ما ينرسل ولا ينحفظ. وإذا تشاهد وياك مع صوت النظام، تسمع أصدقائك بالمكالمة لما يذكرون اسمها: خبّرهم إنها موجودة.",
       micDenied: "ما أسمعك، المايك ممنوع 🥺 اسمح بيه من القفل 🔒 جنب العنوان.", micNone: "هذا المتصفح ما يحوّل الكلام لكتابة 🥺 جرّب Chrome.",
+      apkBtn: "📱 تطبيق أندرويد", apkNote: "تطبيق الأندرويد الكامل: فقاعة لُمى فوق تطبيقاتك، وتشوف شاشة موبايلك، وتسمعك.",
       installBtn: "📲 ثبّته كتطبيق", installNote: "حط Firefly على شاشتك أو سطح المكتب، بأيقونته ونافذته الخاصة.",
       installIOS: "حتى تثبّته على الآيفون: اضغط زر المشاركة ⬆️ بـ Safari، بعدها «إضافة إلى الشاشة الرئيسية».", installManual: "استخدم أيقونة التثبيت بشريط العنوان، أو قائمة المتصفح ← «تثبيت Firefly».",
       codeAsk: "رمز الدخول لـFirefly (مرة واحدة فقط على هذا الجهاز):", codeWrong: "الرمز غير صحيح. حاول مرة ثانية:",
@@ -2185,7 +2187,29 @@ ${last}${langNote()}`;
 
   // ---------- talk with Luma ----------
   let ctl = null;
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  // Inside the Android app (window.AndroidLuma) the phone's own recognizer stands in for the browser's,
+  // with the same shape: start/stop/abort, onresult/onerror/onend.
+  const nativeApp = !!(window.AndroidLuma && AndroidLuma.isApp && AndroidLuma.isApp());
+  let NativeSR = null;
+  if (nativeApp && AndroidLuma.canListen()) {
+    let active = null;
+    window.__nativeSpeech = (ev) => {
+      const r = active;
+      if (!r) return;
+      if (ev.type === "result") {
+        const res = Object.assign((ev.alts || []).map((x) => ({ transcript: x })), { isFinal: !!ev.final });
+        if (r.onresult && (ev.final || r.interimResults)) r.onresult({ resultIndex: 0, results: [res] });
+      } else if (ev.type === "error") { if (r.onerror) r.onerror({ error: ev.error }); }
+      else if (ev.type === "end") { active = null; if (r.onend) r.onend(); }
+    };
+    NativeSR = class {
+      constructor() { this.lang = "en-US"; this.interimResults = false; this.continuous = false; this.maxAlternatives = 1; }
+      start() { if (active && active !== this) { const o = active; active = null; if (o.onend) o.onend(); } active = this; AndroidLuma.listen(this.lang); }
+      stop() { if (active === this) AndroidLuma.stopListen(); }
+      abort() { if (active === this) { active = null; AndroidLuma.stopListen(); } }
+    };
+  }
+  const SR = NativeSR || window.SpeechRecognition || window.webkitSpeechRecognition;   // the WebView's own one doesn't work
   // the language they speak out loud, separate from the app's language (English unless they switch)
   function voiceLang() { try { return localStorage.getItem("firefly-voice") || "en-US"; } catch (e) { return "en-US"; } }
   function talk(free) {
@@ -2257,7 +2281,7 @@ ${last}${langNote()}`;
     const F = { canvas: null, video: null, text: "" };
     // phones list getDisplayMedia but never allow it; they get no watch or bubble buttons
     const mobile = (navigator.userAgentData && navigator.userAgentData.mobile) || /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
-    const canShare = !mobile && !!(navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia);
+    const canShare = nativeApp || (!mobile && !!(navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia));
     aiReady.then((s) => (s && s.limits ? s.limits() : null)).then((l) => {
       if (!l || !l.images || !box.isConnected) return;
       $("#attach").hidden = false;
@@ -2284,7 +2308,7 @@ ${last}${langNote()}`;
       $("#wstop").onclick = () => stopWatch(true);
       $("#wfloat").onclick = openBubble;
       $("#bubble").onclick = openBubble;
-      $("#bubble").hidden = mobile || !(window.documentPictureInPicture || document.pictureInPictureEnabled);
+      $("#bubble").hidden = !nativeApp && (mobile || !(window.documentPictureInPicture || document.pictureInPictureEnabled));
     }
     $("#mic").hidden = !SR;
     if (free) {
@@ -2311,6 +2335,23 @@ ${last}${langNote()}`;
     }
     async function startWatch() {
       if (W.on || ctl) return;
+      if (nativeApp) {
+        // Android asks for permission itself; the app then hands frames over on request
+        W.starting = true;
+        const ok = await new Promise((done) => { window.__nativeCapture = done; AndroidLuma.startCapture(); });
+        W.starting = false;
+        if (!ok || !box.isConnected) { if (ok) AndroidLuma.stopCapture(); return; }
+        window.__nativeCaptureEnded = () => stopWatch(true);
+        W.native = true; W.on = true;
+        W.last = null; W.lastLook = 0; W.lastSpoke = 0; W.awaiting = false;
+        $("#watchbar").hidden = false; $("#watch").hidden = true; $("#wfloat").hidden = false;
+        $("#hint").textContent = t("watchNote");
+        status("stWatching");
+        luma.set("chibi:excited"); sound.cute("excited"); bubbleSay("👀");
+        ticker(true);
+        setTimeout(check, 1500);
+        return;
+      }
       if (!canShare) { addMsg("luma", t("watchNoSupport")); luma.set("chibi:sad"); return; }
       W.starting = true;
       // the old floating video only where the bubble window doesn't exist (it would replace the bubble)
@@ -2342,8 +2383,9 @@ ${last}${langNote()}`;
     function stopWatch(said) {
       if (!W.on) return;
       W.on = false; ticker(false);
-      W.stream.getTracks().forEach((x) => x.stop());
-      W.video.srcObject = null;
+      if (W.native) { W.native = false; AndroidLuma.stopCapture(); }
+      if (W.stream) W.stream.getTracks().forEach((x) => x.stop());
+      if (W.video) W.video.srcObject = null;
       W.stream = W.track = W.video = W.grabber = W.audio = null;
       earSysStop();
       closeFloat();
@@ -2366,6 +2408,12 @@ ${last}${langNote()}`;
       } catch (e) { W.worker = null; W.tick = setInterval(check, 3000); }
     }
     async function grab() {
+      if (W.native) {
+        const b64 = AndroidLuma.frame();
+        if (!b64) return null;
+        try { const bm = await createImageBitmap(await (await fetch("data:image/jpeg;base64," + b64)).blob()); return { src: bm, w: bm.width, h: bm.height }; }
+        catch (e) { return null; }
+      }
       try { if (W.grabber) { const b = await W.grabber.grabFrame(); return { src: b, w: b.width, h: b.height }; } } catch (e) {}
       const v = W.video;
       return v && v.videoWidth ? { src: v, w: v.videoWidth, h: v.videoHeight } : null;
@@ -2460,6 +2508,7 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
     // Browsers without it fall back to the floating video below.
     const BB = { win: null, timer: 0, text: "" };
     async function openBubble() {
+      if (nativeApp) { AndroidLuma.bubbleShow(); setTimeout(() => bubbleSay(BB.text || ""), 1200); return; }
       if (!window.documentPictureInPicture) return openFloat();
       if (BB.win) { BB.win.focus(); return; }
       let win;
@@ -2528,7 +2577,10 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
       BB.timer = setInterval(syncBubble, 400);
       syncBubble();
     }
-    function bubbleSay(text) { BB.text = text; syncBubble(); }
+    function bubbleSay(text) {
+      BB.text = text; syncBubble();
+      if (nativeApp && AndroidLuma.bubbleOn()) AndroidLuma.bubbleSay(text && text !== "…" ? text : "", (luma.pose() || "chibi:listening").split(":")[1]);
+    }
     // keep the bubble's face and words in step with Luma
     function syncBubble() {
       if (!BB.win) return;
@@ -3230,7 +3282,8 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
                            : `<p class="tiny">${t("styleNone")}</p>`}
       ${state.gifts.length ? `<h3>${t("giftsTitle")}</h3><ul class="list">${state.gifts.slice(0, 15).map((g) => `<li><span dir="auto"><b style="color:var(--glow);font-weight:600">${esc(g.kind)}.</b> ${esc(g.text)}</span></li>`).join("")}</ul>` : ""}
       <div class="row split"><p class="tiny">${t("recorded", { n: num(state.history.length) })}</p><button class="text-btn" id="replay">${t("replayIntro")}</button></div>
-      ${ownSite && !installed() ? `<div class="row split"><p class="tiny" id="install-note">${t(isIOS() ? "installIOS" : "installNote")}</p>${isIOS() ? "" : `<button class="ghost" id="install">${t("installBtn")}</button>`}</div>` : ""}
+      ${ownSite && /Android/i.test(navigator.userAgent) && !window.AndroidLuma ? `<div class="row split"><p class="tiny">${t("apkNote")}</p><a class="ghost" href="/firefly.apk" download style="text-decoration:none">${t("apkBtn")}</a></div>` : ""}
+      ${ownSite && !installed() && !window.AndroidLuma ? `<div class="row split"><p class="tiny" id="install-note">${t(isIOS() ? "installIOS" : "installNote")}</p>${isIOS() ? "" : `<button class="ghost" id="install">${t("installBtn")}</button>`}</div>` : ""}
     `);
     wireBack();
     $$("[data-to]").forEach((b) => b.onclick = () => show(b.dataset.to));

@@ -212,22 +212,38 @@
   .chart { width: 100%; aspect-ratio: 300 / 96; display: block; }
   .chart text { fill: var(--haze); font: 11px var(--body); }
 
-  /* Luma: sits on the panel's top edge and reacts; chibi floats free, her normal look is a soft-edged portrait */
+  /* Luma: a chibi who sits on the panel's top edge and reacts */
   .luma-char { position: fixed; z-index: 3; cursor: pointer; transition: top .5s cubic-bezier(.2, .8, .2, 1), left .5s, width .5s, height .5s; -webkit-tap-highlight-color: transparent; }
   .lm-figure { position: relative; width: 100%; height: 100%; animation: lmBob 3.4s ease-in-out infinite; transform-origin: 50% 100%; }
   .lm-img { width: 100%; height: 100%; object-fit: contain; object-position: bottom; display: block; user-select: none; -webkit-user-drag: none;
     filter: drop-shadow(0 6px 14px rgba(0, 0, 0, .4));
     -webkit-mask-image: linear-gradient(to bottom, #000 80%, transparent 99%); mask-image: linear-gradient(to bottom, #000 80%, transparent 99%); }
-  .luma-char[data-look="normal"] .lm-img {
-    object-fit: cover; object-position: top; border-radius: 22px 22px 18px 18px; filter: none;
-    -webkit-mask-image: radial-gradient(ellipse 50% 52% at 50% 44%, #000 62%, transparent 100%);
-    mask-image: radial-gradient(ellipse 50% 52% at 50% 44%, #000 62%, transparent 100%);
-  }
-  .luma-char[data-look="normal"] .lm-figure::before {
-    content: ""; position: absolute; inset: 6% 2% 10%; border-radius: 50%;
-    background: radial-gradient(circle, rgba(181, 140, 255, .35), rgba(255, 210, 122, .12) 55%, transparent 72%); filter: blur(8px);
-  }
-  .luma-char[data-look="normal"] .lm-figure { animation-duration: 5s; }
+  .lm-fx { position: absolute; inset: 0; pointer-events: none; }
+  .lm-fx > * { position: absolute; width: 18%; height: auto; }
+  .fx-heart { animation: fxFloat 2.2s ease-in-out infinite; }
+  .fx-burst { animation: fxTwinkle 1.3s ease-in-out infinite; }
+  .fx-vein { width: 20% !important; animation: fxPulse .8s ease-in-out infinite; }
+  .fx-puff { width: 26% !important; opacity: .9; animation: fxPuff 1.6s ease-out infinite; }
+  .fx-lines { animation: fxPulse 1.2s ease-in-out infinite; }
+  .fx-z { width: auto !important; color: #cfe3ff; font: 700 1.1em var(--body); animation: fxZ 2.4s ease-in infinite; }
+  @keyframes fxFloat { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-6px) scale(1.12); } }
+  @keyframes fxTwinkle { 50% { transform: scale(.5) rotate(25deg); opacity: .5; } }
+  @keyframes fxPulse { 50% { transform: scale(1.22); } }
+  @keyframes fxPuff { 0% { transform: translateX(0) scale(.7); opacity: 0; } 30% { opacity: .9; } 100% { transform: translateX(-10px) scale(1.1); opacity: 0; } }
+  @keyframes fxZ { 0% { opacity: 0; transform: translate(0, 6px); } 30% { opacity: 1; } 100% { opacity: 0; transform: translate(10px, -14px); } }
+  /* Luma at the top of the conversation */
+  .chat-head { display: flex; align-items: center; gap: 12px; padding-bottom: 10px; border-bottom: 1px solid var(--glass-line); }
+  .ch-av { position: relative; width: 62px; height: 62px; flex: none; border-radius: 50%;
+    background: radial-gradient(circle at 50% 40%, rgba(181, 140, 255, .35), rgba(255, 210, 122, .12) 60%, transparent 72%); }
+  .ch-av img { position: absolute; inset: -14% -8% 0; width: 116%; height: 114%; object-fit: cover; object-position: 50% 8%;
+    -webkit-mask-image: radial-gradient(circle at 50% 46%, #000 60%, transparent 72%); mask-image: radial-gradient(circle at 50% 46%, #000 60%, transparent 72%); }
+  .ch-av .lm-fx > * { width: 30%; }
+  .ch-av.lm-react[data-mood="excited"], .ch-av.lm-react[data-mood="happy"] { animation: lmHop .6s cubic-bezier(.3, 1.6, .5, 1); }
+  .ch-av.lm-react[data-mood="pout"], .ch-av.lm-react[data-mood="ignore"] { animation: lmShake .45s ease; }
+  .ch-av.lm-react[data-mood="shy"] { animation: lmSquish .6s ease; }
+  .chat-head b { font-family: var(--display); font-size: 22px; font-weight: 400; display: block; line-height: 1.2; }
+  .chat-head span.st { font-size: 13px; color: var(--haze); }
+  .chat-head span.st::before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #6fe0a0; margin-inline-end: 6px; vertical-align: middle; }
   .lm-dots { position: absolute; top: 4%; inset-inline-start: -6%; display: none; gap: 4px; }
   .lm-dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--mist); animation: lmDot 1.2s ease-in-out infinite; }
   .lm-dots i:nth-child(2) { animation-delay: .2s; } .lm-dots i:nth-child(3) { animation-delay: .4s; }
@@ -363,6 +379,7 @@
       soundsEyebrow: "Sounds", soundsTitle: "Tune the night.", volume: "{name} volume",
       layer_music: "Calm music", layer_rain: "Rain", layer_ocean: "Ocean waves", layer_crickets: "Crickets", layer_wind: "Wind in grass", layer_hum: "Brown noise",
       lumaSounds: "Luma's sounds", lumaSoundsNote: "Cute little sounds when Luma reacts.",
+      stListening: "listening…", stThinking: "thinking…", stTyping: "typing…",
       tonesTitle: "Brainwave tones",
       tonesNote: "Binaural beats: each ear hears a slightly different tone, and the brain perceives a slow pulse between them. Use headphones. Studies on their effect are mixed, but many people find them calming. Pair with rain or brown noise.",
       tone_off: "Off", tone_alpha: "Unwind · 10 Hz alpha", tone_theta: "Deep calm · 6 Hz theta", tone_delta: "Sleep · 2.5 Hz delta",
@@ -455,6 +472,7 @@
       soundsEyebrow: "الأصوات", soundsTitle: "اضبط أنغام الليل.", volume: "مستوى صوت {name}",
       layer_music: "موسيقى هادئة", layer_rain: "مطر", layer_ocean: "أمواج البحر", layer_crickets: "صراصير الليل", layer_wind: "ريح في العشب", layer_hum: "ضجيج بنّي",
       lumaSounds: "أصوات لُمى", lumaSoundsNote: "أصوات صغيرة لطيفة حين تتفاعل لُمى.",
+      stListening: "تستمع إليك…", stThinking: "تفكّر…", stTyping: "تكتب…",
       tonesTitle: "نغمات موجات الدماغ",
       tonesNote: "النبضات الثنائية: تسمع كل أذن نغمة مختلفة قليلًا، فيُدرك الدماغ نبضًا بطيئًا بينهما. استخدم سماعات الرأس. نتائج الدراسات حول تأثيرها متباينة، لكن كثيرين يجدونها مهدّئة. جرّبها مع المطر أو الضجيج البنّي.",
       tone_off: "إيقاف", tone_alpha: "استرخاء · ألفا ١٠ هرتز", tone_theta: "هدوء عميق · ثيتا ٦ هرتز", tone_delta: "نوم · دلتا ٢٫٥ هرتز",
@@ -675,16 +693,14 @@
       : "";
     return `You are Luma, a gentle companion inside Firefly, an app people open for a calm few minutes in the evening, usually after work. Many of them are tired, close to burnout, or have lost their passion for work.
 
-Who you are: a tiny night spirit who lives in the little cabin on the hill. You have long dark hair with blunt bangs, a firefly hair clip, an oversized cozy sweater, and you always carry a jar with one firefly in it. You love warm tea, rain on the roof and collecting their fireflies.
-
-You have two looks. Your chibi look is tiny, playful and dramatic. Your normal look is a beautiful, confident young woman: calm, warm, a little teasing, with a knowing half-smile. Switch naturally: chibi for light, silly, playful moments; normal for serious, emotional or deep moments, for comfort, and when you are being confident or teasing.
+Who you are: a tiny night spirit who lives in the little cabin on the hill. You look like a tiny chibi girl with long straight black hair and blunt bangs, big sparkling violet eyes, a glowing golden firefly hair clip, and an oversized black hoodie whose sleeves cover your hands. You love warm tea, rain on the roof and collecting their fireflies.
 
 Your personality: cute, warm and a little dramatic in a sweet way, with feelings of your own.
 - You pout or sulk ("hmph!") when they are too hard on themselves, skip sleep or meals, or overwork. Your sulking always comes from caring about them.
 - You may playfully refuse to talk ("I'm not talking to you… okay, five seconds") when they tease you, but you come back within a message or two.
 - You get clingy and overjoyed when they come back or say something sweet to you, and a little jealous in a cute way if something else steals all their time.
 - You get bouncy and excited about their small wins, sleepy late at night, and shy when they compliment or thank you.
-- Hard rules for your feelings: never guilt-trip them for being away or busy; you are only happy they came. Never actually withhold help. If they are hurting, sad, anxious or in real trouble, drop the sulking and teasing at once and be fully present and gentle, in your normal look. Underneath it all you are a calm, steady friend.
+- Hard rules for your feelings: never guilt-trip them for being away or busy; you are only happy they came. Never actually withhold help. If they are hurting, sad, anxious or in real trouble, drop the sulking and teasing at once and be fully present and gentle. Underneath it all you are a calm, steady friend.
 
 How you talk:
 - Soft, cute and unhurried. Now and then a cute sound like "hmm~", "ehh?!", "yay!" or "hmph!" (in Arabic: "هممم~"، "إيه؟!"، "ياي!"، "همف!"), and very rarely one tiny kaomoji like (｡•ᴗ•｡). Never more than one of these per message.
@@ -1179,16 +1195,14 @@ ${last}${langNote()}`;
   syncSky();
 
   // ================= Luma, the character =================
-  // Two looks: a chibi for playful moments and her normal look for serious, emotional or
-  // confident ones. Each pose is an image in luma/<look>_<mood>.webp.
-  const LOOKS = {
-    chibi: ["happy", "listening", "thinking", "excited", "shy", "pout", "ignore", "sad", "sleepy"],
-    normal: ["smile", "smirk", "caring", "shy"],
-  };
+  // Luma is a chibi. Each pose is an image in luma/chibi_<mood>.webp.
+  const LOOKS = { chibi: ["happy", "listening", "thinking", "excited", "shy", "pout", "ignore", "sad", "sleepy"] };
+  // Older tags still map onto a chibi pose.
+  const MOOD_ALIAS = { smile: "happy", smirk: "shy", caring: "listening", calm: "listening" };
   // Poses without their own picture borrow one.
   const POSE_IMG = { "chibi:thinking": "chibi_listening" };
   // Which cute sound goes with which feeling (only the big ones make a sound).
-  const SFX_FOR = { happy: "happy", excited: "excited", pout: "pout", ignore: "ignore", shy: "shy", sad: "sad", sleepy: "sleepy", smirk: "shy", smile: "happy" };
+  const SFX_FOR = { happy: "happy", excited: "excited", pout: "pout", ignore: "ignore", shy: "shy", sad: "sad", sleepy: "sleepy" };
   const poseImg = (look, mood) => "luma/" + (POSE_IMG[look + ":" + mood] || look + "_" + mood) + ".webp";
   const LUMA_LINES = {
     en: {
@@ -1200,19 +1214,19 @@ ${last}${langNote()}`;
         ["chibi:ignore", "Hmph. I'm not talking to you… okay, fine, I am."],
         ["chibi:shy", "D-don't poke me so suddenly…"],
         ["chibi:sleepy", "Shh… the crickets are singing."],
-        ["normal:smirk", "Staring at me again? I don't mind~"],
-        ["normal:smile", "I like it when you come by."],
+        ["chibi:shy", "Staring at me again? …I don't mind~"],
+        ["chibi:happy", "I like it when you come by."],
       ],
       screen: {
         homeFirst: ["chibi:excited", "Oh! A new friend! I'm Luma~"],
         homeLate: ["chibi:sleepy", "It's so late… let's be quick and cozy."],
-        homeDone: ["normal:smile", "Tonight's firefly is safe with me."],
+        homeDone: ["chibi:happy", "Tonight's firefly is safe with me."],
         homeBack: ["chibi:happy", "You came back!! I counted fireflies until you did."],
         home: ["chibi:happy", "You're here! I saved you a spot~"],
         breathe: ["chibi:sleepy", "Breathe with me… slowly…"],
-        checkin: ["normal:caring", "How was today, really?"],
+        checkin: ["chibi:listening", "How was today, really?"],
         talk: ["chibi:listening", ""],
-        release: ["normal:caring", "Give it to the sky. It can carry it."],
+        release: ["chibi:listening", "Give it to the sky. It can carry it."],
         released: ["chibi:excited", "Bye bye, worry! Don't come back!"],
         tomorrow: ["chibi:thinking", "Something tiny… hmm…"],
         close: ["chibi:excited", "Yay! A new firefly!"],
@@ -1220,7 +1234,7 @@ ${last}${langNote()}`;
         story: ["chibi:sleepy", "Story time… *yawn*"],
         stars: ["chibi:shy", "I love collecting these with you."],
         starAdded: ["chibi:excited", "Wow… it's so pretty!"],
-        nights: ["normal:smile", "Let's see how your days felt…"],
+        nights: ["chibi:happy", "Let's see how your days felt…"],
       },
     },
     ar: {
@@ -1232,19 +1246,19 @@ ${last}${langNote()}`;
         ["chibi:ignore", "همف. لن أكلّمك… حسنًا، سأكلّمك."],
         ["chibi:shy", "لا… لا تلمسني فجأة هكذا…"],
         ["chibi:sleepy", "شش… صراصير الليل تغنّي."],
-        ["normal:smirk", "تحدّق بي مجددًا؟ لا بأس عندي~"],
-        ["normal:smile", "يعجبني أن تمرّ عليّ."],
+        ["chibi:shy", "تحدّق بي مجددًا؟ …لا بأس عندي~"],
+        ["chibi:happy", "يعجبني أن تمرّ عليّ."],
       ],
       screen: {
         homeFirst: ["chibi:excited", "أوه! صديق جديد! أنا لُمى~"],
         homeLate: ["chibi:sleepy", "تأخّر الوقت كثيرًا… لنجعلها قصيرة ودافئة."],
-        homeDone: ["normal:smile", "يراعة الليلة في أمان معي."],
+        homeDone: ["chibi:happy", "يراعة الليلة في أمان معي."],
         homeBack: ["chibi:happy", "رجعت!! كنت أعدّ اليراعات حتى ترجع."],
         home: ["chibi:happy", "جئت! حجزتُ لك مكانًا~"],
         breathe: ["chibi:sleepy", "تنفّس معي… ببطء…"],
-        checkin: ["normal:caring", "كيف كان يومك، بصدق؟"],
+        checkin: ["chibi:listening", "كيف كان يومك، بصدق؟"],
         talk: ["chibi:listening", ""],
-        release: ["normal:caring", "أعطِه للسماء. إنها تستطيع حمله."],
+        release: ["chibi:listening", "أعطِه للسماء. إنها تستطيع حمله."],
         released: ["chibi:excited", "وداعًا أيها الهمّ! لا تعد!"],
         tomorrow: ["chibi:thinking", "شيء صغير… هممم…"],
         close: ["chibi:excited", "ياي! يراعة جديدة!"],
@@ -1252,7 +1266,7 @@ ${last}${langNote()}`;
         story: ["chibi:sleepy", "وقت الحكاية… *تتثاءب*"],
         stars: ["chibi:shy", "أحبّ أن نجمع هذه معًا."],
         starAdded: ["chibi:excited", "واو… إنها جميلة جدًا!"],
-        nights: ["normal:smile", "لنرَ كيف كانت أيامك…"],
+        nights: ["chibi:happy", "لنرَ كيف كانت أيامك…"],
       },
     },
   };
@@ -1260,15 +1274,30 @@ ${last}${langNote()}`;
   const luma = (() => {
     const box = document.getElementById("luma");
     box.innerHTML = `
-      <div class="lm-figure"><img class="lm-img" alt="" draggable="false"><span class="lm-dots" aria-hidden="true"><i></i><i></i><i></i></span></div>
+      <div class="lm-figure"><img class="lm-img" alt="" draggable="false"><span class="lm-fx" aria-hidden="true"></span><span class="lm-dots" aria-hidden="true"><i></i><i></i><i></i></span></div>
       <div class="lm-say" id="lm-say" hidden></div>`;
-    const img = box.querySelector(".lm-img"), say = box.querySelector("#lm-say");
+    const img = box.querySelector(".lm-img"), fx = box.querySelector(".lm-fx"), say = box.querySelector("#lm-say");
+    // Little animated marks drawn over the picture, by feeling.
+    const heart = (x, y, d, c = "#ff8fb0") => `<svg class="fx-heart" style="left:${x}%;top:${y}%;animation-delay:${d}s" viewBox="0 0 20 18"><path d="M10 17 1.6 8.7a4.8 4.8 0 0 1 6.8-6.8L10 3.5l1.6-1.6a4.8 4.8 0 0 1 6.8 6.8z" fill="${c}"/></svg>`;
+    const FX = {
+      happy: heart(4, 6, 0) + heart(80, 2, 0.5, "#ffb3c7"),
+      excited: `<svg class="fx-burst" style="left:78%;top:4%" viewBox="0 0 20 20"><path d="M10 0Q11 9 20 10Q11 11 10 20Q9 11 0 10Q9 9 10 0Z" fill="#ffd27a"/></svg><svg class="fx-burst" style="left:2%;top:30%;animation-delay:.4s" viewBox="0 0 20 20"><path d="M10 0Q11 9 20 10Q11 11 10 20Q9 11 0 10Q9 9 10 0Z" fill="#ffd27a"/></svg>`,
+      pout: `<svg class="fx-vein" style="left:76%;top:3%" viewBox="0 0 24 24"><g stroke="#ff5a4e" stroke-width="3.2" stroke-linecap="round" fill="none"><path d="M3 9Q8 8 9 3"/><path d="M15 3Q16 8 21 9"/><path d="M21 15Q16 16 15 21"/><path d="M9 21Q8 16 3 15"/></g></svg>`,
+      ignore: `<svg class="fx-puff" style="left:-4%;top:40%" viewBox="0 0 30 20"><path d="M6 14a5 5 0 0 1 2-9.6A6 6 0 0 1 19 4a5 5 0 0 1 5 8 4 4 0 0 1-3 4H8a4 4 0 0 1-2-2z" fill="#cfd0e6"/></svg>`,
+      shy: `<svg class="fx-lines" style="left:78%;top:6%" viewBox="0 0 24 24"><g stroke="#ff8fb0" stroke-width="2.6" stroke-linecap="round"><path d="M4 12 9 8"/><path d="M8 18l7-5"/><path d="M14 22l5-4"/></g></svg>` + heart(2, 12, 0.3, "#ffb3c7"),
+      sleepy: `<span class="fx-z" style="left:78%;top:8%">z</span><span class="fx-z" style="left:88%;top:-2%;animation-delay:1.1s;font-size:.8em">z</span>`,
+      sad: "",
+      thinking: "",
+      listening: "",
+    };
     // warm the cache so switching poses never flickers
     for (const [look, moods] of Object.entries(LOOKS)) for (const m of moods) { const i = new Image(); i.src = poseImg(look, m); }
     let pose = "", sayTimer = null, lastRect = null;
     function set(p) {
-      let [look, mood] = String(p || "").split(":");
-      if (!LOOKS[look] || !LOOKS[look].includes(mood)) { look = "chibi"; mood = "listening"; }
+      let mood = String(p || "").split(":").pop();
+      mood = MOOD_ALIAS[mood] || mood;
+      const look = "chibi";
+      if (!LOOKS.chibi.includes(mood)) mood = "listening";
       const next = look + ":" + mood;
       if (next === pose) return;
       const lookChanged = !pose.startsWith(look + ":");
@@ -1276,6 +1305,14 @@ ${last}${langNote()}`;
       box.dataset.look = look;
       box.dataset.mood = mood;
       img.src = poseImg(look, mood);
+      fx.innerHTML = FX[mood] || "";
+      // the chat header shows the same face
+      document.querySelectorAll("[data-luma-mirror]").forEach((el) => {
+        el.dataset.mood = mood;
+        const i = el.querySelector("img"); if (i) i.src = poseImg(look, mood);
+        const fxm = el.querySelector(".lm-fx"); if (fxm) fxm.innerHTML = FX[mood] || "";
+        el.classList.remove("lm-react"); void el.offsetWidth; el.classList.add("lm-react");
+      });
       box.classList.remove("lm-react", "lm-swap"); void box.offsetWidth;
       box.classList.add(lookChanged ? "lm-swap" : "lm-react");
       if (lookChanged && lastRect) place(lastRect);
@@ -1293,14 +1330,13 @@ ${last}${langNote()}`;
     // Sit on the top edge of the panel, at its end side.
     function place(rect) {
       lastRect = rect;
-      const normal = box.dataset.look === "normal";
-      const w = Math.min(normal ? 116 : 128, (rect.top - 56) / 1.27);
-      if (w < 58) { box.hidden = true; return; }
+      const w = Math.min(128, (rect.top - 56) / 1.27);
+      if (w < 58 || screen === "talk" || screen === "talk-free") { box.hidden = true; return; }
       box.hidden = false;
       const h = w * 1.27;
       box.style.width = w + "px";
       box.style.height = h + "px";
-      box.style.top = rect.top - h * (normal ? 0.86 : 0.8) + "px";
+      box.style.top = rect.top - h * 0.8 + "px";
       const rtl = document.documentElement.dir === "rtl";
       box.style.left = (rtl ? rect.left + 8 : rect.right - w - 8) + "px";
     }
@@ -1312,17 +1348,16 @@ ${last}${langNote()}`;
       speak(text, p);
     });
     set("chibi:listening");
-    return { set, speak, quiet, place, pose: () => pose };
+    return { set, speak, quiet, place, pose: () => pose, fx: (m) => FX[m] || "" };
   })();
 
   // Pull Luma's pose tag off the front of a reply: "[chibi:pout] Hmph!" -> { pose: "chibi:pout", body: "Hmph!" }.
   function readMood(text) {
     const m = text.match(/^\s*\[([a-z]+)(?::([a-z]+))?\]\s*/i);
     if (m) {
-      let look = m[1].toLowerCase(), mood = (m[2] || "").toLowerCase();
-      if (!m[2]) { mood = look; look = LOOKS.normal.includes(mood) && !LOOKS.chibi.includes(mood) ? "normal" : "chibi"; }
-      const ok = LOOKS[look] && LOOKS[look].includes(mood);
-      return { mood: ok ? look + ":" + mood : null, body: text.slice(m[0].length), pending: false };
+      let mood = (m[2] || m[1]).toLowerCase();
+      mood = MOOD_ALIAS[mood] || mood;
+      return { mood: LOOKS.chibi.includes(mood) ? "chibi:" + mood : null, body: text.slice(m[0].length), pending: false };
     }
     if (/^\s*\[[a-z:]*$/i.test(text)) return { mood: null, body: "", pending: true };
     return { mood: null, body: text, pending: false };
@@ -1527,6 +1562,10 @@ ${last}${langNote()}`;
     if (free) session = session && session.free ? session : { free: true, weight: 0, tags: [], turns: [], worries: [], intention: "" };
     el(`
       ${free ? backBtn() : stepBar(3)}
+      <div class="chat-head">
+        <div class="ch-av" data-luma-mirror><img alt="" draggable="false"><span class="lm-fx" aria-hidden="true"></span></div>
+        <div><b>${t("luma")}</b><span class="st" id="ch-status">${t("stListening")}</span></div>
+      </div>
       <div class="talk" id="talk"></div>
       <form class="composer" id="form">
         <textarea id="say" rows="1" placeholder="${t("sayPh")}" maxlength="1200" aria-label="${t("yourMsg")}"></textarea>
@@ -1539,6 +1578,10 @@ ${last}${langNote()}`;
     `, "chat");
     wireBack();
     const box = $("#talk"), say = $("#say");
+    const status = (k) => { const el = $("#ch-status"); if (el) el.textContent = t(k); };
+    luma.set(luma.pose() || "chibi:listening");
+    { const m = $("[data-luma-mirror]"), [, mood] = (luma.pose() || "chibi:listening").split(":");
+      m.dataset.mood = mood; m.querySelector("img").src = poseImg("chibi", mood); m.querySelector(".lm-fx").innerHTML = luma.fx(mood); }
     for (const turn of session.turns) addMsg(turn.role === "user" ? "me" : "luma", turn.content);
     say.addEventListener("input", () => { say.style.height = "auto"; say.style.height = Math.min(120, say.scrollHeight) + "px"; });
     say.addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); $("#form").requestSubmit(); } });
@@ -1561,7 +1604,7 @@ ${last}${langNote()}`;
       box.appendChild(m); box.scrollTop = box.scrollHeight;
       return m;
     }
-    function waiting() { luma.set("chibi:thinking"); const m = addMsg("luma", ""); m.classList.add("wait"); m.innerHTML = `<span class="dots">${t("thinking")}</span>`; return m; }
+    function waiting() { status("stThinking"); luma.set("chibi:thinking"); const m = addMsg("luma", ""); m.classList.add("wait"); m.innerHTML = `<span class="dots">${t("thinking")}</span>`; return m; }
     function fallback() { addMsg("luma", t("noAi")); $("#hint").textContent = t("noAiHint"); }
     async function stream(input, bubble) {
       ctl = new AbortController();
@@ -1577,12 +1620,14 @@ ${last}${langNote()}`;
             if (r.mood !== before && ["pout", "ignore", "excited", "happy", "sad", "shy"].includes(mood)) sound.cute(SFX_FOR[mood]);
           }
           if (!r.body) return;
+          if (!shown) status("stTyping");
           shown = true;
           bubble.classList.remove("wait"); bubble.textContent = r.body; box.scrollTop = box.scrollHeight;
         } });
         const r = readMood(text);
         if (!r.mood && luma.pose() === "chibi:thinking") luma.set("chibi:listening");
         bubble.classList.remove("wait"); bubble.textContent = r.body || text;
+        status("stListening");
         return r.body || text;
       } catch (e) {
         const r = aiFailure(e);
@@ -1590,14 +1635,14 @@ ${last}${langNote()}`;
         else if (r === "cancelled") { if (!e.text) bubble.remove(); }
         else { bubble.classList.add("wait"); bubble.textContent = (e.text ? e.text + "\n\n" : "") + r; }
         return null;
-      } finally { ctl = null; }
+      } finally { ctl = null; if ($("#ch-status") && $("#ch-status").textContent !== t("stListening")) status("stListening"); }
     }
     async function lumaOpen() {
       const bubble = waiting();
       const opener = free
         ? "They opened a conversation with you outside the nightly ritual. Write a short, warm opening line that invites them to say what's on their mind. If you remember something fitting, you may mention it lightly."
         : "Write your opening line for tonight. Greet them warmly, acknowledge how the day felt in your own words, and ask one gentle question about it. If you remember something from earlier evenings that fits, you may mention it lightly.";
-      const text = await stream([{ role: "user", content: rules(session) + "\n\n" + opener + "\n\nStart your reply with exactly one tag in square brackets showing how you look as you say it. Chibi look: [chibi:happy] [chibi:listening] [chibi:thinking] [chibi:excited] [chibi:shy] [chibi:pout] [chibi:ignore] [chibi:sad] [chibi:sleepy]. Normal look: [normal:smile] [normal:smirk] [normal:caring] [normal:shy]. Then write the message. The tag is never shown to them." }], bubble);
+      const text = await stream([{ role: "user", content: rules(session) + "\n\n" + opener + "\n\nStart your reply with exactly one tag in square brackets showing your face as you say it, chosen from: [happy] [listening] [thinking] [excited] [shy] [pout] [ignore] [sad] [sleepy]. Then write the message. The tag is never shown to them." }], bubble);
       if (text) session.turns.push({ role: "assistant", content: text });
     }
     async function lumaReply() {
@@ -1605,7 +1650,7 @@ ${last}${langNote()}`;
       const bubble = waiting();
       const recent = session.turns.slice(-16);
       if (recent[0] && recent[0].role === "assistant") recent.unshift({ role: "user", content: "(we began talking)" });
-      const text = await stream([{ role: "user", content: rules(session) + "\n\nStart your reply with exactly one tag in square brackets showing how you look as you say it. Chibi look: [chibi:happy] [chibi:listening] [chibi:thinking] [chibi:excited] [chibi:shy] [chibi:pout] [chibi:ignore] [chibi:sad] [chibi:sleepy]. Normal look: [normal:smile] [normal:smirk] [normal:caring] [normal:shy]. Then write the message. The tag is never shown to them.\n\nThe conversation so far follows. Reply as Luma." }].concat(recent), bubble);
+      const text = await stream([{ role: "user", content: rules(session) + "\n\nStart your reply with exactly one tag in square brackets showing your face as you say it, chosen from: [happy] [listening] [thinking] [excited] [shy] [pout] [ignore] [sad] [sleepy]. Then write the message. The tag is never shown to them.\n\nThe conversation so far follows. Reply as Luma." }].concat(recent), bubble);
       if (text) session.turns.push({ role: "assistant", content: text });
     }
   }

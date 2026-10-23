@@ -11,3 +11,7 @@ DAILY_LIMIT = "1500"
 [[kv_namespaces]]
 binding = "FIREFLY_KV"
 id = "2b92d956c384435bbfdd6e3be68253c6"
+
+# Whisper speech-to-text for the call's sound (functions/api/hear.js)
+[ai]
+binding = "AI"

@@ -580,8 +580,9 @@
       watchBlocked: "claude.ai doesn't let me see your screen live 🥺 For now, send me a screenshot 📷",
       watchEnded: "That was fun! Again sometime? 🌙", attach: "Send a picture", picSent: "📷",
       bubbleTitle: "Float Luma over your other apps", bubblePh: "Reply…", micTitle: "Talk to Luma",
-      earTitle: "Keep listening: say “Luma” when you're talking to her", stEar: "listening for her name…", stCall: "📞 you're on a call, she isn't listening",
-      earHint: "She only answers when you say “Luma”. Anything else is dropped right away, never sent or saved. On a call she stops listening.",
+      earTitle: "Keep listening: say “Luma” when you're talking to her", stEar: "listening for her name…", stCall: "📞 on a call: she only reacts to her name",
+      friendSaid: "👥 A friend on the call: “{text}”",
+      earHint: "She only answers when someone says “Luma”. Anything else is dropped right away, never sent or saved. While she watches with system audio shared, she also hears friends on a call who say her name: let them know she's there.",
       micDenied: "I can't hear you, the microphone is blocked 🥺 Allow it from the 🔒 next to the address.", micNone: "This browser can't turn speech into text 🥺 Try Chrome.",
       codeAsk: "Firefly access code (only once on this device):", codeWrong: "That code didn't work. Try again:",
       tonesTitle: "Brainwave tones",
@@ -685,8 +686,9 @@
       watchBlocked: "claude.ai لا يسمح لي برؤية شاشتك مباشرة 🥺 حاليًا أرسل لي لقطة شاشة 📷",
       watchEnded: "كانت حلوة! نعيدها مرة ثانية؟ 🌙", attach: "أرسل صورة", picSent: "📷",
       bubbleTitle: "لُمى فوق تطبيقاتك الثانية", bubblePh: "رد عليها…", micTitle: "احچي ويا لُمى",
-      earTitle: "خليها تسمع: ناديها «لُمى» لما تحچي وياها", stEar: "تسمع… تنتظر اسمها", stCall: "📞 أنت بمكالمة، ما تسمع",
-      earHint: "ترد بس لما تگول «لُمى». أي كلام ثاني ينمسح فوراً، ما ينرسل ولا ينحفظ. وبالمكالمات تبطّل تسمع.",
+      earTitle: "خليها تسمع: ناديها «لُمى» لما تحچي وياها", stEar: "تسمع… تنتظر اسمها", stCall: "📞 بمكالمة: تنتبه بس لاسمها",
+      friendSaid: "👥 صديقك بالمكالمة: «{text}»",
+      earHint: "ترد بس لما أحد يگول «لُمى». أي كلام ثاني ينمسح فوراً، ما ينرسل ولا ينحفظ. وإذا تشاهد وياك مع صوت النظام، تسمع أصدقائك بالمكالمة لما يذكرون اسمها: خبّرهم إنها موجودة.",
       micDenied: "ما أسمعك، المايك ممنوع 🥺 اسمح بيه من القفل 🔒 جنب العنوان.", micNone: "هذا المتصفح ما يحوّل الكلام لكتابة 🥺 جرّب Chrome.",
       codeAsk: "رمز الدخول لـFirefly (مرة واحدة فقط على هذا الجهاز):", codeWrong: "الرمز غير صحيح. حاول مرة ثانية:",
       tonesTitle: "نغمات موجات الدماغ",
@@ -2281,7 +2283,7 @@ ${last}${langNote()}`;
       W.starting = true;
       openFloat();   // in the same tap, so the browser allows it
       let st;
-      try { st = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 2 }, audio: false }); }
+      try { st = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 2 }, audio: true, systemAudio: "include" }); }
       catch (e) {
         W.starting = false; closeFloat();
         if (!box.isConnected) return;
@@ -2291,7 +2293,7 @@ ${last}${langNote()}`;
       }
       W.starting = false;
       if (!box.isConnected) { st.getTracks().forEach((x) => x.stop()); return; }
-      W.on = true; W.stream = st; W.track = st.getVideoTracks()[0];
+      W.on = true; W.stream = st; W.track = st.getVideoTracks()[0]; W.audio = st.getAudioTracks()[0] || null;
       W.track.onended = () => stopWatch(true);
       W.video = document.createElement("video"); W.video.muted = true; W.video.playsInline = true; W.video.srcObject = st; W.video.play().catch(() => {});
       try { W.grabber = window.ImageCapture ? new ImageCapture(W.track) : null; } catch (e) { W.grabber = null; }
@@ -2302,13 +2304,15 @@ ${last}${langNote()}`;
       luma.set("chibi:excited"); sound.cute("excited"); drawFloat("👀");
       ticker(true);
       setTimeout(check, 1500);
+      earSysRun();
     }
     function stopWatch(said) {
       if (!W.on) return;
       W.on = false; ticker(false);
       W.stream.getTracks().forEach((x) => x.stop());
       W.video.srcObject = null;
-      W.stream = W.track = W.video = W.grabber = null;
+      W.stream = W.track = W.video = W.grabber = W.audio = null;
+      earSysStop();
       closeFloat();
       if (box.isConnected) {
         $("#watchbar").hidden = true; $("#watch").hidden = false; $("#hint").textContent = t("aiHint");
@@ -2527,12 +2531,13 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
       $("#ear").classList.add("on"); $("#ear").setAttribute("aria-pressed", "true");
       $("#hint").textContent = t("earHint");
       status(idleStatus()); if (byUser) { sound.cute("boop"); luma.set("chibi:listening"); }
-      earRun();
+      earRun(); earSysRun();
     }
     function earStop(byUser) {
       if (byUser) earRemember(false);
       EAR.on = false; EAR.waitUntil = 0;
       if (EAR.rec) { EAR.rec.onend = null; EAR.rec.abort(); EAR.rec = null; }
+      earSysStop();
       if (box.isConnected) {
         $("#ear").classList.remove("on"); $("#ear").setAttribute("aria-pressed", "false");
         $("#hint").textContent = t(W.on ? "watchNote" : "aiHint"); status(idleStatus());
@@ -2540,7 +2545,7 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
       syncBubble();
     }
     function earRun() {
-      if (!EAR.on || EAR.inCall || EAR.rec || rec || !box.isConnected) return;
+      if (!EAR.on || EAR.rec || rec || !box.isConnected) return;
       const r = new SR();
       r.lang = lang === "ar" ? "ar-IQ" : "en-US";
       r.continuous = true; r.interimResults = false;
@@ -2551,28 +2556,45 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
       try { r.start(); } catch (e) { EAR.rec = null; }
       syncBubble();
     }
-    function heardLine(raw) {
+    function heardLine(raw, friend) {
       const text = String(raw || "").trim();
       if (!text) return;
+      // the same words can arrive from both ears (speakers into the mic): take them once
+      const key = text.replace(/[\s،,.!؟?]+/g, " ").toLowerCase();
+      if (EAR.lastKey === key && Date.now() - EAR.lastAt < 4000) return;
+      const pass = (said) => { EAR.lastKey = key; EAR.lastAt = Date.now(); toLuma(friend ? t("friendSaid", { text: said }) : said); };
+      const wait = friend ? "waitSysUntil" : "waitUntil";
       const m = text.match(WAKE);
       if (m) {
         const rest = (text.slice(0, m.index) + " " + text.slice(m.index + m[0].length)).replace(/[\s،,.!؟?]+/g, " ").trim();
-        if (rest.length >= 2) return toLuma(text);
-        // just her name: she perks up and takes the next thing they say
-        EAR.waitUntil = Date.now() + 8000;
-        luma.set("chibi:excited"); sound.cute("boop"); bubbleSay(lang === "ar" ? "همم؟ 👂" : "hmm? 👂");
+        if (rest.length >= 2) return pass(text);
+        // just her name: she perks up and takes the next thing said on that side
+        EAR[wait] = Date.now() + 8000;
+        luma.set("chibi:excited"); if (!EAR.inCall) sound.cute("boop"); bubbleSay(lang === "ar" ? "همم؟ 👂" : "hmm? 👂");
         return;
       }
-      if (Date.now() < EAR.waitUntil) { EAR.waitUntil = 0; return toLuma(text); }
+      if (Date.now() < EAR[wait]) { EAR[wait] = 0; return pass(text); }
       // not for her: forgotten here, never sent or kept
     }
+    // Friends: the same name-only listening on the computer's sound, when it was shared with the screen.
+    // (Browsers that can't listen to a shared track fall back to the mic; the duplicate check above keeps that harmless.)
+    function earSysRun() {
+      if (!EAR.on || EAR.sys || !W.audio || W.audio.readyState !== "live" || !box.isConnected) return;
+      const r = new SR();
+      r.lang = lang === "ar" ? "ar-IQ" : "en-US";
+      r.continuous = true; r.interimResults = false;
+      r.onresult = (e) => { for (let i = e.resultIndex; i < e.results.length; i++) if (e.results[i].isFinal) heardLine(e.results[i][0].transcript, true); };
+      r.onerror = (e) => { if (["not-allowed", "service-not-allowed", "audio-capture"].includes(e.error)) EAR.sysOff = true; };
+      r.onend = () => { EAR.sys = null; if (!EAR.sysOff) setTimeout(earSysRun, 400); };
+      EAR.sys = r;
+      try { r.start(W.audio); } catch (e) { EAR.sys = null; EAR.sysOff = true; }
+    }
+    function earSysStop() { if (EAR.sys) { EAR.sys.onend = null; EAR.sys.abort(); EAR.sys = null; } EAR.sysOff = false; }
     function toLuma(text) { if (ctl || !box.isConnected) return; send(text); bubbleSay("…"); }
     // the screen says a call started or ended
     function onCall(v) {
       if (v === EAR.inCall) return;
       EAR.inCall = v;
-      if (v && EAR.rec) { EAR.rec.onend = null; EAR.rec.abort(); EAR.rec = null; }
-      if (!v) earRun();
       if (box.isConnected) status(idleStatus());
       syncBubble();
     }

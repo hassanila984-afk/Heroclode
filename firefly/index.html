@@ -212,6 +212,62 @@
   .chart { width: 100%; aspect-ratio: 300 / 96; display: block; }
   .chart text { fill: var(--haze); font: 11px var(--body); }
 
+  /* Bottom navigation: always there, so nobody gets lost */
+  .tabbar {
+    position: fixed; z-index: 4; left: 0; right: 0; bottom: 0;
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    padding: 6px max(10px, env(safe-area-inset-left, 0px)) calc(6px + env(safe-area-inset-bottom, 0px)) max(10px, env(safe-area-inset-right, 0px));
+    background: rgba(12, 12, 36, .82); border-top: 1px solid var(--glass-line);
+    backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+    transition: transform .35s ease;
+  }
+  .tabbar button { border: 0; background: none; color: var(--haze); display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px 2px; font-size: 12px; font-weight: 600; border-radius: 14px; }
+  .tabbar svg { width: 24px; height: 24px; }
+  .tabbar button[aria-current="page"] { color: var(--glow); background: rgba(255, 210, 122, .1); }
+  body.no-tabs .tabbar { transform: translateY(110%); }
+  body:not(.no-tabs) .stage { padding-block-end: calc(env(safe-area-inset-bottom, 0px) + 80px); }
+  body:not(.no-tabs) .panel { max-height: calc(100dvh - 190px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); }
+  body:not(.no-tabs) #sound-btn { display: none; }
+  body[data-screen="talk-free"] .back, body[data-screen="sounds"] .back, body[data-screen="nights"] .back { display: none; }
+
+  /* Home: one smart suggestion */
+  .panel.home { gap: 12px; }
+  .home-top { align-items: center; }
+  .pill { font-size: 12px; font-weight: 700; color: var(--glow); background: rgba(255, 210, 122, .12); border-radius: 999px; padding: 4px 10px; }
+  .suggest {
+    display: flex; align-items: center; gap: 14px; width: 100%; text-align: start;
+    background: linear-gradient(135deg, rgba(255, 210, 122, .16), rgba(181, 140, 255, .1));
+    border: 1px solid rgba(255, 210, 122, .35); border-radius: 22px; padding: 16px; color: var(--mist);
+    transition: transform .15s, border-color .2s;
+  }
+  button.suggest:active { transform: scale(.98); }
+  .sg-ico { width: 46px; height: 46px; flex: none; border-radius: 14px; display: grid; place-items: center; background: rgba(255, 210, 122, .16); color: var(--glow); }
+  .sg-ico svg { width: 24px; height: 24px; }
+  .sg-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+  .sg-txt b { font-family: var(--display); font-size: 22px; font-weight: 400; line-height: 1.25; }
+  .sg-txt span { font-size: 14px; color: var(--haze); }
+  .sg-go { flex: none; background: linear-gradient(180deg, var(--glow), var(--glow-deep)); color: #2a1a05; font-weight: 700; border-radius: 999px; padding: 10px 16px; font-size: 15px; }
+  .grow { flex: 1; }
+  .mini-progress { display: inline-flex; align-items: center; gap: 8px; }
+  .mini-progress i { display: inline-block; width: 40px; height: 4px; border-radius: 4px; background: linear-gradient(90deg, var(--glow) var(--p, 0%), var(--chip) 0); }
+
+  /* Getting to know you */
+  .choices { display: grid; gap: 8px; }
+  .choice { text-align: start; border: 1px solid var(--glass-line); background: var(--chip); color: var(--mist); border-radius: 16px; padding: 14px 16px; font-size: 16px; font-weight: 600; transition: transform .12s, border-color .2s, background .2s; }
+  .choice:active, .choice.picked { transform: scale(.98); border-color: var(--glow); background: rgba(255, 210, 122, .14); }
+  .chip-btn { border: 1px solid var(--glass-line); background: var(--chip); color: var(--mist); border-radius: 999px; padding: 9px 14px; font-size: 14px; }
+  .primary.big { padding: 16px; font-size: 18px; }
+  .grid4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .grid4 .tile { flex: none; align-items: center; text-align: center; padding: 12px 6px; }
+  .grid4 .tile b { font-size: 12px; }
+
+  /* Tap-to-reply in the chat */
+  .quick { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; flex-shrink: 0; }
+  .quick::-webkit-scrollbar { display: none; }
+  .quick:empty { display: none; }
+  .quick button { flex: none; border: 1px solid rgba(255, 210, 122, .35); background: rgba(255, 210, 122, .08); color: var(--mist); border-radius: 999px; padding: 8px 13px; font-size: 14px; font-weight: 600; white-space: nowrap; }
+  .quick button:active { transform: scale(.95); }
+
   /* Luma: a chibi who sits on the panel's top edge and reacts */
   .luma-char { position: fixed; z-index: 3; cursor: pointer; transition: top .5s cubic-bezier(.2, .8, .2, 1), left .5s, width .5s, height .5s; -webkit-tap-highlight-color: transparent; }
   .lm-figure { position: relative; width: 100%; height: 100%; animation: lmBob 3.4s ease-in-out infinite; transform-origin: 50% 100%; }
@@ -305,6 +361,12 @@
 <div class="luma-char" id="luma"></div>
 
 <div class="stage"><section class="panel" id="panel" aria-live="polite"></section></div>
+<nav class="tabbar" id="tabbar" aria-label="Main">
+  <button data-tab="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18c3-4 6-6 9-6s6 2 9 6"/><path d="M15 7a3 3 0 1 1-4-2.8"/></svg><span id="tab-home">Meadow</span></button>
+  <button data-tab="talk-free"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16v10H9l-5 4z"/></svg><span id="tab-luma">Luma</span></button>
+  <button data-tab="sounds"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 12h1M8 8v8M12 5v14M16 9v6M20 11v2"/></svg><span id="tab-sounds">Sounds</span></button>
+  <button data-tab="nights"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg><span id="tab-you">You</span></button>
+</nav>
 
 <script>
 (() => {
@@ -507,6 +569,66 @@
     },
   };
 
+  // ---- strings for navigation, smart suggestions and getting to know you ----
+  Object.assign(S.en, {
+    tabHome: "Meadow", tabLuma: "Luma", tabSounds: "Sounds", tabYou: "You",
+    another: "Something else ↻", quietThings: "Quiet things",
+    s_ritual: "Tonight's ritual", s_ritualD: "7 calm minutes, then a firefly.", s_ritualB: "Let's start",
+    s_ritualFirst: "Light your first firefly", s_ritualFirstD: "7 calm minutes with Luma.",
+    s_quick: "Just light it", s_quickD: "Tired? One minute is enough tonight.", s_quickB: "1 minute",
+    s_intentD: "Last time you planned this. Did it happen?",
+    s_story: "A bedtime story", s_storyD: "Luma writes one just for you.", s_storyB: "Read",
+    s_sounds: "Calm sounds", s_soundsD: "Rain, music or brainwave tones.", s_soundsB: "Play",
+    s_talk: "Talk to Luma", s_talkD: "No pressure. Tap a reply or type.", s_talkB: "Open",
+    s_stars: "Add a star", s_starsD: "One good thing from today.", s_starsB: "Add",
+    s_breathe: "Breathe a little", s_breatheD: "One minute to calm your body.", s_breatheB: "Breathe",
+    s_lantern: "Let a worry go", s_lanternD: "Write it, watch it float away.", s_lanternB: "Release",
+    litTonight: "Tonight's firefly is lit ✨",
+    obSkip: "Skip", obGo: "Next", obDone: "Let's go in",
+    obHello: "Hi! I'm Luma 🥺 I live in the little cabin on the hill.",
+    obName: "What should I call you?", obNamePh: "Your name or a nickname", obNoName: "Doesn't matter 😅",
+    obNice: "{name}… I like it ✨", obNiceNone: "Okay, mystery friend 😏",
+    obEvening: "A totally free evening. You pick…",
+    obE_solo: "🎧 Something quiet, alone", obE_one: "☕ Hanging out with one close person", obE_crowd: "🎉 Going out with friends", obE_sleep: "😴 Sleep. Just sleep.",
+    obBad: "A bad day… what do you do first?",
+    obB_space: "🫥 Go quiet, I need space", obB_talk: "💬 Talk to someone", obB_busy: "🎮 Distract myself", obB_laugh: "😂 Laugh it off and keep going",
+    obMsg: "Which message would make you smile most?",
+    obM_joke: "\"lmao look at this 😂\"", obM_proud: "\"I'm proud of you 🥺\"", obM_calm: "\"Breathe. I'm here 🌙\"", obM_push: "\"Come on, you got this 💪\"",
+    obText: "When you text a friend, it usually looks like…",
+    obT_word: "\"hey\"", obT_line: "\"hey how are you, what's up\"", obT_para: "A whole paragraph 📜", obT_voice: "A voice note, typing is effort 😅",
+    obEnd: "Yay! I know you a little now ✨",
+    quickDefault: "I'm okay|Tired 😮‍💨|Don't know what to say|Make me laugh|You talk",
+  });
+  Object.assign(S.ar, {
+    tabHome: "المرج", tabLuma: "لُمى", tabSounds: "الأصوات", tabYou: "أنت",
+    another: "شي ثاني ↻", quietThings: "أشياء هادئة",
+    s_ritual: "طقس الليلة", s_ritualD: "سبع دقائق هادئة، وبعدها يراعة.", s_ritualB: "يلا نبدأ",
+    s_ritualFirst: "ضوّي أول يراعة", s_ritualFirstD: "سبع دقائق هادئة ويا لُمى.",
+    s_quick: "بس ضوّيها", s_quickD: "تعبان؟ دقيقة وحدة تكفي الليلة.", s_quickB: "دقيقة وحدة",
+    s_intentD: "هذي خطتك من المرة الماضية. صارت؟",
+    s_story: "حكاية قبل النوم", s_storyD: "لُمى تكتبلك وحدة خاصة بيك.", s_storyB: "اقرأ",
+    s_sounds: "أصوات هادئة", s_soundsD: "مطر، موسيقى، أو نغمات للدماغ.", s_soundsB: "شغّل",
+    s_talk: "احچي ويا لُمى", s_talkD: "بدون ضغط. اضغط رد جاهز أو اكتب.", s_talkB: "افتح",
+    s_stars: "ضيف نجمة", s_starsD: "شي حلو صار اليوم.", s_starsB: "ضيف",
+    s_breathe: "تنفّس شوية", s_breatheD: "دقيقة تهدّي جسمك.", s_breatheB: "تنفّس",
+    s_lantern: "طلّع همّ من راسك", s_lanternD: "اكتبه وشوفه يطير.", s_lanternB: "أطلقه",
+    litTonight: "يراعة الليلة مضوية ✨",
+    obSkip: "عدّي", obGo: "يلا", obDone: "يلا ندخل",
+    obHello: "هلا! أنا لُمى 🥺 أعيش بالكوخ الصغير فوق التل.",
+    obName: "بشنو أناديك؟", obNamePh: "اسمك أو لقب تحبه", obNoName: "ما يهم 😅",
+    obNice: "{name}… حلو ✨", obNiceNone: "تمام يا صديقي الغامض 😏",
+    obEvening: "مساء فاضي تمامًا. شتختار؟",
+    obE_solo: "🎧 شي هادئ لحالي", obE_one: "☕ قعدة ويا شخص واحد قريب", obE_crowd: "🎉 طلعة ويا الربع", obE_sleep: "😴 نوم. بس نوم.",
+    obBad: "يوم سيئ… شنو أول شي تسويه؟",
+    obB_space: "🫥 أسكت وأحتاج مساحة", obB_talk: "💬 أحچي لأحد", obB_busy: "🎮 ألهي نفسي بشي", obB_laugh: "😂 أضحك عليه وأكمل",
+    obMsg: "أي رسالة تفرّحك أكثر لو وصلتك؟",
+    obM_joke: "«هههه شوف هذا 😂»", obM_proud: "«فخورة بيك 🥺»", obM_calm: "«خذ نفس، أنا هنا 🌙»", obM_push: "«يلا قوم سوّيها 💪»",
+    obText: "لما تكتب لصديق، رسالتك عادةً تكون…",
+    obT_word: "«هلا»", obT_line: "«هلا شلونك شكو ماكو»", obT_para: "فقرة كاملة 📜", obT_voice: "فويس، الكتابة تعب 😅",
+    obEnd: "ياي! صرت أعرفك شوية ✨",
+    quickDefault: "تمام 🙂|تعبان 😮‍💨|ما أعرف شأحچي|ضحّكيني 😂|احچيلي انتي",
+  });
+
   const C = {
     en: {
       milestones: ["your first firefly", "a light in the cabin window", "the old tree blossoms", "shooting stars", "a pond that holds the moon", "the northern lights"],
@@ -634,7 +756,7 @@
   const LS = "firefly-v1";
   function blank() {
     return { name: "", fireflies: 0, golden: 0, streak: 0, best: 0, lastDate: null, graceDate: null,
-      memory: [], style: [], intention: null, history: [], stars: [], gifts: [], seenGifts: [] };
+      memory: [], style: [], onboarded: false, answers: {}, intention: null, history: [], stars: [], gifts: [], seenGifts: [] };
   }
   let state = blank();
   try { const saved = JSON.parse(localStorage.getItem(LS)); if (saved && typeof saved === "object") state = Object.assign(blank(), saved); } catch (e) {}
@@ -672,7 +794,7 @@
           state = remote;
           try { localStorage.setItem(LS, JSON.stringify(state)); } catch (e) {}
           syncSky(); renderCount();
-          if (screen === "home") show("home");
+          if (screen === "home" || (screen === "onboard" && state.onboarded)) show("home");
         } else persist();
       } else if (state.fireflies) persist();
     } catch (e) { docRef = null; }
@@ -1340,7 +1462,8 @@ ${last}${langNote()}`;
     // Sit on the top edge of the panel, at its end side.
     function place(rect) {
       lastRect = rect;
-      const w = Math.min(128, (rect.top - 56) / 1.27);
+      const big = screen === "home" || screen === "onboard";
+      const w = Math.min(big ? 176 : 128, (rect.top - 56) / 1.27);
       if (w < 58 || screen === "talk" || screen === "talk-free") { box.hidden = true; return; }
       box.hidden = false;
       const h = w * 1.27;
@@ -1349,6 +1472,8 @@ ${last}${langNote()}`;
       box.style.top = rect.top - h * 0.8 + "px";
       const rtl = document.documentElement.dir === "rtl";
       box.style.left = (rtl ? rect.left + 8 : rect.right - w - 8) + "px";
+      // keep the speech bubble inside the screen
+      say.style.maxWidth = Math.max(140, Math.min(240, innerWidth - w - 36)) + "px";
     }
     box.addEventListener("click", () => {
       const [p, text] = pick(LUMA_LINES[lang].tap);
@@ -1372,7 +1497,18 @@ ${last}${langNote()}`;
     if (/^\s*\[[a-z:]*$/i.test(text)) return { mood: null, body: "", pending: true };
     return { mood: null, body: text, pending: false };
   }
-  const clean = (text) => readMood(text).body || text;
+  const clean = (text) => splitReplies(readMood(text).body || text).body;
+  // "Hi!\nREPLIES: ok | tired | lol" -> { body: "Hi!", replies: ["ok", "tired", "lol"] }
+  function splitReplies(text) {
+    const i = text.search(/\n?\s*REPLIES\s*:/i);
+    if (i < 0) {
+      // hide a REPLIES line that is still streaming in
+      const j = text.search(/\n\s*R(E(P(L(I(E(S)?)?)?)?)?)?$/i);
+      return { body: (j < 0 ? text : text.slice(0, j)).trim(), replies: [] };
+    }
+    const replies = text.slice(i).replace(/^\s*REPLIES\s*:/i, "").split("|").map((x) => x.trim()).filter((x) => x && x.length <= 40).slice(0, 3);
+    return { body: text.slice(0, i).trim(), replies };
+  }
 
   function lumaForScreen(name) {
     const L = LUMA_LINES[lang].screen, h = new Date().getHours();
@@ -1401,7 +1537,9 @@ ${last}${langNote()}`;
   }
   const stepBar = (n) => `<div class="steps" aria-label="${t("stepOf", { n: num(n) })}">${[1, 2, 3, 4, 5].map((i) => `<i class="${i <= n ? "on" : ""}"></i>`).join("")}</div>`;
   const backBtn = () => `<button class="back" data-back>${t("back")}</button>`;
-  function wireBack(to = "home") { const b = $("[data-back]"); if (b) b.onclick = () => show(to); }
+  // Which bottom tab each screen belongs to (none: a focused step with no tabs).
+  const TAB_OF = { home: "home", "talk-free": "talk-free", sounds: "sounds", nights: "nights", stars: "nights", story: "nights", "breathe-free": "nights", lanterns: "nights" };
+  function wireBack(to) { const b = $("[data-back]"); if (b) b.onclick = () => show(to || (TAB_OF[screen] === "nights" && screen !== "nights" ? "nights" : "home")); }
   const shortDate = (d) => new Date(d + "T12:00").toLocaleDateString(locale(), { month: "short", day: "numeric" });
 
   function renderChrome() {
@@ -1410,6 +1548,10 @@ ${last}${langNote()}`;
     document.getElementById("brand").textContent = t("brand");
     document.getElementById("sound-label").textContent = t("sounds");
     document.getElementById("lang-btn").textContent = t("langSwitch");
+    document.getElementById("tab-home").textContent = t("tabHome");
+    document.getElementById("tab-luma").textContent = t("tabLuma");
+    document.getElementById("tab-sounds").textContent = t("tabSounds");
+    document.getElementById("tab-you").textContent = t("tabYou");
   }
   const renderCount = renderChrome;
   const nextMilestone = () => milestones().find((m) => m.at > state.fireflies);
@@ -1418,6 +1560,10 @@ ${last}${langNote()}`;
   function show(name, arg) {
     if (cleanup) { cleanup(); cleanup = null; }
     screen = name;
+    document.body.dataset.screen = name;
+    const tab = TAB_OF[name];
+    document.body.classList.toggle("no-tabs", !tab);
+    document.querySelectorAll("#tabbar [data-tab]").forEach((b) => b.setAttribute("aria-current", b.dataset.tab === tab ? "page" : "false"));
     SCREENS[name](arg);
     syncFloor();
     lumaForScreen(name);
@@ -1437,61 +1583,190 @@ ${last}${langNote()}`;
   };
   const icon = (k) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[k]}</svg>`;
 
-  // ---------- home ----------
+  // ---------- home: Luma in the middle and one smart suggestion ----------
+  const newSession = (quick) => ({ quick, weight: 0, tags: [], turns: [], worries: [], intention: "" });
+  // Picks what to offer right now from the time, tonight's progress and how the last days felt.
+  function suggestions() {
+    const h = new Date().getHours(), late = h >= 23 || h < 4, evening = h >= 17 || h < 4;
+    const last = state.history[state.history.length - 1] || {};
+    const heavy = last.weight >= 4, worried = (last.tags || []).includes("Worry");
+    const done = doneTonight(), first = !state.fireflies;
+    const list = [];
+    if (state.intention && state.intention.date !== dayKey() && state.intention.done == null) list.push({ k: "intent", score: 100 });
+    if (!done) {
+      list.push({ k: "ritual", score: late || heavy ? 70 : evening ? 90 : 75 });
+      if (!first) list.push({ k: "quick", score: late || heavy ? 88 : 40 });
+    }
+    list.push({ k: "story", score: done && h >= 21 ? 80 : late ? 60 : 25 });
+    list.push({ k: "sounds", score: done ? 65 : 30 });
+    list.push({ k: "talk", score: !state.style.length ? 58 : done ? 55 : 35 });
+    list.push({ k: "stars", score: state.stars.length < 3 ? 45 : done ? 50 : 20 });
+    list.push({ k: "breathe", score: heavy ? 62 : 28 });
+    list.push({ k: "lantern", score: worried ? 64 : 22 });
+    return list.sort((a, b) => b.score - a.score);
+  }
+  const SUGGEST = {
+    ritual: { icon: "moon", go: () => { session = newSession(false); show("breathe"); } },
+    quick: { icon: "moon", go: () => { session = newSession(true); show("checkin"); } },
+    story: { icon: "book", go: () => show("story") },
+    sounds: { icon: "sound", go: () => show("sounds") },
+    talk: { icon: "talk", go: () => show("talk-free") },
+    stars: { icon: "star", go: () => show("stars") },
+    breathe: { icon: "breath", go: () => show("breathe-free") },
+    lantern: { icon: "lantern", go: () => show("lanterns") },
+  };
+  let suggestAt = 0;
   function home() {
-    const h = new Date().getHours();
-    const part = t(h < 5 ? "partLate" : h < 12 ? "partMorning" : h < 17 ? "partAfternoon" : "partEvening");
-    const weekday = new Date().toLocaleDateString(locale(), { weekday: "long" });
+    const list = suggestions();
+    const top = list[suggestAt % list.length];
     const next = nextMilestone(), from = prevMilestoneAt();
     const pct = next ? Math.round(((state.fireflies - from) / (next.at - from)) * 100) : 100;
-    const pendingIntention = state.intention && state.intention.date !== dayKey() && state.intention.done == null;
-    const first = !state.fireflies;
-    const hi = state.name ? t("hiName", { name: esc(state.name) }) : "";
-    const greeting = first ? t("greetFirst") : doneTonight() ? t("greetDone", { hi }) : t("greetBack", { hi });
-    const lead = t(first ? "leadFirst" : doneTonight() ? "leadDone" : "leadBack");
-    const tiles = [
-      ["sounds", "sound", "tileSounds"], ["story", "book", "tileStory"], ["stars", "star", "tileStars"],
-      ["breathe-free", "breath", "tileBreathe"], ["lanterns", "lantern", "tileLanterns"],
-      ["talk-free", "talk", "tileTalk"], ["nights", "moon", "tileNights"],
-    ];
+    const weekday = new Date().toLocaleDateString(locale(), { weekday: "long" });
+    const h = new Date().getHours();
+    const part = t(h < 5 ? "partLate" : h < 12 ? "partMorning" : h < 17 ? "partAfternoon" : "partEvening");
+    let card;
+    if (top.k === "intent") {
+      card = `<div class="suggest">
+          <div class="sg-ico">${icon("star")}</div>
+          <div class="sg-txt"><b dir="auto">${esc(state.intention.text)}</b><span>${t("s_intentD")}</span></div>
+        </div>
+        <div class="row"><button class="primary grow" data-did="1">${t("itHappened")}</button><button class="ghost" data-did="0">${t("notYet")}</button></div>`;
+    } else {
+      const first = top.k === "ritual" && !state.fireflies;
+      const title = first ? t("s_ritualFirst") : t("s_" + top.k), why = first ? t("s_ritualFirstD") : t("s_" + top.k + "D");
+      card = `<button class="suggest" id="go">
+          <div class="sg-ico">${icon(SUGGEST[top.k].icon)}</div>
+          <div class="sg-txt"><b>${title}</b><span>${why}</span></div>
+          <div class="sg-go">${t("s_" + top.k + "B")}</div>
+        </button>`;
+    }
     el(`
-      <p class="eyebrow">${esc(weekday)} · ${part}</p>
-      <h1>${greeting}</h1>
-      <p class="soft">${lead}</p>
-      ${pendingIntention ? `
-        <div class="note" id="intent">
-          <div class="who">${t("lastPlanned")}</div>
-          <blockquote>${esc(state.intention.text)}</blockquote>
-          <div class="row" style="margin-top:10px"><button class="ghost" data-did="1">${t("itHappened")}</button><button class="text-btn" data-did="0">${t("notYet")}</button></div>
-        </div>` : ""}
-      ${state.fireflies ? `<div class="stats">
-          <div><b>${num(state.fireflies + state.golden)}</b><span>${t("statFireflies")}</span></div>
-          <div><b>${num(state.streak)}</b><span>${t("statRow")}</span></div>
-          <div><b>${num(state.stars.length)}</b><span>${t("statStars")}</span></div>
-        </div>` : ""}
-      ${next ? `<div><div class="progress"><i style="width:${pct}%"></i></div><p class="tiny" style="margin-top:6px">${t("untilNext", { n: num(next.at - state.fireflies), label: next.label })}</p></div>`
-             : `<p class="tiny">${t("allAwake")}</p>`}
-      <div class="row split">
-        ${doneTonight() ? "" : `<button class="primary" id="begin">${t(first ? "beginFirst" : "begin")}</button>`}
-        ${doneTonight() || first ? "" : `<button class="text-btn" id="quick">${t("quick")}</button>`}
+      <div class="row split home-top">
+        <p class="eyebrow">${esc(weekday)} · ${part}</p>
+        ${doneTonight() ? `<span class="pill">${t("litTonight")}</span>` : ""}
       </div>
-      <p class="eyebrow">${t("inMeadow")}</p>
-      <div class="tiles">${tiles.map(([to, ic, k]) => `<button class="tile" data-to="${to}">${icon(ic)}<b>${t(k)}</b><span>${t(k + "D")}</span></button>`).join("")}</div>
-    `);
-    const newSession = (quick) => ({ quick, weight: 0, tags: [], turns: [], worries: [], intention: "" });
-    const begin = $("#begin");
-    if (begin) begin.onclick = () => { session = newSession(false); show("breathe"); };
-    const quick = $("#quick");
-    if (quick) quick.onclick = () => { session = newSession(true); show("checkin"); };
-    $$("[data-to]").forEach((b) => b.onclick = () => show(b.dataset.to));
+      ${card}
+      <div class="row split">
+        <button class="text-btn" id="another">${t("another")}</button>
+        ${next ? `<span class="tiny mini-progress"><i style="--p:${pct}%"></i>${t("untilNext", { n: num(next.at - state.fireflies), label: next.label })}</span>` : ""}
+      </div>
+    `, "home");
+    const go = $("#go");
+    if (go) go.onclick = () => SUGGEST[top.k].go();
+    $("#another").onclick = () => { suggestAt++; show("home"); };
     $$("[data-did]").forEach((b) => b.onclick = () => {
       state.intention.done = b.dataset.did === "1";
       persist();
-      $("#intent").innerHTML = state.intention.done
-        ? `<div class="who">${t("niceDone")}</div><blockquote>${t("niceDoneQ")}</blockquote>`
-        : `<div class="who">${t("okay")}</div><blockquote>${t("okayQ")}</blockquote>`;
+      luma.speak(t(state.intention.done ? "niceDoneQ" : "okayQ"), state.intention.done ? "chibi:excited" : "chibi:listening");
+      if (state.intention.done) sound.cute("excited");
+      suggestAt = 0;
+      show("home");
     });
   }
+
+  // ---------- getting to know you (first time) ----------
+  // Light, playful questions. The answers become notes on how Luma should talk with them,
+  // shown in "You" like everything else she learns.
+  const OB_NOTES = {
+    en: {
+      solo: "Introverted, recharges alone. Keep it calm and low-pressure; never push them to talk.",
+      one: "Values close one-on-one connection. Be warm and personal.",
+      crowd: "Social and energetic. Be lively and playful.",
+      sleep: "Often drained. Keep things short and restful.",
+      space: "When upset they need space first. Be quiet and gentle, few questions.",
+      talk: "When upset they like to talk it out. Invite them to vent and really listen.",
+      busy: "Copes by distraction. Offer light, fun things unless they go deeper.",
+      laugh: "Copes with humor. Light teasing and jokes help.",
+      joke: "Lights up with silly, funny messages.",
+      proud: "Needs words of affirmation. Tell them you're proud of them.",
+      calm: "Feels cared for by a calm, reassuring presence.",
+      push: "Likes a playful little push to get going.",
+      word: "Writes very short. Reply very short.",
+      line: "Short, casual messages.",
+      para: "Enjoys longer chats. You can say a little more.",
+      voice: "Dislikes typing. Keep it easy; they will mostly tap ready replies.",
+    },
+    ar: {
+      solo: "انطوائي ويرتاح لحاله. خلّيها هادئة وبدون ضغط، ولا تجبريه يحچي.",
+      one: "يقدّر العلاقة القريبة مع شخص واحد. كوني دافئة وقريبة.",
+      crowd: "اجتماعي وحيوي. كوني مرحة ونشيطة.",
+      sleep: "غالبًا مستنزف. خلّي الكلام قصير ومريح.",
+      space: "لما يتضايق يحتاج مساحة أولًا. كوني هادئة ولطيفة وقللي الأسئلة.",
+      talk: "لما يتضايق يحب يحچي. شجّعيه يفضفض واسمعيه زين.",
+      busy: "يتعامل بالتلهّي. اقترحي أشياء خفيفة وممتعة إلا إذا هو تعمّق.",
+      laugh: "يتعامل بالضحك. المزاح والمشاكسة الخفيفة تساعده.",
+      joke: "يفرح بالرسائل المضحكة والسخيفة.",
+      proud: "يحتاج كلمات تقدير. گوليله إنك فخورة بيه.",
+      calm: "يحس بالاهتمام من الحضور الهادئ والمطمئن.",
+      push: "يحب دفعة مرحة صغيرة حتى يتحرك.",
+      word: "يكتب قصير جدًا. ردّي قصير جدًا.",
+      line: "رسائل قصيرة وعفوية.",
+      para: "يحب السوالف الطويلة. تقدرين تحچين أكثر شوية.",
+      voice: "ما يحب الكتابة. خلّيها سهلة، راح يضغط ردود جاهزة غالبًا.",
+    },
+  };
+  const OB_STEPS = [
+    { q: "obEvening", key: "evening", opts: [["solo", "chibi:shy"], ["one", "chibi:happy"], ["crowd", "chibi:excited"], ["sleep", "chibi:sleepy"]], pre: "obE_" },
+    { q: "obBad", key: "bad", opts: [["space", "chibi:listening"], ["talk", "chibi:happy"], ["busy", "chibi:excited"], ["laugh", "chibi:happy"]], pre: "obB_" },
+    { q: "obMsg", key: "msg", opts: [["joke", "chibi:excited"], ["proud", "chibi:shy"], ["calm", "chibi:sleepy"], ["push", "chibi:pout"]], pre: "obM_" },
+    { q: "obText", key: "text", opts: [["word", "chibi:happy"], ["line", "chibi:happy"], ["para", "chibi:excited"], ["voice", "chibi:pout"]], pre: "obT_" },
+  ];
+  function onboard(step = 0) {
+    const total = OB_STEPS.length + 1;
+    const dots = `<div class="steps">${Array.from({ length: total }, (_, i) => `<i class="${i <= step ? "on" : ""}"></i>`).join("")}</div>`;
+    const finish = () => {
+      state.onboarded = true;
+      const a = state.answers || {};
+      const notes = OB_NOTES[lang];
+      state.style = ["evening", "bad", "msg", "text"].map((k) => notes[a[k]]).filter(Boolean).concat(state.style).slice(0, 5);
+      persist();
+      el(`${dots}<h2>${t("obEnd")}</h2><button class="primary big" id="in">${t("obDone")}</button>`, "onboard");
+      luma.speak(t("obEnd"), "chibi:excited", 3000); sound.cute("excited");
+      $("#in").onclick = () => { suggestAt = 0; show("home"); };
+    };
+    if (step === 0) {
+      el(`
+        ${dots}
+        <h2>${t("obName")}</h2>
+        <form class="composer" id="nf"><input type="text" id="nm" maxlength="30" placeholder="${t("obNamePh")}" aria-label="${t("obName")}" autocomplete="given-name" value="${esc(state.name || "")}"><button class="primary">${t("obGo")}</button></form>
+        <div class="row split"><button class="chip-btn" id="noname">${t("obNoName")}</button><button class="text-btn" id="skip">${t("obSkip")}</button></div>
+      `, "onboard");
+      luma.speak(t("obHello"), "chibi:happy", 6000);
+      const nextWith = (name) => {
+        state.name = name; persist();
+        luma.speak(name ? t("obNice", { name }) : t("obNiceNone"), name ? "chibi:shy" : "chibi:happy", 3000);
+        sound.cute(name ? "shy" : "happy");
+        setTimeout(() => onboard(1), 900);
+      };
+      $("#nf").onsubmit = (e) => { e.preventDefault(); nextWith($("#nm").value.trim()); };
+      $("#noname").onclick = () => nextWith("");
+      $("#skip").onclick = () => { state.onboarded = true; persist(); show("home"); };
+      return;
+    }
+    if (step > OB_STEPS.length) return finish();
+    const s = OB_STEPS[step - 1];
+    el(`
+      ${dots}
+      <h2>${t(s.q)}</h2>
+      <div class="choices">${s.opts.map(([k]) => `<button class="choice" data-k="${k}">${t(s.pre + k)}</button>`).join("")}</div>
+      <div class="row end"><button class="text-btn" id="skip">${t("obSkip")}</button></div>
+    `, "onboard");
+    luma.set("chibi:listening");
+    $$("[data-k]").forEach((b) => b.onclick = () => {
+      state.answers = Object.assign({}, state.answers, { [s.key]: b.dataset.k });
+      const [, pose] = s.opts.find(([k]) => k === b.dataset.k);
+      b.classList.add("picked");
+      luma.set(pose); sound.cute(SFX_FOR[pose.split(":")[1]] || "happy");
+      setTimeout(() => onboard(step + 1), 450);
+    });
+    $("#skip").onclick = () => onboard(step + 1);
+  }
+
+  // ---------- "You": quiet things and your nights ----------
+  const quietGrid = () => `
+    <p class="eyebrow">${t("quietThings")}</p>
+    <div class="grid4">${[["story", "book", "tileStory"], ["breathe-free", "breath", "tileBreathe"], ["lanterns", "lantern", "tileLanterns"], ["stars", "star", "tileStars"]]
+      .map(([to, ic, k]) => `<button class="tile" data-to="${to}">${icon(ic)}<b>${t(k)}</b></button>`).join("")}</div>`;
 
   // ---------- breathing (ritual step and free practice) ----------
   function breathe(free) {
@@ -1577,6 +1852,7 @@ ${last}${langNote()}`;
         <div><b>${t("luma")}</b><span class="st" id="ch-status">${t("stListening")}</span></div>
       </div>
       <div class="talk" id="talk"></div>
+      <div class="quick" id="quick"></div>
       <form class="composer" id="form">
         <textarea id="say" rows="1" placeholder="${t("sayPh")}" maxlength="1200" aria-label="${t("yourMsg")}"></textarea>
         <button class="primary send" aria-label="${t("send")}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
@@ -1595,15 +1871,27 @@ ${last}${langNote()}`;
     for (const turn of session.turns) addMsg(turn.role === "user" ? "me" : "luma", turn.content);
     say.addEventListener("input", () => { say.style.height = "auto"; say.style.height = Math.min(120, say.scrollHeight) + "px"; });
     say.addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); $("#form").requestSubmit(); } });
+    const send = (text) => {
+      if (!text || ctl) return;
+      addMsg("me", text);
+      session.turns.push({ role: "user", content: text });
+      showQuick([]);
+      lumaReply();
+    };
     $("#form").onsubmit = (e) => {
       e.preventDefault();
       const text = say.value.trim();
-      if (!text || ctl) return;
       say.value = ""; say.style.height = "auto";
-      addMsg("me", text);
-      session.turns.push({ role: "user", content: text });
-      lumaReply();
+      send(text);
     };
+    // Tap-to-reply: Luma's suggestions, or gentle defaults
+    function showQuick(list) {
+      const q = $("#quick"); if (!q) return;
+      const items = (list && list.length ? list : t("quickDefault").split("|")).slice(0, 5);
+      q.innerHTML = items.map((x) => `<button type="button" dir="auto">${esc(x)}</button>`).join("");
+      q.querySelectorAll("button").forEach((b) => b.onclick = () => send(b.textContent));
+    }
+    showQuick(session.replies || []);
     if (!free) $("#next").onclick = () => show("release");
     cleanup = () => { if (ctl) ctl.abort(); if (free) remember(session); };
     if (!session.turns.length) lumaOpen();
@@ -1632,13 +1920,16 @@ ${last}${langNote()}`;
           if (!r.body) return;
           if (!shown) status("stTyping");
           shown = true;
-          bubble.classList.remove("wait"); bubble.textContent = r.body; box.scrollTop = box.scrollHeight;
+          bubble.classList.remove("wait"); bubble.textContent = splitReplies(r.body).body; box.scrollTop = box.scrollHeight;
         } });
         const r = readMood(text);
         if (!r.mood && luma.pose() === "chibi:thinking") luma.set("chibi:listening");
-        bubble.classList.remove("wait"); bubble.textContent = r.body || text;
+        const { body, replies } = splitReplies(r.body || text);
+        bubble.classList.remove("wait"); bubble.textContent = body;
         status("stListening");
-        return r.body || text;
+        session.replies = replies;
+        showQuick(replies);
+        return body;
       } catch (e) {
         const r = aiFailure(e);
         if (r === "off") { bubble.remove(); fallback(); }
@@ -1652,7 +1943,7 @@ ${last}${langNote()}`;
       const opener = free
         ? "They opened a conversation with you outside the nightly ritual. Write a short, warm opening line that invites them to say what's on their mind. If you remember something fitting, you may mention it lightly."
         : "Write your opening line for tonight. Greet them warmly, acknowledge how the day felt in your own words, and ask one gentle question about it. If you remember something from earlier evenings that fits, you may mention it lightly.";
-      const text = await stream([{ role: "user", content: rules(session) + "\n\n" + opener + "\n\nStart your reply with exactly one tag in square brackets showing your face as you say it, chosen from: [happy] [listening] [thinking] [excited] [shy] [pout] [ignore] [sad] [sleepy]. Then write the message. The tag is never shown to them." }], bubble);
+      const text = await stream([{ role: "user", content: rules(session) + "\n\n" + opener + "\n\nStart your reply with exactly one tag in square brackets showing your face as you say it, chosen from: [happy] [listening] [thinking] [excited] [shy] [pout] [ignore] [sad] [sleepy]. Then write the message. After the message, add one last separate line: REPLIES: followed by 3 very short replies (at most 4 words each) the person might want to tap, in their own language and dialect, separated by |. The tag and the REPLIES line are never shown to them." }], bubble);
       if (text) session.turns.push({ role: "assistant", content: text });
     }
     async function lumaReply() {
@@ -1660,7 +1951,7 @@ ${last}${langNote()}`;
       const bubble = waiting();
       const recent = session.turns.slice(-16);
       if (recent[0] && recent[0].role === "assistant") recent.unshift({ role: "user", content: "(we began talking)" });
-      const text = await stream([{ role: "user", content: rules(session) + "\n\nStart your reply with exactly one tag in square brackets showing your face as you say it, chosen from: [happy] [listening] [thinking] [excited] [shy] [pout] [ignore] [sad] [sleepy]. Then write the message. The tag is never shown to them.\n\nThe conversation so far follows. Reply as Luma." }].concat(recent), bubble);
+      const text = await stream([{ role: "user", content: rules(session) + "\n\nStart your reply with exactly one tag in square brackets showing your face as you say it, chosen from: [happy] [listening] [thinking] [excited] [shy] [pout] [ignore] [sad] [sleepy]. Then write the message. After the message, add one last separate line: REPLIES: followed by 3 very short replies (at most 4 words each) the person might want to tap, in their own language and dialect, separated by |. The tag and the REPLIES line are never shown to them.\n\nThe conversation so far follows. Reply as Luma." }].concat(recent), bubble);
       if (text) session.turns.push({ role: "assistant", content: text });
       // learn their style early, so Luma adapts within the first few messages
       const n = session.turns.filter((x) => x.role === "user").length;
@@ -2019,6 +2310,7 @@ ${last}${langNote()}`;
     const time = nights.time || "21:00";
     el(`
       ${backBtn()}
+      ${quietGrid()}
       <p class="eyebrow">${t("nightsEyebrow")}</p>
       <h2>${t("nightsTitle")}</h2>
       ${chart}
@@ -2042,6 +2334,7 @@ ${last}${langNote()}`;
       <p class="tiny">${t("recorded", { n: num(state.history.length) })}</p>
     `);
     wireBack();
+    $$("[data-to]").forEach((b) => b.onclick = () => show(b.dataset.to));
     const cal = $("#cal"), tInput = $("#time");
     const setCal = () => {
       nights.time = tInput.value || "21:00";
@@ -2092,7 +2385,7 @@ ${last}${langNote()}`;
   }
 
   const SCREENS = {
-    home, checkin, tomorrow, close, sounds, story, stars, nights,
+    home, checkin, tomorrow, close, sounds, story, stars, nights, onboard: () => onboard(0),
     breathe: () => breathe(false), "breathe-free": () => breathe(true),
     talk: () => talk(false), "talk-free": () => talk(true),
     release: () => release(false), lanterns: () => release(true),
@@ -2109,6 +2402,10 @@ ${last}${langNote()}`;
     }
     show("sounds");
   };
+  document.querySelectorAll("#tabbar [data-tab]").forEach((b) => b.onclick = () => {
+    if (b.dataset.tab === "home") suggestAt = 0;
+    show(b.dataset.tab);
+  });
   document.getElementById("lang-btn").onclick = () => {
     lang = lang === "ar" ? "en" : "ar";
     try { localStorage.setItem(LANG_LS, lang); } catch (e) {}
@@ -2128,7 +2425,7 @@ ${last}${langNote()}`;
   addEventListener("pointerdown", firstTouch, true);
   addEventListener("keydown", firstTouch, true);
   renderChrome();
-  show("home");
+  show(state.onboarded ? "home" : "onboard");
   connectStore();
 })();
 </script>

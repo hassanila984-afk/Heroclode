@@ -1,6 +1,8 @@
 package com.firefly.luma;
 
 import android.Manifest;
+import android.animation.ValueAnimator;
+import android.view.animation.OvershootInterpolator;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -57,7 +59,25 @@ public class LumaService extends Service {
     private ImageView face;
     private TextView words;
     private WindowManager.LayoutParams lp;
-    private final Runnable hideWords = () -> { if (words != null) words.setVisibility(View.GONE); };
+    private final Runnable hideWords = () -> { if (words != null) words.setVisibility(View.GONE); stopWiggle(); tuck(); };
+
+    // ----- her life on the screen: she peeks from an edge, comes out to talk, dozes when it's quiet -----
+    private TextView zz;
+    private int side = 1;                   // 0 = left edge, 1 = right edge
+    private long lastActivity = System.currentTimeMillis();
+    private boolean asleep;
+    private ValueAnimator mover;
+    private android.animation.ObjectAnimator wiggle;
+    private final Runnable life = new Runnable() {
+        @Override public void run() {
+            if (bubble != null && !appOpen && words.getVisibility() != View.VISIBLE) {
+                long idle = System.currentTimeMillis() - lastActivity;
+                if (idle > 8 * 60_000 && !asleep) sleep();
+                else if (!asleep && idle > 2 * 60_000 && Math.random() < 0.35) curiousPeek();
+            }
+            main.postDelayed(this, 45_000);
+        }
+    };
 
     private MediaProjection projection;
     private VirtualDisplay display;
@@ -74,7 +94,7 @@ public class LumaService extends Service {
     /** For troubleshooting from the page: what the screen capture is doing. */
     static String captureInfo() { return me == null ? "no service" : (me.reader == null ? "not capturing" : "capturing") + (me.lastError.isEmpty() ? "" : " | " + me.lastError); }
     /** Firefly itself is on screen: the bubble steps aside (it would sit on top of the chat). */
-    static void appVisible(boolean open) { main.post(() -> { if (me != null) { me.appOpen = open; if (me.bubble != null) me.bubble.setVisibility(open ? View.GONE : View.VISIBLE); } }); }
+    static void appVisible(boolean open) { main.post(() -> { if (me != null) { me.appOpen = open; if (open) me.lastActivity = System.currentTimeMillis(); if (me.bubble != null) { me.bubble.setVisibility(open ? View.GONE : View.VISIBLE); if (!open && me.asleep) me.wake(); } } }); }
     static void say(String text, String mood) { main.post(() -> { if (me != null) me.show(text, mood); }); }
     /** Listening started while the app is open: let the service keep the microphone if it runs. */
     static void micOn(MainActivity a) { if (me != null && !me.mic) { me.mic = true; me.foreground(); } }
@@ -153,6 +173,13 @@ public class LumaService extends Service {
         bubble.setOrientation(LinearLayout.VERTICAL);
         bubble.setGravity(Gravity.CENTER_HORIZONTAL);
 
+        zz = new TextView(this);
+        zz.setText("z z");
+        zz.setTextColor(0xFFFFD27A);
+        zz.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);
+        zz.setVisibility(View.GONE);
+        bubble.addView(zz, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+
         face = new ImageView(this);
         face.setScaleType(ImageView.ScaleType.CENTER_CROP);
         GradientDrawable ring = new GradientDrawable();
@@ -191,18 +218,25 @@ public class LumaService extends Service {
                 PixelFormat.TRANSLUCENT);
         lp.gravity = Gravity.TOP | Gravity.START;
         DisplayMetrics screen = getResources().getDisplayMetrics();
-        lp.x = screen.widthPixels - dp(84);
+        lp.x = screen.widthPixels;
         lp.y = screen.heightPixels / 3;
+        side = 1;
         setFace("happy");
         dragAndTap(bubble);
         wm.addView(bubble, lp);
         if (appOpen) bubble.setVisibility(View.GONE);
-        bubble.setScaleX(0.4f); bubble.setScaleY(0.4f);
-        bubble.animate().scaleX(1).scaleY(1).setDuration(260).start();
+        lastActivity = System.currentTimeMillis();
+        main.postDelayed(this::tuck, 150);
+        main.removeCallbacks(life);
+        main.postDelayed(life, 45_000);
     }
 
     private void removeBubble() {
         main.removeCallbacks(hideWords);
+        main.removeCallbacks(life);
+        if (mover != null) mover.cancel();
+        stopWiggle();
+        asleep = false;
         showCloseTarget(false);
         if (bubble != null) { try { wm.removeView(bubble); } catch (Exception ignored) { } }
         bubble = null; face = null; words = null;
@@ -256,7 +290,7 @@ public class LumaService extends Service {
                     return true;
                 case MotionEvent.ACTION_MOVE:
                     float dx = e.getRawX() - start[0], dy = e.getRawY() - start[1];
-                    if (!moved[0] && Math.abs(dx) + Math.abs(dy) > dp(8)) { moved[0] = true; showCloseTarget(true); }
+                    if (!moved[0] && Math.abs(dx) + Math.abs(dy) > dp(8)) { moved[0] = true; showCloseTarget(true); if (mover != null) mover.cancel(); face.setRotation(0); }
                     lp.x = (int) (start[2] + dx); lp.y = (int) (start[3] + dy);
                     if (bubble != null) wm.updateViewLayout(bubble, lp);
                     if (closeTarget != null) {
@@ -269,6 +303,7 @@ public class LumaService extends Service {
                     boolean drop = moved[0] && overClose(e.getRawX(), e.getRawY());
                     showCloseTarget(false);
                     if (drop) { removeBubble(); stopIfIdle(); }
+                    else if (moved[0]) snapToEdge();
                     else if (!moved[0] && bubble != null && e.getActionMasked() == MotionEvent.ACTION_UP) {
                         startActivity(new Intent(this, MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_REORDER_TO_FRONT));
                     }
@@ -303,19 +338,112 @@ public class LumaService extends Service {
 
     private void show(String text, String mood) {
         if (bubble == null) return;
+        boolean talking = text != null && !text.trim().isEmpty();
+        if (asleep || talking) wake();
         if (mood != null && !mood.isEmpty()) {
             setFace(mood);
-            face.animate().translationY(-dp(10)).setDuration(140).withEndAction(() -> face.animate().translationY(0).setDuration(180).start()).start();
+            hop();
         }
-        if (text != null && !text.trim().isEmpty()) {
+        if (talking) {
             String t = text.trim();
             words.setText(t.length() > 160 ? t.substring(0, 157) + "…" : t);
             words.setVisibility(View.VISIBLE);
             words.setAlpha(0); words.setScaleX(0.85f); words.setScaleY(0.85f);
             words.animate().alpha(1).scaleX(1).scaleY(1).setDuration(220).start();
+            boolean thrilled = "excited".equals(mood);
+            comeOut(thrilled);   // something exciting on screen: she scoots toward the middle
+            startWiggle(t.length());
             main.removeCallbacks(hideWords);
             main.postDelayed(hideWords, Math.max(6000, t.length() * 90L));
         }
+    }
+
+    private int screenW() { return getResources().getDisplayMetrics().widthPixels; }
+    private int screenH() { return getResources().getDisplayMetrics().heightPixels; }
+
+    /** Glide the bubble to x, y. */
+    private void moveTo(int x, int y, long ms) {
+        if (bubble == null) return;
+        if (mover != null) mover.cancel();
+        final int x0 = lp.x, y0 = lp.y;
+        mover = ValueAnimator.ofFloat(0, 1);
+        mover.setDuration(ms);
+        mover.setInterpolator(new OvershootInterpolator(0.9f));
+        mover.addUpdateListener(a -> {
+            if (bubble == null) return;
+            float k = (float) a.getAnimatedValue();
+            lp.x = (int) (x0 + (x - x0) * k); lp.y = (int) (y0 + (y - y0) * k);
+            try { wm.updateViewLayout(bubble, lp); } catch (Exception ignored) { }
+        });
+        mover.start();
+    }
+
+    private int clampY(int y) { return Math.max(dp(40), Math.min(screenH() - dp(220), y)); }
+
+    /** Half hidden past the edge, peeking out, as if she were behind the app. */
+    private void tuck() {
+        if (bubble == null || face == null) return;
+        int fw = dp(68), x = side == 0 ? -(int) (fw * 0.45f) : screenW() - (int) (fw * 0.55f);
+        moveTo(x - (side == 0 ? 0 : (bubble.getWidth() - fw) / 2), clampY(lp.y), 520);
+        face.animate().rotation(side == 0 ? 16 : -16).setDuration(400).start();
+    }
+
+    /** Out from behind the edge, fully on screen, to talk. */
+    private void comeOut(boolean toMiddle) {
+        if (bubble == null) return;
+        bubble.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
+        int w = bubble.getMeasuredWidth(), x = side == 0 ? dp(10) : screenW() - w - dp(10);
+        if (toMiddle) x = (screenW() - w) / 2 + (side == 0 ? -dp(30) : dp(30));
+        moveTo(x, clampY(lp.y), 380);
+        face.animate().rotation(0).setDuration(250).start();
+    }
+
+    private void snapToEdge() {
+        side = lp.x + dp(34) < screenW() / 2 ? 0 : 1;
+        if (words.getVisibility() == View.VISIBLE) comeOut(false); else tuck();
+    }
+
+    /** Every few minutes of quiet she slides out a little, looks around, and hides again. */
+    private void curiousPeek() {
+        if (bubble == null) return;
+        int fw = dp(68), x = side == 0 ? dp(4) : screenW() - fw - dp(4);
+        moveTo(x, clampY(lp.y + (int) ((Math.random() - 0.5) * dp(160))), 600);
+        face.animate().rotation(0).setDuration(300).start();
+        main.postDelayed(this::tuck, 2200);
+    }
+
+    private void hop() {
+        face.animate().translationY(-dp(10)).setDuration(140).withEndAction(() -> { if (face != null) face.animate().translationY(0).setDuration(180).start(); }).start();
+    }
+
+    /** A little sway while she talks. */
+    private void startWiggle(int chars) {
+        stopWiggle();
+        wiggle = android.animation.ObjectAnimator.ofFloat(face, "rotation", -7f, 7f);
+        wiggle.setDuration(280);
+        wiggle.setRepeatMode(ValueAnimator.REVERSE);
+        wiggle.setRepeatCount(Math.min(14, 4 + chars / 12));
+        wiggle.start();
+    }
+
+    private void stopWiggle() { if (wiggle != null) wiggle.cancel(); wiggle = null; }
+
+    private void sleep() {
+        asleep = true;
+        setFace("sleepy");
+        zz.setVisibility(View.VISIBLE);
+        zz.setAlpha(0.3f);
+        zz.animate().alpha(1).translationY(-dp(6)).setDuration(1400).withEndAction(() -> { if (zz != null) zz.animate().alpha(0.3f).translationY(0).setDuration(1400).start(); }).start();
+    }
+
+    /** Back from a doze (or simply active again): a little wave-hop. */
+    private void wake() {
+        lastActivity = System.currentTimeMillis();
+        if (!asleep) return;
+        asleep = false;
+        zz.setVisibility(View.GONE);
+        setFace("happy");
+        hop();
     }
 
     // ----- watching the screen -----

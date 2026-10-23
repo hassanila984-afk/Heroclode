@@ -2513,7 +2513,11 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
     // Browsers without it fall back to the floating video below.
     const BB = { win: null, timer: 0, text: "" };
     async function openBubble() {
-      if (nativeApp) { AndroidLuma.bubbleShow(); setTimeout(() => bubbleSay(BB.text || ""), 1200); return; }
+      if (nativeApp) {   // 🫧 shows the bubble, or puts it away if it's already out
+        if (AndroidLuma.bubbleOn()) AndroidLuma.bubbleHide();
+        else { AndroidLuma.bubbleShow(); setTimeout(() => bubbleSay(BB.text || ""), 1200); }
+        return;
+      }
       if (!window.documentPictureInPicture) return openFloat();
       if (BB.win) { BB.win.focus(); return; }
       let win;

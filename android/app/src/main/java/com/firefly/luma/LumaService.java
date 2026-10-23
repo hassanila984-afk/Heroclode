@@ -103,7 +103,7 @@ public class LumaService extends Service {
             else if (CAPTURE_OFF.equals(a)) stopCapture(false);
             else if (STOP.equals(a)) { stopCapture(true); removeBubble(); }
         }
-        if (bubble == null && projection == null) { stopForeground(STOP_FOREGROUND_REMOVE); stopSelf(); }
+        stopIfIdle();
         return START_NOT_STICKY;
     }
 
@@ -203,38 +203,92 @@ public class LumaService extends Service {
 
     private void removeBubble() {
         main.removeCallbacks(hideWords);
+        showCloseTarget(false);
         if (bubble != null) { try { wm.removeView(bubble); } catch (Exception ignored) { } }
         bubble = null; face = null; words = null;
         if (MainActivity.current != null) MainActivity.current.js("window.__nativeBubble && __nativeBubble(false)");
     }
 
-    /** Drag to move; tap to open Firefly; hold to put the bubble away. */
+    /** Drag to move (drop her on the ✕ at the bottom to put the bubble away); tap to open Firefly. */
+    private TextView closeTarget;
+    private WindowManager.LayoutParams closeLp;
+
+    private void showCloseTarget(boolean on) {
+        if (on && closeTarget == null) {
+            closeTarget = new TextView(this);
+            closeTarget.setText("✕");
+            closeTarget.setTextColor(0xFFFFFFFF);
+            closeTarget.setTextSize(TypedValue.COMPLEX_UNIT_SP, 26);
+            closeTarget.setGravity(Gravity.CENTER);
+            GradientDrawable c = new GradientDrawable();
+            c.setShape(GradientDrawable.OVAL);
+            c.setColor(0xCC1A1342);
+            c.setStroke(dp(2), 0x66FFFFFF);
+            closeTarget.setBackground(c);
+            closeLp = new WindowManager.LayoutParams(dp(64), dp(64),
+                    WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+                    WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,
+                    PixelFormat.TRANSLUCENT);
+            closeLp.gravity = Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
+            closeLp.y = dp(72);
+            try { wm.addView(closeTarget, closeLp); } catch (Exception e) { closeTarget = null; }
+        } else if (!on && closeTarget != null) {
+            try { wm.removeView(closeTarget); } catch (Exception ignored) { }
+            closeTarget = null;
+        }
+    }
+
+    /** Is the bubble's face over the ✕? */
+    private boolean overClose(float rawX, float rawY) {
+        DisplayMetrics d = getResources().getDisplayMetrics();
+        float cx = d.widthPixels / 2f, cy = d.heightPixels - dp(72) - dp(32);
+        return Math.hypot(rawX - cx, rawY - cy) < dp(70);
+    }
+
     private void dragAndTap(View v) {
         final float[] start = new float[4];
         final boolean[] moved = new boolean[1];
-        final Runnable hold = this::removeBubble;
         v.setOnTouchListener((view, e) -> {
             switch (e.getActionMasked()) {
                 case MotionEvent.ACTION_DOWN:
                     start[0] = e.getRawX(); start[1] = e.getRawY(); start[2] = lp.x; start[3] = lp.y;
                     moved[0] = false;
-                    main.postDelayed(hold, 700);
                     return true;
                 case MotionEvent.ACTION_MOVE:
                     float dx = e.getRawX() - start[0], dy = e.getRawY() - start[1];
-                    if (Math.abs(dx) + Math.abs(dy) > dp(8)) { moved[0] = true; main.removeCallbacks(hold); }
+                    if (!moved[0] && Math.abs(dx) + Math.abs(dy) > dp(8)) { moved[0] = true; showCloseTarget(true); }
                     lp.x = (int) (start[2] + dx); lp.y = (int) (start[3] + dy);
                     if (bubble != null) wm.updateViewLayout(bubble, lp);
+                    if (closeTarget != null) {
+                        boolean over = overClose(e.getRawX(), e.getRawY());
+                        closeTarget.setScaleX(over ? 1.25f : 1f); closeTarget.setScaleY(over ? 1.25f : 1f);
+                    }
                     return true;
                 case MotionEvent.ACTION_UP:
-                    main.removeCallbacks(hold);
-                    if (!moved[0] && bubble != null) {
+                case MotionEvent.ACTION_CANCEL:
+                    boolean drop = moved[0] && overClose(e.getRawX(), e.getRawY());
+                    showCloseTarget(false);
+                    if (drop) { removeBubble(); stopIfIdle(); }
+                    else if (!moved[0] && bubble != null && e.getActionMasked() == MotionEvent.ACTION_UP) {
                         startActivity(new Intent(this, MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_REORDER_TO_FRONT));
                     }
                     return true;
             }
             return false;
         });
+    }
+
+    private void stopIfIdle() {
+        if (bubble == null && projection == null) { stopForeground(STOP_FOREGROUND_REMOVE); stopSelf(); }
+    }
+
+    /** Firefly was swiped away from recent apps: Luma goes with it. */
+    @Override
+    public void onTaskRemoved(Intent rootIntent) {
+        stopCapture(false);
+        removeBubble();
+        stopIfIdle();
+        super.onTaskRemoved(rootIntent);
     }
 
     private void setFace(String mood) {

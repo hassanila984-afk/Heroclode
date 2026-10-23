@@ -29,8 +29,8 @@
   <form id="f">
     <label for="code">رمز الدخول</label>
     <input id="code" autocomplete="off" required placeholder="luma-…">
-    <label for="key">مفتاح Anthropic (يبدأ بـ sk-ant-api03-)</label>
-    <input id="key" type="password" autocomplete="off" required placeholder="sk-ant-api03-…">
+    <label for="key">مفتاح Anthropic (من console.anthropic.com، يبدأ بـ sk-ant-)</label>
+    <input id="key" type="password" autocomplete="off" required placeholder="sk-ant-…">
     <button id="go">احفظ</button>
   </form>
   <div id="msg"></div>
@@ -40,7 +40,7 @@
   const say = (text, cls) => { msg.textContent = text; msg.className = cls || ""; };
   const ERR = {
     wrong_code: "رمز الدخول غير صحيح.",
-    not_an_api_key: "هذا مو مفتاح API. لازم يبدأ بـ sk-ant-api03-",
+    not_an_api_key: "هذا مو مفتاح API. انسخه كامل من console.anthropic.com ← API Keys.",
     key_rejected: "Anthropic رفض هذا المفتاح. تأكد إنك نسخته كامل.",
     check_failed: "ما گدرت أتأكد من المفتاح هسه، جرّب بعد شوية.",
     not_configured: "الخادم بعده مو جاهز.",

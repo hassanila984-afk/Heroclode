@@ -582,7 +582,7 @@
       watchBlocked: "claude.ai doesn't let me see your screen live 🥺 For now, send me a screenshot 📷",
       watchEnded: "That was fun! Again sometime? 🌙", watchNoFrames: "I can't see your screen yet 🥺 Screenshot this note and send it:", attach: "Send a picture", picSent: "📷",
       bubbleTitle: "Float Luma over your other apps", bubblePh: "Reply…", micTitle: "Talk to Luma",
-      earTitle: "Keep listening: say “Luma” when you're talking to her", earHeard: "last heard:", micBusy: "the mic is busy (a call or another app is using it)", voiceTitle: "Language you speak out loud (English / Arabic)", stEar: "listening for her name…", stCall: "📞 on a call: she only reacts to her name",
+      earTitle: "Keep listening: say “Luma” when you're talking to her", earHeard: "last heard:", sayName: "say “Luma” first when you're in another app", micBusy: "the mic is busy (a call or another app is using it)", voiceTitle: "Language you speak out loud (English / Arabic)", stEar: "listening for her name…", stCall: "📞 on a call: she only reacts to her name",
       friendSaid: "👥 A friend on the call: “{text}”",
       earHint: "She only answers when someone says “Luma”. Anything else is dropped right away, never sent or saved. While she watches with system audio shared, she also hears friends on a call who say her name: let them know she's there.",
       micDenied: "I can't hear you, the microphone is blocked 🥺 Allow it from the 🔒 next to the address.", micNone: "This browser can't turn speech into text 🥺 Try Chrome.",
@@ -691,7 +691,7 @@
       watchBlocked: "claude.ai لا يسمح لي برؤية شاشتك مباشرة 🥺 حاليًا أرسل لي لقطة شاشة 📷",
       watchEnded: "كانت حلوة! نعيدها مرة ثانية؟ 🌙", watchNoFrames: "بعدني ما أشوف شاشتك 🥺 صوّر هالملاحظة وأرسلها:", attach: "أرسل صورة", picSent: "📷",
       bubbleTitle: "لُمى فوق تطبيقاتك الثانية", bubblePh: "رد عليها…", micTitle: "احچي ويا لُمى",
-      earTitle: "خليها تسمع: ناديها «لُمى» لما تحچي وياها", earHeard: "آخر شي سمعته:", micBusy: "المايك مشغول (مكالمة أو تطبيق ثاني يستخدمه)", voiceTitle: "لغة كلامك بالصوت (إنكليزي / عربي)", stEar: "تسمع… تنتظر اسمها", stCall: "📞 بمكالمة: تنتبه بس لاسمها",
+      earTitle: "خليها تسمع: ناديها «لُمى» لما تحچي وياها", earHeard: "آخر شي سمعته:", sayName: "گول «لُمى» أول شي لما تكون بتطبيق ثاني", micBusy: "المايك مشغول (مكالمة أو تطبيق ثاني يستخدمه)", voiceTitle: "لغة كلامك بالصوت (إنكليزي / عربي)", stEar: "تسمع… تنتظر اسمها", stCall: "📞 بمكالمة: تنتبه بس لاسمها",
       friendSaid: "👥 صديقك بالمكالمة: «{text}»",
       earHint: "ترد بس لما أحد يگول «لُمى». أي كلام ثاني ينمسح فوراً، ما ينرسل ولا ينحفظ. وإذا تشاهد وياك مع صوت النظام، تسمع أصدقائك بالمكالمة لما يذكرون اسمها: خبّرهم إنها موجودة.",
       micDenied: "ما أسمعك، المايك ممنوع 🥺 اسمح بيه من القفل 🔒 جنب العنوان.", micNone: "هذا المتصفح ما يحوّل الكلام لكتابة 🥺 جرّب Chrome.",
@@ -2678,9 +2678,15 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
       if (!EAR.on || EAR.rec || rec || !box.isConnected) return;
       const r = new SR();
       r.lang = voiceLang();
-      r.continuous = true; r.interimResults = false;
+      r.continuous = true; r.interimResults = true;
       r.maxAlternatives = 5;
-      r.onresult = (e) => { for (let i = e.resultIndex; i < e.results.length; i++) if (e.results[i].isFinal) heardLine([...e.results[i]].map((a) => a.transcript)); };
+      r.onresult = (e) => {
+        for (let i = e.resultIndex; i < e.results.length; i++) {
+          const alts = [...e.results[i]].map((a) => a.transcript);
+          if (e.results[i].isFinal) { heardLine(alts, false, EAR.nameSeen); EAR.nameSeen = false; }
+          else if (alts.some(named)) EAR.nameSeen = true;   // the final text sometimes drops her name
+        }
+      };
       r.onerror = (e) => {
         if (e.error === "not-allowed" || e.error === "service-not-allowed") { earStop(true); addMsg("luma", t("micDenied")); luma.set("chibi:sad"); }
         else if (e.error === "audio-capture" && box.isConnected) $("#hint").textContent = "👂 " + t("micBusy");
@@ -2690,16 +2696,20 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
       try { r.start(); } catch (e) { EAR.rec = null; }
       syncBubble();
     }
-    function heardLine(raw, friend) {
+    function heardLine(raw, friend, nameSeen) {
       const alts = [].concat(raw).map((x) => String(x || "").trim()).filter(Boolean);
       if (!alts.length) return;
       const text = alts.find(named) || alts[0];
-      if (!friend && box.isConnected && EAR.on) $("#hint").textContent = "👂 " + t("earHeard") + " “" + text + "”" + (named(text) ? " ✨" : "");
+      // with her chat open in front of them, whatever they say is for her; elsewhere her name is needed
+      const facing = !friend && !EAR.inCall && document.visibilityState === "visible" && (nativeApp || document.hasFocus());
+      const forHer = facing || nameSeen;
+      if (!friend && box.isConnected && EAR.on) $("#hint").textContent = "👂 " + t("earHeard") + " “" + text + "”" + (named(text) || forHer ? " ✨" : " · " + t("sayName"));
       // the same words can arrive from both ears (speakers into the mic): take them once
       const key = norm(text);
       if (EAR.lastKey === key && Date.now() - EAR.lastAt < 4000) return;
       const pass = (said) => { EAR.lastKey = key; EAR.lastAt = Date.now(); toLuma(friend ? t("friendSaid", { text: said }) : said); };
       const wait = friend ? "waitSysUntil" : "waitUntil";
+      if (forHer && !named(text)) return pass(text);
       if (named(text)) {
         const rest = norm(text).replace(WAKE, " ").replace(WAKE_EDGE, " ").trim();
         if (rest.length >= 2) return pass(text);

@@ -2,7 +2,7 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700&family=Amiri:wght@400;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap">
 <style>
   /* Layout: a living night meadow fills the screen; one quiet glass panel floats over its lower part and changes with each step of the evening. The land always sits just above the panel. */
   :root {
@@ -116,7 +116,7 @@
   .tiles { display: flex; gap: 8px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; margin: 0 -4px; padding: 2px 4px 4px; }
   .tiles::-webkit-scrollbar { display: none; }
   .tile {
-    flex: 0 0 128px; scroll-snap-align: start; text-align: left;
+    flex: 0 0 128px; scroll-snap-align: start; text-align: start;
     border: 1px solid var(--glass-line); background: var(--chip); border-radius: 18px;
     padding: 12px; display: flex; flex-direction: column; gap: 6px; min-width: 0;
     transition: border-color .2s, background .2s;
@@ -151,8 +151,8 @@
 
   .talk { display: flex; flex-direction: column; gap: 10px; overflow-y: auto; min-height: 120px; flex: 1; padding-right: 2px; overscroll-behavior: contain; }
   .msg { max-width: 88%; padding: 10px 14px; border-radius: 18px; white-space: pre-wrap; overflow-wrap: anywhere; animation: rise .35s ease both; }
-  .msg.luma { background: var(--luma); border: 1px solid rgba(255, 210, 122, .18); align-self: flex-start; border-bottom-left-radius: 6px; }
-  .msg.me { background: var(--me); align-self: flex-end; border-bottom-right-radius: 6px; }
+  .msg.luma { background: var(--luma); border: 1px solid rgba(255, 210, 122, .18); align-self: flex-start; border-end-start-radius: 6px; }
+  .msg.me { background: var(--me); align-self: flex-end; border-end-end-radius: 6px; }
   .msg.wait { color: var(--haze); font-style: italic; }
   .dots::after { content: ""; animation: dots 1.4s steps(4) infinite; }
   @keyframes dots { 0% { content: ""; } 25% { content: "."; } 50% { content: ".."; } 75% { content: "..."; } }
@@ -182,9 +182,9 @@
   .layers { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
   .layer { border: 1px solid var(--glass-line); background: var(--chip); border-radius: 16px; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
   .layer.on { border-color: rgba(255, 210, 122, .55); background: rgba(255, 210, 122, .08); }
-  .layer button { border: 0; background: none; padding: 0; text-align: left; display: flex; justify-content: space-between; align-items: center; gap: 6px; font-weight: 600; font-size: 14px; }
+  .layer button { border: 0; background: none; padding: 0; text-align: start; display: flex; justify-content: space-between; align-items: center; gap: 6px; font-weight: 600; font-size: 14px; }
   .switch { width: 30px; height: 18px; border-radius: 999px; background: var(--chip); border: 1px solid var(--glass-line); position: relative; flex: none; }
-  .switch::after { content: ""; position: absolute; top: 2px; left: 2px; width: 12px; height: 12px; border-radius: 50%; background: var(--haze); transition: transform .2s; }
+  .switch::after { content: ""; position: absolute; top: 2px; inset-inline-start: 2px; width: 12px; height: 12px; border-radius: 50%; background: var(--haze); transition: transform .2s; }
   .layer.on .switch { background: rgba(255, 210, 122, .35); }
   .layer.on .switch::after { transform: translateX(12px); background: var(--glow); }
   input[type="range"] { width: 100%; accent-color: var(--glow-deep); }
@@ -193,7 +193,7 @@
   .gift {
     border: 1px solid rgba(255, 210, 122, .4); border-radius: 20px; padding: 18px;
     background: linear-gradient(160deg, rgba(255, 210, 122, .14), rgba(140, 120, 255, .08));
-    text-align: left; display: flex; flex-direction: column; gap: 6px; width: 100%;
+    text-align: start; display: flex; flex-direction: column; gap: 6px; width: 100%;
   }
   .gift.sealed { align-items: center; text-align: center; animation: glowPulse 2.4s ease-in-out infinite; }
   .gift.open { animation: unfold .7s cubic-bezier(.2, 1.3, .4, 1) both; }
@@ -212,6 +212,18 @@
   .chart { width: 100%; aspect-ratio: 300 / 96; display: block; }
   .chart text { fill: var(--haze); font: 11px var(--body); }
 
+  /* Arabic: its own typefaces, no faux italics, right-to-left details */
+  :root[lang="ar"] { --display: "Amiri", "Noto Naskh Arabic", serif; --body: "IBM Plex Sans Arabic", "Noto Sans Arabic", system-ui, sans-serif; }
+  :root[lang="ar"] em, :root[lang="ar"] .brand, :root[lang="ar"] .note blockquote, :root[lang="ar"] .tip, :root[lang="ar"] .msg.wait { font-style: normal; }
+  :root[lang="ar"] .eyebrow, :root[lang="ar"] .note .who, :root[lang="ar"] .gift .kind { letter-spacing: 0; text-transform: none; font-size: 13px; }
+  :root[lang="ar"] h1 { line-height: 1.35; } :root[lang="ar"] h2, :root[lang="ar"] h3 { line-height: 1.4; }
+  :root[lang="ar"] .note blockquote, :root[lang="ar"] .gift .body, :root[lang="ar"] .story { line-height: 1.75; }
+  :root[lang="ar"] .breath-word { line-height: 1.5; }
+  [dir="rtl"] .send svg { transform: scaleX(-1); }
+  [dir="rtl"] .layer.on .switch::after { transform: translateX(-12px); }
+  #lang-btn { font-family: "IBM Plex Sans Arabic", var(--body); }
+  :root[lang="ar"] #lang-btn { font-family: var(--body); }
+
   @media (max-height: 640px) {
     h1 { font-size: 32px; } h2 { font-size: 25px; }
     .orb-wrap { height: 130px; }
@@ -225,10 +237,11 @@
 <canvas id="sky" aria-hidden="true"></canvas>
 
 <div class="top">
-  <span class="brand">Firefly</span>
+  <span class="brand" id="brand">Firefly</span>
   <div class="row">
     <span class="count" id="count"></span>
-    <button class="round" id="sound-btn"><span class="eq" id="eq"><i></i><i></i><i></i></span>Sounds</button>
+    <button class="round" id="lang-btn" lang="ar">عربي</button>
+    <button class="round" id="sound-btn"><span class="eq" id="eq"><i></i><i></i><i></i></span><span id="sound-label">Sounds</span></button>
   </div>
 </div>
 <div class="tip" id="tip" hidden></div>
@@ -237,69 +250,319 @@
 
 <script>
 (() => {
+  // ================= language file: English and Arabic (simple Modern Standard Arabic) =================
+  const LANG_LS = "firefly-lang";
+  let lang = "en";
+  try { lang = localStorage.getItem(LANG_LS) || ((navigator.language || "").toLowerCase().startsWith("ar") ? "ar" : "en"); } catch (e) {}
+  if (lang !== "ar") lang = "en";
+
+  const S = {
+    en: {
+      brand: "Firefly", sounds: "Sounds", langSwitch: "عربي", count: "{n} fireflies",
+      partLate: "Late night", partMorning: "Morning", partAfternoon: "Afternoon", partEvening: "Evening",
+      hiName: ", {name}",
+      greetFirst: "Hello. <em>Breathe out.</em>",
+      greetDone: "Tonight's light <em>is lit{hi}.</em>",
+      greetBack: "Welcome back{hi}. <em>Sit a while.</em>",
+      leadFirst: "Seven quiet minutes each evening. Talk it out with Luma, let a worry go, and light a firefly. Come back each night and the hill slowly comes alive.",
+      leadDone: "Stay as long as you like. Put on some sounds, hear a bedtime story, or add a star to your sky.",
+      leadBack: "The meadow kept your fireflies safe. Tonight's gift is waiting at the end.",
+      lastPlanned: "Last time you planned", itHappened: "It happened", notYet: "Not yet, that's okay",
+      niceDone: "Nicely done", niceDoneQ: "Small things done tired count double.",
+      okay: "That's okay", okayQ: "Tomorrow is a fresh page.",
+      statFireflies: "fireflies", statRow: "nights in a row", statStars: "stars",
+      untilNext: "{n} more nights until {label}",
+      allAwake: "The whole hill is awake. Every firefly here is an evening you showed up for yourself.",
+      beginFirst: "Light your first firefly", begin: "Begin tonight · 7 min", quick: "Too tired? 1-minute version",
+      inMeadow: "In the meadow",
+      tileSounds: "Sounds", tileSoundsD: "Music, rain, brainwave tones",
+      tileStory: "Bedtime story", tileStoryD: "Luma writes one for you",
+      tileStars: "Your stars", tileStarsD: "Good moments in your sky",
+      tileBreathe: "Breathe", tileBreatheD: "Calm, box or sleep",
+      tileLanterns: "Lanterns", tileLanternsD: "Let a worry float away",
+      tileTalk: "Talk to Luma", tileTalkD: "Any time you need",
+      tileNights: "Your nights", tileNightsD: "Patterns, gifts, reminder",
+      back: "← Meadow", done: "Done", skip: "Skip", cont: "Continue",
+      stepOf: "Step {n} of 5",
+      breatheEyebrow: "Breathe", arriveEyebrow: "Arrive",
+      breatheFreeTitle: "Follow the light.", breatheTitle: "Leave the day at the door.",
+      breathPattern: "Breathing pattern", getComfy: "Get comfortable", breathsCount: "{n} breaths", hereNow: "Good. You're here now.",
+      bIn: "Breathe in", bHold: "Hold", bOut: "Breathe out",
+      checkinEyebrow: "Check in", namePh: "What should Luma call you? (optional)", nameLabel: "Your name",
+      howHeavy: "How heavy did today feel?", whatWeighed: "What weighed on it? Pick any.",
+      lightMine: "Light my firefly", talkItOut: "Talk it out",
+      sayPh: "Say anything. Luma's listening.", yourMsg: "Your message", send: "Send",
+      aiHint: "Luma is an AI. In a crisis, call your local emergency number.",
+      readyLetGo: "I'm ready to let go", thinking: "Luma is thinking",
+      noAi: "I can't talk in this view, but writing it out still helps. Type whatever's on your mind. It stays here, just for you.",
+      noAiHint: "Luma's voice needs Claude access in this view.", saved: "Saved. Keep going if there's more. 🌙",
+      errRate: "Luma needs a short rest. Try again in a minute.",
+      errSession: "You've been signed out. Sign in again to keep talking.",
+      errRefused: "Let's try saying that a different way.",
+      errGeneric: "Lost the thread for a second. Try that again.",
+      letGoEyebrow: "Let go", letGoTitle: "Put a worry in a lantern.",
+      letGoLead: "Write it down, then release it. It floats away over the hill. You can pick it back up tomorrow if you really want to.",
+      worryPh: "The thing that's still circling…", worryLabel: "A worry to release", releaseBtn: "Release",
+      releasedMore: "{n} lanterns released. Add another, or continue.", releasedFree: "{n} lanterns released. Add another.",
+      nothingToLet: "Nothing to let go tonight",
+      tomorrowEyebrow: "Tomorrow", tomorrowTitle: "One small, kind thing <em>for tomorrow.</em>",
+      tomorrowLead: "Tiny on purpose. Something you could do even on a tired day.",
+      planPh: "Take a real lunch break, outside", planLabel: "One small thing for tomorrow",
+      askIdea: "Ask Luma for an idea", anotherIdea: "Another idea", tryAgain: "Try again",
+      fireflyNo: "Firefly no. {n}", tonight: "Tonight", goneTitle: "There it goes. <em>Goodnight.</em>", stillGlowing: "Still glowing.",
+      unlocked: "Something new on the hill: {label}.",
+      grace: "You missed a night, so Luma kept your streak safe. Rest nights are allowed, once a week.",
+      luma: "Luma", writingNote: "Writing you a note", giftTonight: "Tonight's gift", tapOpen: "Tap to open",
+      teaseNext: "Tomorrow: a new gift, and {n} more nights until {label}.", teaseNone: "Tomorrow: a new gift is waiting.",
+      teaseStreak: " {n} nights in a row.", bedtime: "Bedtime story", backMeadow: "Back to the meadow",
+      fallbackNote: "You showed up for yourself tonight. That's the whole job. Sleep well.",
+      rareGift: "Rare gift", rareText: "A golden firefly. They're rare, and this one chose your meadow. It will glow there for good.",
+      letter: "A letter from Luma", lumaWriting: "Luma is writing",
+      soundsEyebrow: "Sounds", soundsTitle: "Tune the night.", volume: "{name} volume",
+      layer_music: "Calm music", layer_rain: "Rain", layer_ocean: "Ocean waves", layer_crickets: "Crickets", layer_wind: "Wind in grass", layer_hum: "Brown noise",
+      tonesTitle: "Brainwave tones",
+      tonesNote: "Binaural beats: each ear hears a slightly different tone, and the brain perceives a slow pulse between them. Use headphones. Studies on their effect are mixed, but many people find them calming. Pair with rain or brown noise.",
+      tone_off: "Off", tone_alpha: "Unwind · 10 Hz alpha", tone_theta: "Deep calm · 6 Hz theta", tone_delta: "Sleep · 2.5 Hz delta",
+      timerTitle: "Sleep timer", timerOff: "Off", timerMin: "{n} min", fading: "Fading out in about {n} min.", stopAll: "Stop everything",
+      storyEyebrow: "Bedtime story", storyTitle: "Tonight, <em>in the meadow.</em>", storyWriting: "Luma is writing your story",
+      readToMe: "Read it to me", stopReading: "Stop reading", noVoice: "This device has no voice for this language.",
+      addAmbience: "Add rain and music", ambienceOn: "Rain and music on", anotherStory: "Another story",
+      starsEyebrow: "Your stars", starsTitle: "Hang a good moment <em>in your sky.</em>",
+      starsLead: "Anything that went okay, made you smile, or that you're glad about. Each one becomes a star you can tap later to read again.",
+      starPh: "My coworker brought me coffee", starLabel: "A good moment", addStar: "Add star",
+      noStars: "Your sky has no stars of your own yet. Start with one small thing.",
+      firstStar: "Your first star. Look up: it's in your sky now. Tap it any night.",
+      manyStars: "{n} stars in your sky. On hard days, tap them and read them back.",
+      nightsEyebrow: "Your nights", nightsTitle: "How the days <em>have felt.</em>", chartLabel: "How heavy each of the last 14 days felt",
+      insightEmpty: "Check in for a few nights and patterns will show up here.",
+      insightTag: "Lately, the thing weighing on you most is <b>{tag}</b>.",
+      insightLighter: " Your days have felt lighter this week than last. Something's working.",
+      insightHeavier: " This week has felt heavier than last. Be extra gentle with yourself.",
+      insightSame: " This week has felt about the same as last.",
+      statLit: "nights lit", statBest: "best streak", statGolden: "golden", statGifts: "gifts",
+      reminderTitle: "Nightly reminder", reminderNote: "A set time makes a habit much easier to keep. Choose yours and add it to your calendar.",
+      reminderTime: "Reminder time", addCal: "Add to Google Calendar",
+      calTitle: "Firefly: light tonight's firefly", calDetails: "Seven quiet minutes for yourself. Open Firefly in Claude.",
+      remembersTitle: "What Luma remembers", forget: "Forget this",
+      remembersNote: "Luma uses these so you don't have to repeat yourself. Remove anything you like.",
+      remembersNone: "Nothing yet. As you talk, Luma keeps a few short notes so it can remember you.",
+      giftsTitle: "Gifts you've opened", recorded: "{n} evenings recorded.",
+    },
+    ar: {
+      brand: "يراعة", sounds: "الأصوات", langSwitch: "English", count: "اليراعات: {n}",
+      partLate: "آخر الليل", partMorning: "الصباح", partAfternoon: "الظهيرة", partEvening: "المساء",
+      hiName: "، يا {name}",
+      greetFirst: "أهلًا بك. <em>تنفّس بهدوء.</em>",
+      greetDone: "نور الليلة <em>مُضاء{hi}.</em>",
+      greetBack: "أهلًا بعودتك{hi}. <em>اجلس قليلًا.</em>",
+      leadFirst: "سبع دقائق هادئة كل مساء. تحدّث مع لُمى، وتخلَّ عن همٍّ يشغلك، وأضئ يراعة. عُد كل ليلة، وستدبّ الحياة في التلّ شيئًا فشيئًا.",
+      leadDone: "ابقَ ما شئت. شغّل بعض الأصوات، أو استمع إلى حكاية قبل النوم، أو أضف نجمة إلى سمائك.",
+      leadBack: "حفظ المرجُ يراعاتك. وهدية الليلة تنتظرك في النهاية.",
+      lastPlanned: "خطّتك الصغيرة من المرة الماضية", itHappened: "فعلتُها", notYet: "ليس بعد، ولا بأس",
+      niceDone: "أحسنت", niceDoneQ: "الأشياء الصغيرة التي تُنجَز رغم التعب تُحسب مرتين.",
+      okay: "لا بأس", okayQ: "غدًا صفحة جديدة.",
+      statFireflies: "يراعة", statRow: "ليالٍ متتالية", statStars: "نجمة",
+      untilNext: "الليالي المتبقية حتى {label}: {n}",
+      allAwake: "استيقظ التلّ كله. كل يراعة هنا مساءٌ حضرتَ فيه من أجل نفسك.",
+      beginFirst: "أضئ يراعتك الأولى", begin: "ابدأ الليلة · ٧ دقائق", quick: "متعب جدًا؟ النسخة القصيرة (دقيقة واحدة)",
+      inMeadow: "في المرج",
+      tileSounds: "الأصوات", tileSoundsD: "موسيقى، مطر، نغمات للدماغ",
+      tileStory: "حكاية قبل النوم", tileStoryD: "تكتبها لك لُمى",
+      tileStars: "نجومك", tileStarsD: "لحظات جميلة في سمائك",
+      tileBreathe: "تنفّس", tileBreatheD: "هدوء، مربّع، أو نوم",
+      tileLanterns: "الفوانيس", tileLanternsD: "دع همًّا يطفو بعيدًا",
+      tileTalk: "تحدّث مع لُمى", tileTalkD: "في أي وقت تحتاجه",
+      tileNights: "لياليك", tileNightsD: "أنماط، هدايا، تذكير",
+      back: "→ المرج", done: "تم", skip: "تخطَّ", cont: "متابعة",
+      stepOf: "الخطوة {n} من ٥",
+      breatheEyebrow: "تنفّس", arriveEyebrow: "الوصول",
+      breatheFreeTitle: "اتبع الضوء.", breatheTitle: "اترك يومك عند الباب.",
+      breathPattern: "نمط التنفّس", getComfy: "اجلس براحة", breathsCount: "الأنفاس: {n}", hereNow: "جيد. أنت هنا الآن.",
+      bIn: "شهيق", bHold: "احبس نفَسك", bOut: "زفير بطيء",
+      checkinEyebrow: "تفقّد حالك", namePh: "بماذا تناديك لُمى؟ (اختياري)", nameLabel: "اسمك",
+      howHeavy: "كم كان يومك ثقيلًا؟", whatWeighed: "ما الذي أثقله؟ اختر ما يناسبك.",
+      lightMine: "أضئ يراعتي", talkItOut: "لنتحدّث",
+      sayPh: "قل أي شيء. لُمى تصغي إليك.", yourMsg: "رسالتك", send: "إرسال",
+      aiHint: "لُمى ذكاء اصطناعي. في حالات الطوارئ، اتصل برقم الطوارئ المحلي.",
+      readyLetGo: "أنا مستعد للتخلّي", thinking: "لُمى تفكّر",
+      noAi: "لا أستطيع الكلام في هذه الصفحة، لكن الكتابة تساعد أيضًا. اكتب ما يدور في ذهنك، وسيبقى هنا لك وحدك.",
+      noAiHint: "صوت لُمى يحتاج إلى إذن استخدام Claude في هذه الصفحة.", saved: "حُفظ. أكمل إن كان هناك المزيد. 🌙",
+      errRate: "تحتاج لُمى إلى استراحة قصيرة. حاول بعد دقيقة.",
+      errSession: "انتهت جلستك. سجّل الدخول من جديد لمواصلة الحديث.",
+      errRefused: "لنجرّب قول ذلك بطريقة أخرى.",
+      errGeneric: "انقطع الخيط للحظة. حاول مرة أخرى.",
+      letGoEyebrow: "التخلّي", letGoTitle: "ضع همًّا في فانوس.",
+      letGoLead: "اكتبه ثم أطلقه، وسيطفو بعيدًا فوق التلّ. يمكنك استعادته غدًا إن أردت حقًا.",
+      worryPh: "الشيء الذي ما زال يدور في رأسك…", worryLabel: "همٌّ تريد التخلّي عنه", releaseBtn: "أطلِق",
+      releasedMore: "الفوانيس المُطلقة: {n}. أضف آخر أو تابع.", releasedFree: "الفوانيس المُطلقة: {n}. أضف آخر.",
+      nothingToLet: "لا شيء أتخلّى عنه الليلة",
+      tomorrowEyebrow: "غدًا", tomorrowTitle: "شيء صغير ولطيف <em>من أجل الغد.</em>",
+      tomorrowLead: "صغير عن قصد. شيء تستطيع فعله حتى في يوم متعب.",
+      planPh: "خذ استراحة غداء حقيقية في الخارج", planLabel: "شيء صغير للغد",
+      askIdea: "اطلب فكرة من لُمى", anotherIdea: "فكرة أخرى", tryAgain: "حاول مجددًا",
+      fireflyNo: "اليراعة رقم {n}", tonight: "الليلة", goneTitle: "ها هي تطير. <em>تصبح على خير.</em>", stillGlowing: "ما زالت تتوهّج.",
+      unlocked: "شيء جديد على التلّ: {label}.",
+      grace: "فاتتك ليلة، فحفظت لُمى سلسلتك. يُسمح بليلة راحة واحدة كل أسبوع.",
+      luma: "لُمى", writingNote: "تكتب لك رسالة", giftTonight: "هدية الليلة", tapOpen: "اضغط لفتحها",
+      teaseNext: "غدًا: هدية جديدة، والليالي المتبقية حتى {label}: {n}.", teaseNone: "غدًا: هدية جديدة بانتظارك.",
+      teaseStreak: " ليالٍ متتالية: {n}.", bedtime: "حكاية قبل النوم", backMeadow: "العودة إلى المرج",
+      fallbackNote: "حضرتَ من أجل نفسك الليلة، وهذا كل المطلوب. نومًا هنيئًا.",
+      rareGift: "هدية نادرة", rareText: "يراعة ذهبية. إنها نادرة، وقد اختارت مرجك، وستبقى تتوهّج فيه إلى الأبد.",
+      letter: "رسالة من لُمى", lumaWriting: "لُمى تكتب",
+      soundsEyebrow: "الأصوات", soundsTitle: "اضبط أنغام الليل.", volume: "مستوى صوت {name}",
+      layer_music: "موسيقى هادئة", layer_rain: "مطر", layer_ocean: "أمواج البحر", layer_crickets: "صراصير الليل", layer_wind: "ريح في العشب", layer_hum: "ضجيج بنّي",
+      tonesTitle: "نغمات موجات الدماغ",
+      tonesNote: "النبضات الثنائية: تسمع كل أذن نغمة مختلفة قليلًا، فيُدرك الدماغ نبضًا بطيئًا بينهما. استخدم سماعات الرأس. نتائج الدراسات حول تأثيرها متباينة، لكن كثيرين يجدونها مهدّئة. جرّبها مع المطر أو الضجيج البنّي.",
+      tone_off: "إيقاف", tone_alpha: "استرخاء · ألفا ١٠ هرتز", tone_theta: "هدوء عميق · ثيتا ٦ هرتز", tone_delta: "نوم · دلتا ٢٫٥ هرتز",
+      timerTitle: "مؤقّت النوم", timerOff: "إيقاف", timerMin: "{n} دقيقة", fading: "يخفت الصوت بعد نحو {n} دقيقة.", stopAll: "أوقف كل شيء",
+      storyEyebrow: "حكاية قبل النوم", storyTitle: "الليلة، <em>في المرج.</em>", storyWriting: "لُمى تكتب حكايتك",
+      readToMe: "اقرأها لي", stopReading: "أوقف القراءة", noVoice: "لا يتوفّر صوت عربي على هذا الجهاز.",
+      addAmbience: "أضف المطر والموسيقى", ambienceOn: "المطر والموسيقى يعملان", anotherStory: "حكاية أخرى",
+      starsEyebrow: "نجومك", starsTitle: "علّق لحظة جميلة <em>في سمائك.</em>",
+      starsLead: "أي شيء سار على ما يرام، أو أضحكك، أو أنت ممتنّ له. كل لحظة تصبح نجمة يمكنك الضغط عليها لاحقًا لتقرأها من جديد.",
+      starPh: "زميلي أحضر لي قهوة", starLabel: "لحظة جميلة", addStar: "أضف نجمة",
+      noStars: "لا نجوم خاصة بك في سمائك بعد. ابدأ بشيء صغير.",
+      firstStar: "نجمتك الأولى. انظر إلى الأعلى: إنها في سمائك الآن. اضغط عليها في أي ليلة.",
+      manyStars: "النجوم في سمائك: {n}. في الأيام الصعبة، اضغط عليها واقرأها من جديد.",
+      nightsEyebrow: "لياليك", nightsTitle: "كيف كانت <em>أيامك.</em>", chartLabel: "مدى ثقل كل يوم من الأيام الأربعة عشر الماضية",
+      insightEmpty: "تفقّد حالك بضع ليالٍ وستظهر الأنماط هنا.",
+      insightTag: "في الآونة الأخيرة، أكثر ما يثقل عليك هو <b>{tag}</b>.",
+      insightLighter: " كانت أيامك هذا الأسبوع أخفّ من الأسبوع الماضي. شيءٌ ما ينجح.",
+      insightHeavier: " كان هذا الأسبوع أثقل من سابقه. كن ألطف بنفسك.",
+      insightSame: " كان هذا الأسبوع قريبًا من سابقه.",
+      statLit: "ليالٍ مضاءة", statBest: "أطول سلسلة", statGolden: "ذهبية", statGifts: "هدايا",
+      reminderTitle: "تذكير ليلي", reminderNote: "الوقت الثابت يجعل العادة أسهل بكثير. اختر وقتك وأضفه إلى تقويمك.",
+      reminderTime: "وقت التذكير", addCal: "أضف إلى تقويم Google",
+      calTitle: "يراعة: أضئ يراعة الليلة", calDetails: "سبع دقائق هادئة لنفسك. افتح يراعة في Claude.",
+      remembersTitle: "ما تتذكّره لُمى", forget: "انسَ هذا",
+      remembersNote: "تستخدم لُمى هذه الملاحظات حتى لا تضطر إلى التكرار. احذف ما تشاء.",
+      remembersNone: "لا شيء بعد. أثناء حديثكما، تحتفظ لُمى ببعض الملاحظات القصيرة لتتذكّرك.",
+      giftsTitle: "الهدايا التي فتحتها", recorded: "الأمسيات المسجّلة: {n}.",
+    },
+  };
+
+  const C = {
+    en: {
+      milestones: ["your first firefly", "a light in the cabin window", "the old tree blossoms", "shooting stars", "a pond that holds the moon", "the northern lights"],
+      weights: ["Light", "Okay", "Heavy", "Very", "Crushing"],
+      tags: { Work: "Work", Tiredness: "Tiredness", People: "People", Money: "Money", Worry: "Worry", Health: "Health", Boredom: "Boredom", "Nothing much": "Nothing much" },
+      breaths: { calm: ["Calm", "In 4 · hold 2 · out 6"], box: ["Box", "4 · 4 · 4 · 4, steadying"], sleep: ["Sleep", "In 4 · hold 7 · out 8"] },
+      gifts: {
+        "Kind words": [
+          "You don't have to earn rest. You're allowed to just have it.",
+          "Being tired isn't failing. It's information.",
+          "Some days the win is that you got through it. Today counts.",
+          "You're doing better than your inner critic says. It has a bad view from in there.",
+          "Passion often comes back quietly, after rest, not before it.",
+          "The people who love you would want you to go easier on yourself.",
+          "You showed up for yourself tonight. That was a choice, and you made it.",
+        ],
+        "Night fact": [
+          "Fireflies are beetles, not flies.",
+          "A firefly's glow is \"cold light\": almost all the energy becomes light, and very little becomes heat.",
+          "In the Great Smoky Mountains, one kind of firefly flashes in sync for a couple of weeks each summer.",
+          "Firefly larvae glow too. Some people call them glow-worms.",
+          "There are around 2,000 kinds of fireflies in the world, and each has its own flash pattern.",
+          "The light from some stars you can see tonight left them hundreds of years ago.",
+          "The Moon drifts about 3.8 cm farther from Earth every year.",
+          "Owls can't move their eyes in their sockets, so they turn their whole heads instead.",
+        ],
+        "Tiny challenge": [
+          "Tomorrow, take three slow breaths before you open your email.",
+          "Drink a full glass of water before your first coffee tomorrow.",
+          "Step outside for two minutes tomorrow and look at the sky.",
+          "Send one kind message to someone tomorrow. No reason needed.",
+          "Keep your phone out of reach for the first 10 minutes after you wake up.",
+          "Eat lunch away from your desk tomorrow, even for 15 minutes.",
+          "Tomorrow, write down one thing you did well at work, however small.",
+          "Tonight, dim the lights an hour before bed.",
+        ],
+        "Small poem": [
+          "The day is set down\nlike a heavy bag at the door.\nThe night asks for nothing.",
+          "Small lights in the grass,\nnone of them trying to be the moon,\nall of them enough.",
+          "Rain on the cabin roof.\nTomorrow can wait\nout there in the dark.",
+          "You carried it all day.\nHere, the hill will hold it\nuntil morning.",
+          "No inbox in the meadow.\nOnly crickets keeping time\nfor no one at all.",
+        ],
+      },
+      stories: [
+        "You walk the last few steps up the hill. The grass is cool and a little damp, and it brushes your ankles like it remembers you.\n\nThe cabin window is lit. Inside, a kettle ticks as it cools. You sit by the window and watch the fireflies drift low over the meadow, slow as thoughts that no longer need answering.\n\nThe rain starts, so softly at first that it sounds like someone turning pages. You let your shoulders drop. You let your jaw unclench. There's nothing left to do tonight, and nowhere to be.\n\nOne firefly lands on the glass, glows twice, and moves on. You breathe out, long and slow, and the room gets warmer, and the sound of the rain gets farther away, and farther, and you drift.",
+        "The pond at the bottom of the meadow is so still it holds the whole moon. You sit on the old wooden bench beside it and pull a blanket around your shoulders.\n\nSomewhere, crickets are keeping a slow rhythm. A breeze moves through the tall grass in long waves, the way the sea moves, the way breathing moves.\n\nYou notice the weight of your body on the bench. Your hands are heavy and warm. Your feet are heavy and warm. Each breath out is a little longer than the one before.\n\nA few fireflies drift across the water, and their reflections drift with them, two lights for every one. You watch them until you can't tell which are which, and your eyes grow heavy, and the meadow keeps watch while you sleep.",
+      ],
+    },
+    ar: {
+      milestones: ["يراعتك الأولى", "ضوء في نافذة الكوخ", "تُزهر الشجرة القديمة", "الشُّهُب", "بركة يسكنها القمر", "الشفق القطبي"],
+      weights: ["خفيف", "مقبول", "ثقيل", "ثقيل جدًا", "مُنهِك"],
+      tags: { Work: "العمل", Tiredness: "التعب", People: "الناس", Money: "المال", Worry: "القلق", Health: "الصحة", Boredom: "الملل", "Nothing much": "لا شيء يُذكر" },
+      breaths: { calm: ["هدوء", "شهيق ٤ · حبس ٢ · زفير ٦"], box: ["مربّع", "٤ · ٤ · ٤ · ٤ للثبات"], sleep: ["نوم", "شهيق ٤ · حبس ٧ · زفير ٨"] },
+      gifts: {
+        "كلمات لطيفة": [
+          "لا يلزمك أن تستحق الراحة. يحقّ لك أن تنالها فحسب.",
+          "التعب ليس فشلًا. إنه رسالة من جسدك.",
+          "في بعض الأيام، يكفي أنك اجتزتها. هذا اليوم يُحسب لك.",
+          "أنت أفضل مما يقوله ناقدك الداخلي، فهو لا يرى المشهد جيدًا من هناك.",
+          "كثيرًا ما يعود الشغف بهدوء بعد الراحة، لا قبلها.",
+          "من يحبّونك يتمنّون لو تكون ألطف مع نفسك.",
+          "حضرتَ من أجل نفسك الليلة. كان ذلك اختيارك، وقد فعلته.",
+        ],
+        "حقيقة ليلية": [
+          "اليراعات خنافس، وليست ذبابًا.",
+          "ضوء اليراعة «ضوء بارد»: تتحوّل معظم طاقته إلى ضوء، وقليل جدًا منها إلى حرارة.",
+          "في جبال سموكي العظيمة، يومض نوع من اليراعات في وقت واحد لأسبوعين تقريبًا كل صيف.",
+          "يرقات اليراعات تتوهّج أيضًا، ويسمّيها بعض الناس الدودة المضيئة.",
+          "في العالم نحو ألفي نوع من اليراعات، ولكل نوع نمط وميض خاص به.",
+          "بعض النجوم التي تراها الليلة غادرها ضوؤها قبل مئات السنين.",
+          "يبتعد القمر عن الأرض نحو ٣٫٨ سنتيمترات كل عام.",
+          "لا تستطيع البومة تحريك عينيها داخل محجريهما، لذلك تُدير رأسها كله.",
+        ],
+        "تحدٍّ صغير": [
+          "غدًا، خذ ثلاثة أنفاس بطيئة قبل أن تفتح بريدك.",
+          "اشرب كوبًا كاملًا من الماء قبل قهوتك الأولى غدًا.",
+          "اخرج غدًا لدقيقتين وانظر إلى السماء.",
+          "أرسل غدًا رسالة لطيفة إلى أحدهم، دون أي سبب.",
+          "أبعِد هاتفك عنك في أول عشر دقائق بعد استيقاظك.",
+          "تناول غداءك غدًا بعيدًا عن مكتبك، ولو لربع ساعة.",
+          "غدًا، اكتب شيئًا واحدًا أحسنتَ فيه في عملك، مهما كان صغيرًا.",
+          "الليلة، خفّف الأضواء قبل النوم بساعة.",
+        ],
+        "قصيدة صغيرة": [
+          "وضعتَ النهارَ\nكحقيبةٍ ثقيلةٍ عند الباب.\nوالليلُ لا يطلب شيئًا.",
+          "أضواءٌ صغيرةٌ في العشب،\nلا تحاول أيٌّ منها أن تكون القمر،\nوكلٌّ منها يكفي.",
+          "مطرٌ على سقف الكوخ.\nالغدُ يمكنه الانتظار\nهناك في العتمة.",
+          "حملتَه طوال اليوم.\nهنا، سيحمله التلُّ عنك\nحتى الصباح.",
+          "لا بريدَ في المرج.\nفقط صراصيرُ الليل تعدّ الوقت\nلا لأحد.",
+        ],
+      },
+      stories: [
+        "تمشي الخطوات الأخيرة صعودًا إلى التلّ. العشب بارد ورطب قليلًا، يلامس كاحليك كأنه يتذكّرك.\n\nنافذة الكوخ مضاءة. في الداخل، يطقطق إبريق الشاي وهو يبرد. تجلس قرب النافذة وتراقب اليراعات تطفو منخفضة فوق المرج، بطيئة كأفكار لم تعد تحتاج إلى إجابة.\n\nيبدأ المطر ناعمًا في أوله، حتى يبدو كصوت صفحات تُقلَّب. تُرخي كتفيك. تُرخي فكّك. لم يبقَ شيء تفعله الليلة، ولا مكان عليك أن تكون فيه.\n\nتحطّ يراعة على الزجاج، تتوهّج مرتين، ثم تمضي. تُخرج نفَسك طويلًا وبطيئًا، فتدفأ الغرفة، ويبتعد صوت المطر، ويبتعد أكثر، وتغفو.",
+        "البركة في أسفل المرج ساكنة إلى حدّ أنها تحتضن القمر كله. تجلس على المقعد الخشبي القديم بجانبها، وتلفّ بطانية حول كتفيك.\n\nفي مكان ما، تحافظ صراصير الليل على إيقاع بطيء. ونسمةٌ تعبر العشب الطويل في موجات طويلة، كما يتحرّك البحر، وكما يتحرّك التنفّس.\n\nتلاحظ ثقل جسدك على المقعد. يداك ثقيلتان ودافئتان. قدماك ثقيلتان ودافئتان. وكل زفير أطول قليلًا من الذي قبله.\n\nتعبر بضع يراعات فوق الماء، وتعبر انعكاساتها معها، ضوءان لكل يراعة. تراقبها حتى لا تعود تميّز هذا من ذاك، فتثقل عيناك، ويسهر المرج عليك وأنت نائم.",
+      ],
+    },
+  };
+
+  const t = (k, v = {}) => String((S[lang] && S[lang][k]) ?? S.en[k] ?? k).replace(/\{(\w+)\}/g, (m, x) => (x in v ? v[x] : m));
+  const c = () => C[lang];
+  const num = (n) => (lang === "ar" ? Number(n).toLocaleString("ar-u-nu-arab") : String(n));
+  const locale = () => (lang === "ar" ? "ar-u-nu-arab" : undefined);
+  function applyLang() {
+    document.documentElement.lang = lang;
+    document.documentElement.dir = lang === "ar" ? "rtl" : "ltr";
+    document.title = t("brand");
+  }
+  applyLang();
+
   // ================= content =================
-  const MILESTONES = [
-    { at: 1, label: "your first firefly" },
-    { at: 3, label: "a light in the cabin window" },
-    { at: 7, label: "the old tree blossoms" },
-    { at: 14, label: "shooting stars" },
-    { at: 21, label: "a pond that holds the moon" },
-    { at: 30, label: "the northern lights" },
-  ];
-  const WEIGHTS = [
-    { v: 1, label: "Light", size: 8 }, { v: 2, label: "Okay", size: 12 }, { v: 3, label: "Heavy", size: 16 },
-    { v: 4, label: "Very", size: 20 }, { v: 5, label: "Crushing", size: 25 },
-  ];
+  const MILESTONE_AT = [1, 3, 7, 14, 21, 30];
+  const milestones = () => MILESTONE_AT.map((at, i) => ({ at, label: c().milestones[i] }));
+  const WEIGHT_SIZES = [8, 12, 16, 20, 25];
   const WEIGHT_WORDS = ["", "light", "okay", "heavy", "very heavy", "crushing"];
   const TAGS = ["Work", "Tiredness", "People", "Money", "Worry", "Health", "Boredom", "Nothing much"];
   const BREATHS = {
-    calm: { name: "Calm", hint: "In 4 · hold 2 · out 6", steps: [["Breathe in", 4], ["Hold", 2], ["Breathe out", 6]] },
-    box: { name: "Box", hint: "4 · 4 · 4 · 4, steadying", steps: [["Breathe in", 4], ["Hold", 4], ["Breathe out", 4], ["Hold", 4]] },
-    sleep: { name: "Sleep", hint: "In 4 · hold 7 · out 8", steps: [["Breathe in", 4], ["Hold", 7], ["Breathe out", 8]] },
+    calm: [["in", 4], ["hold", 2], ["out", 6]],
+    box: [["in", 4], ["hold", 4], ["out", 4], ["hold", 4]],
+    sleep: [["in", 4], ["hold", 7], ["out", 8]],
   };
-  // Gifts: one sealed gift each evening. Mostly gentle, sometimes rare.
-  const GIFTS = {
-    "Kind words": [
-      "You don't have to earn rest. You're allowed to just have it.",
-      "Being tired isn't failing. It's information.",
-      "Some days the win is that you got through it. Today counts.",
-      "You're doing better than your inner critic says. It has a bad view from in there.",
-      "Passion often comes back quietly, after rest, not before it.",
-      "The people who love you would want you to go easier on yourself.",
-      "You showed up for yourself tonight. That was a choice, and you made it.",
-    ],
-    "Night fact": [
-      "Fireflies are beetles, not flies.",
-      "A firefly's glow is \"cold light\": almost all the energy becomes light, and very little becomes heat.",
-      "In the Great Smoky Mountains, one kind of firefly flashes in sync for a couple of weeks each summer.",
-      "Firefly larvae glow too. Some people call them glow-worms.",
-      "There are around 2,000 kinds of fireflies in the world, and each has its own flash pattern.",
-      "The light from some stars you can see tonight left them hundreds of years ago.",
-      "The Moon drifts about 3.8 cm farther from Earth every year.",
-      "Owls can't move their eyes in their sockets, so they turn their whole heads instead.",
-    ],
-    "Tiny challenge": [
-      "Tomorrow, take three slow breaths before you open your email.",
-      "Drink a full glass of water before your first coffee tomorrow.",
-      "Step outside for two minutes tomorrow and look at the sky.",
-      "Send one kind message to someone tomorrow. No reason needed.",
-      "Keep your phone out of reach for the first 10 minutes after you wake up.",
-      "Eat lunch away from your desk tomorrow, even for 15 minutes.",
-      "Tomorrow, write down one thing you did well at work, however small.",
-      "Tonight, dim the lights an hour before bed.",
-    ],
-    "Small poem": [
-      "The day is set down\nlike a heavy bag at the door.\nThe night asks for nothing.",
-      "Small lights in the grass,\nnone of them trying to be the moon,\nall of them enough.",
-      "Rain on the cabin roof.\nTomorrow can wait\nout there in the dark.",
-      "You carried it all day.\nHere, the hill will hold it\nuntil morning.",
-      "No inbox in the meadow.\nOnly crickets keeping time\nfor no one at all.",
-    ],
-  };
-  const STORIES = [
-    "You walk the last few steps up the hill. The grass is cool and a little damp, and it brushes your ankles like it remembers you.\n\nThe cabin window is lit. Inside, a kettle ticks as it cools. You sit by the window and watch the fireflies drift low over the meadow, slow as thoughts that no longer need answering.\n\nThe rain starts, so softly at first that it sounds like someone turning pages. You let your shoulders drop. You let your jaw unclench. There's nothing left to do tonight, and nowhere to be.\n\nOne firefly lands on the glass, glows twice, and moves on. You breathe out, long and slow, and the room gets warmer, and the sound of the rain gets farther away, and farther, and you drift.",
-    "The pond at the bottom of the meadow is so still it holds the whole moon. You sit on the old wooden bench beside it and pull a blanket around your shoulders.\n\nSomewhere, crickets are keeping a slow rhythm. A breeze moves through the tall grass in long waves, the way the sea moves, the way breathing moves.\n\nYou notice the weight of your body on the bench. Your hands are heavy and warm. Your feet are heavy and warm. Each breath out is a little longer than the one before.\n\nA few fireflies drift across the water, and their reflections drift with them, two lights for every one. You watch them until you can't tell which are which, and your eyes grow heavy, and the meadow keeps watch while you sleep.",
-  ];
+  const BREATH_WORD = { in: "bIn", hold: "bHold", out: "bOut" };
 
   // ================= state =================
   const LS = "firefly-v1";
@@ -353,6 +616,11 @@
   let sample = null, aiOff = false;
   const aiReady = (window.claude && window.claude.use) ? claude.use("sample").then((s) => { sample = s; return s; }) : Promise.resolve(null);
 
+  // Added to every request so Luma writes in the language the person chose.
+  const langNote = () => lang === "ar"
+    ? "\n\nLanguage: write ONLY in clear, simple Modern Standard Arabic (فصحى بيضاء): warm, natural and easy for any Arab reader, never stiff or classical. Use Arabic punctuation. Your name in Arabic is لُمى."
+    : "\n\nLanguage: write in English.";
+
   function rules(session) {
     const mem = state.memory.length ? state.memory.map((m) => "- " + m).join("\n") : "- nothing yet, this may be one of your first evenings together";
     const last = state.intention && state.intention.date !== dayKey()
@@ -373,21 +641,22 @@ ${state.name ? `\nTheir name is ${state.name}. Use it now and then, not every me
 ${today}
 What you remember about them from earlier evenings:
 ${mem}
-${last}`;
+${last}${langNote()}`;
   }
   async function ask(input, opts = {}) {
     await aiReady;
     if (!sample || aiOff) throw { code: "not_granted" };
+    if (typeof input === "string" && !input.includes("Language:")) input += langNote();
     return sample(input, Object.assign({ modelTier: "quick" }, opts));
   }
   function aiFailure(e) {
     const code = e && e.code;
     if (["not_granted", "sampling_disabled", "not_declared", "capability_disabled", "capability_removed"].includes(code)) { aiOff = true; return "off"; }
     if (code === "cancelled") return "cancelled";
-    if (code === "rate_limited") return "Luma needs a short rest. Try again in a minute.";
-    if (code === "session_expired") return "You've been signed out. Sign in again to keep talking.";
-    if (code === "refused") return "Let's try saying that a different way.";
-    return "Lost the thread for a second. Try that again.";
+    if (code === "rate_limited") return t("errRate");
+    if (code === "session_expired") return t("errSession");
+    if (code === "refused") return t("errRefused");
+    return t("errGeneric");
   }
 
   // ================= sound engine =================
@@ -762,7 +1031,7 @@ ${last}`;
         cx.fillStyle = `rgba(255,205,140,${a * 0.9})`;
         cx.beginPath(); cx.roundRect ? cx.roundRect(l.x - 9, l.y - 12, 18, 22, 6) : cx.rect(l.x - 9, l.y - 12, 18, 22); cx.fill();
         cx.fillStyle = `rgba(236,235,248,${a * 0.85})`;
-        cx.font = "italic 15px 'Instrument Serif', Georgia, serif"; cx.textAlign = "center";
+        cx.font = "italic 15px 'Instrument Serif', 'Amiri', Georgia, serif"; cx.textAlign = "center";
         cx.fillText(l.text, l.x, l.y + 34);
       }
       lanterns = lanterns.filter((l) => l.age < 9);
@@ -780,7 +1049,7 @@ ${last}`;
       for (const st of userStars) { const [x, y] = starPos(st), d = Math.hypot(x - e.clientX, y - e.clientY); if (d < bd) { bd = d; best = st; } }
       if (!best) { tip.hidden = true; return; }
       const [x, y] = starPos(best);
-      tip.innerHTML = `${esc(best.text)}<small>${new Date(best.date + "T12:00").toLocaleDateString(undefined, { month: "short", day: "numeric" })}</small>`;
+      tip.innerHTML = `${esc(best.text)}<small>${new Date(best.date + "T12:00").toLocaleDateString(locale(), { month: "short", day: "numeric" })}</small>`;
       tip.style.left = Math.max(130, Math.min(W - 130, x)) + "px"; tip.style.top = y + "px";
       tip.hidden = false;
       clearTimeout(tipTimer); tipTimer = setTimeout(() => (tip.hidden = true), 5000);
@@ -816,16 +1085,21 @@ ${last}`;
     panel.scrollTop = 0;
     panel.style.animation = "none"; void panel.offsetWidth; panel.style.animation = "";
   }
-  const stepBar = (n) => `<div class="steps" aria-label="Step ${n} of 5">${[1, 2, 3, 4, 5].map((i) => `<i class="${i <= n ? "on" : ""}"></i>`).join("")}</div>`;
-  const backBtn = (label = "Meadow") => `<button class="back" data-back>← ${label}</button>`;
+  const stepBar = (n) => `<div class="steps" aria-label="${t("stepOf", { n: num(n) })}">${[1, 2, 3, 4, 5].map((i) => `<i class="${i <= n ? "on" : ""}"></i>`).join("")}</div>`;
+  const backBtn = () => `<button class="back" data-back>${t("back")}</button>`;
   function wireBack(to = "home") { const b = $("[data-back]"); if (b) b.onclick = () => show(to); }
+  const shortDate = (d) => new Date(d + "T12:00").toLocaleDateString(locale(), { month: "short", day: "numeric" });
 
-  function renderCount() {
+  function renderChrome() {
     const n = state.fireflies + state.golden;
-    document.getElementById("count").textContent = n ? `${n} firefl${n === 1 ? "y" : "ies"}` : "";
+    document.getElementById("count").textContent = n ? t("count", { n: num(n) }) : "";
+    document.getElementById("brand").textContent = t("brand");
+    document.getElementById("sound-label").textContent = t("sounds");
+    document.getElementById("lang-btn").textContent = t("langSwitch");
   }
-  const nextMilestone = () => MILESTONES.find((m) => m.at > state.fireflies);
-  const prevMilestoneAt = () => { const d = MILESTONES.filter((m) => m.at <= state.fireflies); return d.length ? d[d.length - 1].at : 0; };
+  const renderCount = renderChrome;
+  const nextMilestone = () => milestones().find((m) => m.at > state.fireflies);
+  const prevMilestoneAt = () => { const d = milestones().filter((m) => m.at <= state.fireflies); return d.length ? d[d.length - 1].at : 0; };
 
   function show(name, arg) {
     if (cleanup) { cleanup(); cleanup = null; }
@@ -851,27 +1125,19 @@ ${last}`;
   // ---------- home ----------
   function home() {
     const h = new Date().getHours();
-    const part = h < 5 ? "Late night" : h < 12 ? "Morning" : h < 17 ? "Afternoon" : "Evening";
-    const weekday = new Date().toLocaleDateString(undefined, { weekday: "long" });
+    const part = t(h < 5 ? "partLate" : h < 12 ? "partMorning" : h < 17 ? "partAfternoon" : "partEvening");
+    const weekday = new Date().toLocaleDateString(locale(), { weekday: "long" });
     const next = nextMilestone(), from = prevMilestoneAt();
     const pct = next ? Math.round(((state.fireflies - from) / (next.at - from)) * 100) : 100;
     const pendingIntention = state.intention && state.intention.date !== dayKey() && state.intention.done == null;
     const first = !state.fireflies;
-    const hi = state.name ? `, ${esc(state.name)}` : "";
-    const greeting = first ? "Hello. <em>Breathe out.</em>" : doneTonight() ? `Tonight's light <em>is lit${hi}.</em>` : `Welcome back${hi}. <em>Sit a while.</em>`;
-    const lead = first
-      ? "Seven quiet minutes each evening. Talk it out with Luma, let a worry go, and light a firefly. Come back each night and the hill slowly comes alive."
-      : doneTonight()
-        ? "Stay as long as you like. Put on some sounds, hear a bedtime story, or add a star to your sky."
-        : "The meadow kept your fireflies safe. Tonight's gift is waiting at the end.";
+    const hi = state.name ? t("hiName", { name: esc(state.name) }) : "";
+    const greeting = first ? t("greetFirst") : doneTonight() ? t("greetDone", { hi }) : t("greetBack", { hi });
+    const lead = t(first ? "leadFirst" : doneTonight() ? "leadDone" : "leadBack");
     const tiles = [
-      ["sounds", "sound", "Sounds", "Rain, waves, brainwave tones"],
-      ["story", "book", "Bedtime story", "Luma writes one for you"],
-      ["stars", "star", "Your stars", "Good moments in your sky"],
-      ["breathe-free", "breath", "Breathe", "Calm, box or sleep"],
-      ["lanterns", "lantern", "Lanterns", "Let a worry float away"],
-      ["talk-free", "talk", "Talk to Luma", "Any time you need"],
-      ["nights", "moon", "Your nights", "Patterns, gifts, reminder"],
+      ["sounds", "sound", "tileSounds"], ["story", "book", "tileStory"], ["stars", "star", "tileStars"],
+      ["breathe-free", "breath", "tileBreathe"], ["lanterns", "lantern", "tileLanterns"],
+      ["talk-free", "talk", "tileTalk"], ["nights", "moon", "tileNights"],
     ];
     el(`
       <p class="eyebrow">${esc(weekday)} · ${part}</p>
@@ -879,23 +1145,23 @@ ${last}`;
       <p class="soft">${lead}</p>
       ${pendingIntention ? `
         <div class="note" id="intent">
-          <div class="who">Last time you planned</div>
+          <div class="who">${t("lastPlanned")}</div>
           <blockquote>${esc(state.intention.text)}</blockquote>
-          <div class="row" style="margin-top:10px"><button class="ghost" data-did="1">It happened</button><button class="text-btn" data-did="0">Not yet, that's okay</button></div>
+          <div class="row" style="margin-top:10px"><button class="ghost" data-did="1">${t("itHappened")}</button><button class="text-btn" data-did="0">${t("notYet")}</button></div>
         </div>` : ""}
       ${state.fireflies ? `<div class="stats">
-          <div><b>${state.fireflies + state.golden}</b><span>fireflies</span></div>
-          <div><b>${state.streak}</b><span>night${state.streak === 1 ? "" : "s"} in a row</span></div>
-          <div><b>${state.stars.length}</b><span>star${state.stars.length === 1 ? "" : "s"}</span></div>
+          <div><b>${num(state.fireflies + state.golden)}</b><span>${t("statFireflies")}</span></div>
+          <div><b>${num(state.streak)}</b><span>${t("statRow")}</span></div>
+          <div><b>${num(state.stars.length)}</b><span>${t("statStars")}</span></div>
         </div>` : ""}
-      ${next ? `<div><div class="progress"><i style="width:${pct}%"></i></div><p class="tiny" style="margin-top:6px">${next.at - state.fireflies} more night${next.at - state.fireflies === 1 ? "" : "s"} until ${next.label}</p></div>`
-             : `<p class="tiny">The whole hill is awake. Every firefly here is an evening you showed up for yourself.</p>`}
+      ${next ? `<div><div class="progress"><i style="width:${pct}%"></i></div><p class="tiny" style="margin-top:6px">${t("untilNext", { n: num(next.at - state.fireflies), label: next.label })}</p></div>`
+             : `<p class="tiny">${t("allAwake")}</p>`}
       <div class="row split">
-        ${doneTonight() ? "" : `<button class="primary" id="begin">${first ? "Light your first firefly" : "Begin tonight · 7 min"}</button>`}
-        ${doneTonight() || first ? "" : `<button class="text-btn" id="quick">Too tired? 1-minute version</button>`}
+        ${doneTonight() ? "" : `<button class="primary" id="begin">${t(first ? "beginFirst" : "begin")}</button>`}
+        ${doneTonight() || first ? "" : `<button class="text-btn" id="quick">${t("quick")}</button>`}
       </div>
-      <p class="eyebrow">In the meadow</p>
-      <div class="tiles">${tiles.map(([to, ic, t, d]) => `<button class="tile" data-to="${to}">${icon(ic)}<b>${t}</b><span>${d}</span></button>`).join("")}</div>
+      <p class="eyebrow">${t("inMeadow")}</p>
+      <div class="tiles">${tiles.map(([to, ic, k]) => `<button class="tile" data-to="${to}">${icon(ic)}<b>${t(k)}</b><span>${t(k + "D")}</span></button>`).join("")}</div>
     `);
     const newSession = (quick) => ({ quick, weight: 0, tags: [], turns: [], worries: [], intention: "" });
     const begin = $("#begin");
@@ -907,8 +1173,8 @@ ${last}`;
       state.intention.done = b.dataset.did === "1";
       persist();
       $("#intent").innerHTML = state.intention.done
-        ? `<div class="who">Nicely done</div><blockquote>Small things done tired count double.</blockquote>`
-        : `<div class="who">That's okay</div><blockquote>Tomorrow is a fresh page.</blockquote>`;
+        ? `<div class="who">${t("niceDone")}</div><blockquote>${t("niceDoneQ")}</blockquote>`
+        : `<div class="who">${t("okay")}</div><blockquote>${t("okayQ")}</blockquote>`;
     });
   }
 
@@ -917,13 +1183,13 @@ ${last}`;
     const key = free ? (breathe.key || "calm") : "calm";
     el(`
       ${free ? backBtn() : stepBar(1)}
-      <p class="eyebrow">${free ? "Breathe" : "Arrive"}</p>
-      <h2>${free ? "Follow the light." : "Leave the day at the door."}</h2>
-      ${free ? `<div class="chips" role="group" aria-label="Breathing pattern">${Object.entries(BREATHS).map(([k, b]) => `<button data-b="${k}" aria-pressed="${k === key}">${b.name}</button>`).join("")}</div><p class="tiny">${BREATHS[key].hint}</p>` : ""}
+      <p class="eyebrow">${t(free ? "breatheEyebrow" : "arriveEyebrow")}</p>
+      <h2>${t(free ? "breatheFreeTitle" : "breatheTitle")}</h2>
+      ${free ? `<div class="chips" role="group" aria-label="${t("breathPattern")}">${Object.keys(BREATHS).map((k) => `<button data-b="${k}" aria-pressed="${k === key}">${c().breaths[k][0]}</button>`).join("")}</div><p class="tiny">${c().breaths[key][1]}</p>` : ""}
       <div class="orb-wrap"><div class="orb" id="orb"></div></div>
-      <p class="breath-word" id="word">Get comfortable</p>
+      <p class="breath-word" id="word">${t("getComfy")}</p>
       <div class="row split">
-        ${free ? `<span class="tiny" id="rounds"></span><button class="ghost" data-back2>Done</button>` : `<button class="text-btn" id="skip">Skip</button><button class="ghost" id="next" hidden>Continue</button>`}
+        ${free ? `<span class="tiny" id="rounds"></span><button class="ghost" data-back2>${t("done")}</button>` : `<button class="text-btn" id="skip">${t("skip")}</button><button class="ghost" id="next" hidden>${t("cont")}</button>`}
       </div>
     `);
     if (free) {
@@ -931,25 +1197,25 @@ ${last}`;
       $("[data-back2]").onclick = () => show("home");
       $$("[data-b]").forEach((b) => b.onclick = () => { breathe.key = b.dataset.b; show("breathe-free"); });
     }
-    const orb = $("#orb"), word = $("#word"), pattern = BREATHS[key].steps;
-    let i = 0, rounds = 0, t = null, alive = true;
-    cleanup = () => { alive = false; clearTimeout(t); };
+    const orb = $("#orb"), word = $("#word"), pattern = BREATHS[key];
+    let i = 0, rounds = 0, tm = null, alive = true;
+    cleanup = () => { alive = false; clearTimeout(tm); };
     const step = () => {
       if (!alive) return;
-      const [w, sec] = pattern[i % pattern.length];
-      word.textContent = w;
+      const [kind, sec] = pattern[i % pattern.length];
+      word.textContent = t(BREATH_WORD[kind]);
       orb.style.transitionDuration = sec + "s";
-      if (w === "Breathe in") orb.style.transform = "scale(2.3)";
-      if (w === "Breathe out") orb.style.transform = "scale(1)";
+      if (kind === "in") orb.style.transform = "scale(2.3)";
+      if (kind === "out") orb.style.transform = "scale(1)";
       i++;
       if (i % pattern.length === 0) {
         rounds++;
-        if (free) $("#rounds").textContent = `${rounds} breath${rounds > 1 ? "s" : ""}`;
-        if (!free && rounds >= 3) { t = setTimeout(() => { word.textContent = "Good. You're here now."; $("#next").hidden = false; }, sec * 1000); return; }
+        if (free) $("#rounds").textContent = t("breathsCount", { n: num(rounds) });
+        if (!free && rounds >= 3) { tm = setTimeout(() => { word.textContent = t("hereNow"); $("#next").hidden = false; }, sec * 1000); return; }
       }
-      t = setTimeout(step, sec * 1000);
+      tm = setTimeout(step, sec * 1000);
     };
-    t = setTimeout(step, 600);
+    tm = setTimeout(step, 600);
     if (!free) $("#skip").onclick = $("#next").onclick = () => show("checkin");
   }
 
@@ -957,15 +1223,15 @@ ${last}`;
   function checkin() {
     el(`
       ${session.quick ? backBtn() : stepBar(2)}
-      <p class="eyebrow">Check in</p>
-      ${!state.name ? `<input type="text" id="name" maxlength="30" placeholder="What should Luma call you? (optional)" aria-label="Your name" autocomplete="given-name">` : ""}
-      <h2>How heavy did today feel?</h2>
-      <div class="weights" role="group" aria-label="How heavy today felt">
-        ${WEIGHTS.map((w) => `<button data-w="${w.v}" aria-pressed="${session.weight === w.v}"><i style="width:${w.size}px;height:${w.size}px"></i>${w.label}</button>`).join("")}
+      <p class="eyebrow">${t("checkinEyebrow")}</p>
+      ${!state.name ? `<input type="text" id="name" maxlength="30" placeholder="${t("namePh")}" aria-label="${t("nameLabel")}" autocomplete="given-name">` : ""}
+      <h2>${t("howHeavy")}</h2>
+      <div class="weights" role="group" aria-label="${t("howHeavy")}">
+        ${WEIGHT_SIZES.map((size, i) => `<button data-w="${i + 1}" aria-pressed="${session.weight === i + 1}"><i style="width:${size}px;height:${size}px"></i>${c().weights[i]}</button>`).join("")}
       </div>
-      <p class="soft">What weighed on it? Pick any.</p>
-      <div class="chips" role="group" aria-label="What weighed on today">${TAGS.map((t) => `<button data-t="${t}" aria-pressed="${session.tags.includes(t)}">${t}</button>`).join("")}</div>
-      <div class="row end"><button class="primary" id="next" ${session.weight ? "" : "disabled"}>${session.quick ? "Light my firefly" : "Talk it out"}</button></div>
+      <p class="soft">${t("whatWeighed")}</p>
+      <div class="chips" role="group" aria-label="${t("whatWeighed")}">${TAGS.map((tag) => `<button data-t="${tag}" aria-pressed="${session.tags.includes(tag)}">${c().tags[tag]}</button>`).join("")}</div>
+      <div class="row end"><button class="primary" id="next" ${session.weight ? "" : "disabled"}>${t(session.quick ? "lightMine" : "talkItOut")}</button></div>
     `);
     wireBack();
     $$("[data-w]").forEach((b) => b.onclick = () => {
@@ -974,8 +1240,8 @@ ${last}`;
       $("#next").disabled = false;
     });
     $$("[data-t]").forEach((b) => b.onclick = () => {
-      const t = b.dataset.t, on = session.tags.includes(t);
-      session.tags = on ? session.tags.filter((x) => x !== t) : session.tags.concat(t);
+      const tag = b.dataset.t, on = session.tags.includes(tag);
+      session.tags = on ? session.tags.filter((x) => x !== tag) : session.tags.concat(tag);
       b.setAttribute("aria-pressed", !on);
     });
     $("#next").onclick = () => {
@@ -993,17 +1259,17 @@ ${last}`;
       ${free ? backBtn() : stepBar(3)}
       <div class="talk" id="talk"></div>
       <form class="composer" id="form">
-        <textarea id="say" rows="1" placeholder="Say anything. Luma's listening." maxlength="1200" aria-label="Your message"></textarea>
-        <button class="primary send" aria-label="Send"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+        <textarea id="say" rows="1" placeholder="${t("sayPh")}" maxlength="1200" aria-label="${t("yourMsg")}"></textarea>
+        <button class="primary send" aria-label="${t("send")}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
       </form>
       <div class="row split">
-        <span class="tiny" id="hint">Luma is an AI. In a crisis, call your local emergency number.</span>
-        ${free ? "" : `<button class="ghost" id="next">I'm ready to let go</button>`}
+        <span class="tiny" id="hint">${t("aiHint")}</span>
+        ${free ? "" : `<button class="ghost" id="next">${t("readyLetGo")}</button>`}
       </div>
     `, "chat");
     wireBack();
     const box = $("#talk"), say = $("#say");
-    for (const t of session.turns) addMsg(t.role === "user" ? "me" : "luma", t.content);
+    for (const turn of session.turns) addMsg(turn.role === "user" ? "me" : "luma", turn.content);
     say.addEventListener("input", () => { say.style.height = "auto"; say.style.height = Math.min(120, say.scrollHeight) + "px"; });
     say.addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); $("#form").requestSubmit(); } });
     $("#form").onsubmit = (e) => {
@@ -1021,15 +1287,12 @@ ${last}`;
 
     function addMsg(who, text) {
       const m = document.createElement("div");
-      m.className = "msg " + who; m.textContent = text;
+      m.className = "msg " + who; m.textContent = text; m.dir = "auto";
       box.appendChild(m); box.scrollTop = box.scrollHeight;
       return m;
     }
-    function waiting() { const m = addMsg("luma", ""); m.classList.add("wait"); m.innerHTML = '<span class="dots">Luma is thinking</span>'; return m; }
-    function fallback() {
-      addMsg("luma", "I can't talk in this view, but writing it out still helps. Type whatever's on your mind. It stays here, just for you.");
-      $("#hint").textContent = "Luma's voice needs Claude access in this view.";
-    }
+    function waiting() { const m = addMsg("luma", ""); m.classList.add("wait"); m.innerHTML = `<span class="dots">${t("thinking")}</span>`; return m; }
+    function fallback() { addMsg("luma", t("noAi")); $("#hint").textContent = t("noAiHint"); }
     async function stream(input, bubble) {
       ctl = new AbortController();
       try {
@@ -1052,7 +1315,7 @@ ${last}`;
       if (text) session.turns.push({ role: "assistant", content: text });
     }
     async function lumaReply() {
-      if (aiOff) { addMsg("luma", "Saved. Keep going if there's more. 🌙"); return; }
+      if (aiOff) { addMsg("luma", t("saved")); return; }
       const bubble = waiting();
       const recent = session.turns.slice(-16);
       if (recent[0] && recent[0].role === "assistant") recent.unshift({ role: "user", content: "(we began talking)" });
@@ -1066,21 +1329,21 @@ ${last}`;
     const worries = free ? [] : session.worries;
     el(`
       ${free ? backBtn() : stepBar(4)}
-      <p class="eyebrow">Let go</p>
-      <h2>Put a worry in a lantern.</h2>
-      <p class="soft">Write it down, then release it. It floats away over the hill. You can pick it back up tomorrow if you really want to.</p>
+      <p class="eyebrow">${t("letGoEyebrow")}</p>
+      <h2>${t("letGoTitle")}</h2>
+      <p class="soft">${t("letGoLead")}</p>
       <form class="composer" id="form">
-        <input type="text" id="worry" maxlength="120" placeholder="The thing that's still circling…" aria-label="A worry to release" autocomplete="off">
-        <button class="ghost">Release</button>
+        <input type="text" id="worry" maxlength="120" placeholder="${t("worryPh")}" aria-label="${t("worryLabel")}" autocomplete="off">
+        <button class="ghost">${t("releaseBtn")}</button>
       </form>
       <p class="tiny" id="released"></p>
       <div class="row split">
-        ${free ? `<span></span><button class="primary" data-done>Done</button>` : `<button class="text-btn" id="skip">Nothing to let go tonight</button><button class="primary" id="next" ${worries.length ? "" : "hidden"}>Continue</button>`}
+        ${free ? `<span></span><button class="primary" data-done>${t("done")}</button>` : `<button class="text-btn" id="skip">${t("nothingToLet")}</button><button class="primary" id="next" ${worries.length ? "" : "hidden"}>${t("cont")}</button>`}
       </div>
     `);
     wireBack();
     const sync = () => {
-      $("#released").textContent = worries.length ? `${worries.length} lantern${worries.length > 1 ? "s" : ""} released. Add another${free ? "" : ", or continue"}.` : "";
+      $("#released").textContent = worries.length ? t(free ? "releasedFree" : "releasedMore", { n: num(worries.length) }) : "";
       if (!free) $("#next").hidden = !worries.length;
     };
     sync();
@@ -1099,25 +1362,25 @@ ${last}`;
   function tomorrow() {
     el(`
       ${stepBar(5)}
-      <p class="eyebrow">Tomorrow</p>
-      <h2>One small, kind thing <em>for tomorrow.</em></h2>
-      <p class="soft">Tiny on purpose. Something you could do even on a tired day.</p>
-      <input type="text" id="plan" maxlength="120" placeholder="Take a real lunch break, outside" aria-label="One small thing for tomorrow" autocomplete="off" value="${esc(session.intention)}">
+      <p class="eyebrow">${t("tomorrowEyebrow")}</p>
+      <h2>${t("tomorrowTitle")}</h2>
+      <p class="soft">${t("tomorrowLead")}</p>
+      <input type="text" id="plan" maxlength="120" placeholder="${t("planPh")}" aria-label="${t("planLabel")}" autocomplete="off" value="${esc(session.intention)}">
       <div class="row split">
-        <button class="text-btn" id="idea" ${aiOff ? "hidden" : ""}>Ask Luma for an idea</button>
-        <button class="primary" id="next">Light my firefly</button>
+        <button class="text-btn" id="idea" ${aiOff ? "hidden" : ""}>${t("askIdea")}</button>
+        <button class="primary" id="next">${t("lightMine")}</button>
       </div>
     `);
     const plan = $("#plan"), idea = $("#idea");
     idea.onclick = async () => {
-      idea.disabled = true; idea.textContent = "Luma is thinking…";
-      const talked = session.turns.slice(-8).map((t) => (t.role === "user" ? "Them: " : "Luma: ") + t.content).join("\n");
+      idea.disabled = true; idea.textContent = t("thinking") + "…";
+      const talked = session.turns.slice(-8).map((x) => (x.role === "user" ? "Them: " : "Luma: ") + x.content).join("\n");
       try {
         const { text } = await ask(rules(session) + "\n\nTonight's conversation:\n" + (talked || "(they didn't talk much)") +
           "\n\nSuggest ONE tiny, kind, concrete thing they could do tomorrow, fitted to what they shared. Under 12 words. Reply with only the suggestion, no quotes.", { cache: false });
-        plan.value = text.trim().replace(/^["“]|["”]$/g, "");
-        idea.textContent = "Another idea";
-      } catch (e) { if (aiFailure(e) === "off") idea.hidden = true; else idea.textContent = "Try again"; }
+        plan.value = text.trim().replace(/^["“«]|["”»]$/g, "");
+        idea.textContent = t("anotherIdea");
+      } catch (e) { if (aiFailure(e) === "off") idea.hidden = true; else idea.textContent = t("tryAgain"); }
       finally { idea.disabled = false; }
     };
     $("#next").onclick = () => { session.intention = plan.value.trim(); show("close"); };
@@ -1140,20 +1403,20 @@ ${last}`;
     if (session.intention) state.intention = { text: session.intention, date: dayKey(), done: null };
     state.history = state.history.filter((h) => h.date !== dayKey()).concat({ date: dayKey(), weight: session.weight, tags: session.tags, worries: session.worries.length }).slice(-90);
     persist();
-    renderCount();
-    const unlocked = !already && MILESTONES.find((m) => m.at === state.fireflies && m.at > 1);
+    renderChrome();
+    const unlocked = !already && milestones().find((m) => m.at === state.fireflies && m.at > 1);
     const next = nextMilestone();
     el(`
-      <p class="eyebrow">${already ? "Tonight" : "Firefly no. " + state.fireflies}</p>
-      <h2>${already ? "Still glowing." : "There it goes. <em>Goodnight.</em>"}</h2>
-      ${unlocked ? `<p class="soft">Something new on the hill: ${unlocked.label}.</p>` : ""}
-      ${graceSaved ? `<p class="soft">You missed a night, so Luma kept your streak safe. Rest nights are allowed, once a week.</p>` : ""}
-      <div class="note"><div class="who">Luma</div><blockquote id="goodnight"><span class="dots">Writing you a note</span></blockquote></div>
-      <div id="gift-slot">${already ? "" : `<button class="gift sealed" id="gift"><span class="kind">Tonight's gift</span><span class="body">Tap to open</span></button>`}</div>
-      <p class="tiny">${next ? `Tomorrow: a new gift, and ${next.at - state.fireflies} more night${next.at - state.fireflies === 1 ? "" : "s"} until ${next.label}.` : "Tomorrow: a new gift is waiting."}${state.streak > 1 ? ` ${state.streak} nights in a row.` : ""}</p>
+      <p class="eyebrow">${already ? t("tonight") : t("fireflyNo", { n: num(state.fireflies) })}</p>
+      <h2>${t(already ? "stillGlowing" : "goneTitle")}</h2>
+      ${unlocked ? `<p class="soft">${t("unlocked", { label: unlocked.label })}</p>` : ""}
+      ${graceSaved ? `<p class="soft">${t("grace")}</p>` : ""}
+      <div class="note"><div class="who">${t("luma")}</div><blockquote id="goodnight" dir="auto"><span class="dots">${t("writingNote")}</span></blockquote></div>
+      <div id="gift-slot">${already ? "" : `<button class="gift sealed" id="gift"><span class="kind">${t("giftTonight")}</span><span class="body">${t("tapOpen")}</span></button>`}</div>
+      <p class="tiny">${next ? t("teaseNext", { n: num(next.at - state.fireflies), label: next.label }) : t("teaseNone")}${state.streak > 1 ? t("teaseStreak", { n: num(state.streak) }) : ""}</p>
       <div class="row split">
-        <button class="ghost" id="story">Bedtime story</button>
-        <button class="primary" id="done">Back to the meadow</button>
+        <button class="ghost" id="story">${t("bedtime")}</button>
+        <button class="primary" id="done">${t("backMeadow")}</button>
       </div>
     `);
     $("#done").onclick = () => show("home");
@@ -1161,14 +1424,14 @@ ${last}`;
     const giftBtn = $("#gift");
     if (giftBtn) giftBtn.onclick = () => openGift();
     const note = $("#goodnight");
-    const talked = session.turns.slice(-10).map((t) => (t.role === "user" ? "Them: " : "Luma: ") + t.content).join("\n");
+    const talked = session.turns.slice(-10).map((x) => (x.role === "user" ? "Them: " : "Luma: ") + x.content).join("\n");
     ask(rules(session) + "\n\nTonight's conversation:\n" + (talked || "(they kept it quiet tonight)") +
         (session.worries.length ? `\nThey released ${session.worries.length} worry lantern(s).` : "") +
         (session.intention ? `\nTomorrow's small thing: ${session.intention}` : "") +
         "\n\nWrite a goodnight note to them: 1 or 2 short sentences, warm and specific to tonight. Plain text only.",
         { cache: false, onText: ({ text }) => { note.textContent = text; } })
       .then(({ text }) => { note.textContent = text; })
-      .catch(() => { note.textContent = "You showed up for yourself tonight. That's the whole job. Sleep well."; });
+      .catch(() => { note.textContent = t("fallbackNote"); });
     remember(session);
   }
 
@@ -1176,58 +1439,60 @@ ${last}`;
   async function openGift() {
     const slot = $("#gift-slot");
     const roll = Math.random();
+    const gifts = c().gifts;
     let gift;
     if (roll < 0.08) {
       state.golden += 1;
       sky.lightOne(true);
       sound.chime();
-      gift = { kind: "Rare gift", text: "A golden firefly. They're rare, and this one chose your meadow. It will glow there for good." };
+      gift = { kind: t("rareGift"), text: t("rareText") };
     } else if (roll < 0.33 && !aiOff) {
-      gift = { kind: "A letter from Luma", text: "" };
+      gift = { kind: t("letter"), text: "" };
     } else {
-      const kinds = Object.keys(GIFTS), kind = pick(kinds);
-      const fresh = GIFTS[kind].filter((t) => !state.seenGifts.includes(t));
-      const text = pick(fresh.length ? fresh : GIFTS[kind]);
+      const kind = pick(Object.keys(gifts));
+      const fresh = gifts[kind].filter((x) => !state.seenGifts.includes(x));
+      const text = pick(fresh.length ? fresh : gifts[kind]);
       state.seenGifts = state.seenGifts.concat(text).slice(-60);
       gift = { kind, text };
     }
-    slot.innerHTML = `<div class="gift open"><span class="kind">${esc(gift.kind)}</span><span class="body" id="gift-body">${gift.text ? esc(gift.text) : '<span class="dots">Luma is writing</span>'}</span></div>`;
+    slot.innerHTML = `<div class="gift open"><span class="kind">${esc(gift.kind)}</span><span class="body" id="gift-body" dir="auto">${gift.text ? esc(gift.text) : `<span class="dots">${t("lumaWriting")}</span>`}</span></div>`;
     if (!gift.text) {
       try {
-        const { text } = await ask(rules(session) + "\n\nWrite them a short letter (3 or 4 sentences) as a gift for tonight, signed \"Luma\". Be warm and hopeful without being cheesy. If you remember something specific about them, use it.",
-          { cache: false, onText: ({ text }) => { $("#gift-body") && ($("#gift-body").textContent = text); } });
+        const { text } = await ask(rules(session) + `\n\nWrite them a short letter (3 or 4 sentences) as a gift for tonight, signed "${t("luma")}". Be warm and hopeful without being cheesy. If you remember something specific about them, use it.`,
+          { cache: false, onText: ({ text }) => { const b = $("#gift-body"); if (b) b.textContent = text; } });
         gift.text = text;
       } catch (e) {
         aiFailure(e);
-        gift = { kind: "Kind words", text: pick(GIFTS["Kind words"]) };
-        slot.innerHTML = `<div class="gift open"><span class="kind">${gift.kind}</span><span class="body">${esc(gift.text)}</span></div>`;
+        const kind = Object.keys(gifts)[0];
+        gift = { kind, text: pick(gifts[kind]) };
+        slot.innerHTML = `<div class="gift open"><span class="kind">${esc(gift.kind)}</span><span class="body">${esc(gift.text)}</span></div>`;
       }
     }
     state.gifts = [{ kind: gift.kind, text: gift.text, date: dayKey() }].concat(state.gifts).slice(0, 80);
     persist();
-    renderCount();
+    renderChrome();
   }
 
   // ---------- sounds ----------
   function sounds() {
     el(`
       ${backBtn()}
-      <p class="eyebrow">Sounds</p>
-      <h2>Tune the night.</h2>
+      <p class="eyebrow">${t("soundsEyebrow")}</p>
+      <h2>${t("soundsTitle")}</h2>
       <canvas id="wave" aria-hidden="true"></canvas>
       <div class="layers">${sound.LAYERS.map((l) => `
         <div class="layer ${sound.isOn(l.id) ? "on" : ""}" data-l="${l.id}">
-          <button aria-pressed="${sound.isOn(l.id)}">${l.name}<span class="switch"></span></button>
-          <input type="range" min="0" max="1" step="0.01" value="${sound.vol(l.id)}" aria-label="${l.name} volume">
+          <button aria-pressed="${sound.isOn(l.id)}">${t("layer_" + l.id)}<span class="switch"></span></button>
+          <input type="range" min="0" max="1" step="0.01" value="${sound.vol(l.id)}" aria-label="${t("volume", { name: t("layer_" + l.id) })}">
         </div>`).join("")}
       </div>
-      <h3>Brainwave tones</h3>
-      <p class="tiny">Binaural beats: each ear hears a slightly different tone, and the brain perceives a slow pulse between them. Use headphones. Studies on their effect are mixed, but many people find them calming. Pair with rain or brown noise.</p>
-      <div class="chips" role="group" aria-label="Brainwave tone">${Object.entries(TONES).map(([k, t]) => `<button data-tone="${k}" aria-pressed="${sound.tone() === k}">${t.name}${t.sub ? ` · ${t.sub}` : ""}</button>`).join("")}</div>
-      <h3>Sleep timer</h3>
-      <div class="chips" role="group" aria-label="Sleep timer">${[0, 15, 30, 60].map((m) => `<button data-timer="${m}">${m ? m + " min" : "Off"}</button>`).join("")}</div>
+      <h3>${t("tonesTitle")}</h3>
+      <p class="tiny">${t("tonesNote")}</p>
+      <div class="chips" role="group" aria-label="${t("tonesTitle")}">${Object.keys(TONES).map((k) => `<button data-tone="${k}" aria-pressed="${sound.tone() === k}">${t("tone_" + k)}</button>`).join("")}</div>
+      <h3>${t("timerTitle")}</h3>
+      <div class="chips" role="group" aria-label="${t("timerTitle")}">${[0, 15, 30, 60].map((m) => `<button data-timer="${m}">${m ? t("timerMin", { n: num(m) }) : t("timerOff")}</button>`).join("")}</div>
       <p class="tiny" id="timer-note"></p>
-      <div class="row split"><button class="text-btn" id="stop-all">Stop everything</button><button class="primary" data-done>Done</button></div>
+      <div class="row split"><button class="text-btn" id="stop-all">${t("stopAll")}</button><button class="primary" data-done>${t("done")}</button></div>
     `);
     wireBack();
     $("[data-done]").onclick = () => show("home");
@@ -1249,10 +1514,9 @@ ${last}`;
       $$("[data-tone]").forEach((b) => b.setAttribute("aria-pressed", b.dataset.tone === sound.tone()));
       const left = sound.timerLeft();
       $$("[data-timer]").forEach((b) => b.setAttribute("aria-pressed", Number(b.dataset.timer) === sound.timerMin()));
-      $("#timer-note").textContent = left ? `Fading out in about ${left} min.` : "";
+      $("#timer-note").textContent = left ? t("fading", { n: num(left) }) : "";
     };
     soundsRefresh = refresh; refresh();
-    // live waveform
     const cv = $("#wave"), cx = cv.getContext("2d"), buf = new Uint8Array(1024);
     let raf = 0;
     const draw = () => {
@@ -1280,15 +1544,16 @@ ${last}`;
     const speech = "speechSynthesis" in window;
     el(`
       ${backBtn()}
-      <p class="eyebrow">Bedtime story</p>
-      <h2>Tonight, <em>in the meadow.</em></h2>
-      <div class="story" id="story"><span class="dots">Luma is writing your story</span></div>
+      <p class="eyebrow">${t("storyEyebrow")}</p>
+      <h2>${t("storyTitle")}</h2>
+      <div class="story" id="story" dir="auto"><span class="dots">${t("storyWriting")}</span></div>
+      <p class="tiny" id="voice-note" hidden></p>
       <div class="row split">
         <div class="row">
-          ${speech ? `<button class="ghost" id="read">Read it to me</button>` : ""}
-          <button class="text-btn" id="ambience">Add rain and music</button>
+          ${speech ? `<button class="ghost" id="read">${t("readToMe")}</button>` : ""}
+          <button class="text-btn" id="ambience">${t("addAmbience")}</button>
         </div>
-        <button class="text-btn" id="another">Another story</button>
+        <button class="text-btn" id="another">${t("anotherStory")}</button>
       </div>
     `);
     wireBack();
@@ -1298,32 +1563,35 @@ ${last}`;
     const mood = last && last.date === dayKey() && last.weight ? `Today felt ${WEIGHT_WORDS[last.weight]} for them.` : "";
     const write = async () => {
       ctl2.abort(); ctl2 = new AbortController();
-      box.innerHTML = '<span class="dots">Luma is writing your story</span>';
+      box.innerHTML = `<span class="dots">${t("storyWriting")}</span>`;
       try {
         const r = await ask(`Write a calming bedtime story of about 220 words, in second person and present tense, set in a quiet night meadow with a small cabin, a pond, fireflies and soft rain. Slow and sensory. Nothing dramatic happens. ${mood} ${state.name ? "You may use their name, " + state.name + ", once." : ""} Gently guide their body to relax. End with them drifting to sleep. Plain text, short paragraphs, no title.`,
-          { cache: false, signal: ctl2.signal, onText: ({ text: t }) => { box.textContent = t; } });
+          { cache: false, signal: ctl2.signal, onText: ({ text: x }) => { box.textContent = x; } });
         text = r.text; box.textContent = text;
       } catch (e) {
         if (e && e.code === "cancelled") return;
         aiFailure(e);
-        text = pick(STORIES); box.textContent = text;
+        text = pick(c().stories); box.textContent = text;
       }
     };
     write();
     $("#another").onclick = () => { stopReading(); write(); };
-    $("#ambience").onclick = () => { sound.start("rain"); sound.start("music"); $("#ambience").textContent = "Rain and music on"; };
-    function stopReading() { if (speech) speechSynthesis.cancel(); reading = false; const r = $("#read"); if (r) r.textContent = "Read it to me"; }
+    $("#ambience").onclick = () => { sound.start("rain"); sound.start("music"); $("#ambience").textContent = t("ambienceOn"); };
+    function stopReading() { if (speech) speechSynthesis.cancel(); reading = false; const r = $("#read"); if (r) r.textContent = t("readToMe"); }
     if (speech) $("#read").onclick = () => {
       if (reading) return stopReading();
       if (!text) return;
       const u = new SpeechSynthesisUtterance(text);
-      u.rate = 0.82; u.pitch = 0.95;
+      u.lang = lang === "ar" ? "ar-SA" : "en-US";
+      u.rate = lang === "ar" ? 0.85 : 0.82; u.pitch = 0.95;
       const voices = speechSynthesis.getVoices();
-      const v = voices.find((v) => /en/i.test(v.lang) && /female|samantha|serena|karen|moira|google uk english female/i.test(v.name)) || voices.find((v) => /en/i.test(v.lang));
+      const mine = voices.filter((v) => v.lang.toLowerCase().startsWith(lang));
+      const v = lang === "ar" ? mine[0] : (mine.find((v) => /female|samantha|serena|karen|moira|google uk english female/i.test(v.name)) || mine[0]);
       if (v) u.voice = v;
+      else if (lang === "ar" && voices.length) { const n = $("#voice-note"); n.textContent = t("noVoice"); n.hidden = false; }
       u.onend = stopReading;
       speechSynthesis.speak(u);
-      reading = true; $("#read").textContent = "Stop reading";
+      reading = true; $("#read").textContent = t("stopReading");
     };
     cleanup = () => { ctl2.abort(); stopReading(); };
   }
@@ -1332,15 +1600,15 @@ ${last}`;
   function stars() {
     el(`
       ${backBtn()}
-      <p class="eyebrow">Your stars</p>
-      <h2>Hang a good moment <em>in your sky.</em></h2>
-      <p class="soft">Anything that went okay, made you smile, or that you're glad about. Each one becomes a star you can tap later to read again.</p>
+      <p class="eyebrow">${t("starsEyebrow")}</p>
+      <h2>${t("starsTitle")}</h2>
+      <p class="soft">${t("starsLead")}</p>
       <form class="composer" id="form">
-        <input type="text" id="good" maxlength="90" placeholder="My coworker brought me coffee" aria-label="A good moment" autocomplete="off">
-        <button class="ghost">Add star</button>
+        <input type="text" id="good" maxlength="90" placeholder="${t("starPh")}" aria-label="${t("starLabel")}" autocomplete="off">
+        <button class="ghost">${t("addStar")}</button>
       </form>
-      ${state.stars.length ? `<ul class="list" id="list">${state.stars.slice().reverse().slice(0, 30).map((s) => `<li><span>${esc(s.text)}</span><small>${new Date(s.date + "T12:00").toLocaleDateString(undefined, { month: "short", day: "numeric" })}</small></li>`).join("")}</ul>`
-                         : `<p class="tiny">Your sky has no stars of your own yet. Start with one small thing.</p>`}
+      ${state.stars.length ? `<ul class="list" id="list">${state.stars.slice().reverse().slice(0, 30).map((s) => `<li><span dir="auto">${esc(s.text)}</span><small>${shortDate(s.date)}</small></li>`).join("")}</ul>`
+                         : `<p class="tiny">${t("noStars")}</p>`}
     `);
     wireBack();
     $("#form").onsubmit = (e) => {
@@ -1354,7 +1622,7 @@ ${last}`;
       sound.chime();
       show("stars");
       const n = state.stars.length;
-      if ([1, 5, 10, 25, 50].includes(n)) $(".soft").textContent = n === 1 ? "Your first star. Look up: it's in your sky now. Tap it any night." : `${n} stars in your sky. On hard days, tap them and read them back.`;
+      if ([1, 5, 10, 25, 50].includes(n)) $(".soft").textContent = n === 1 ? t("firstStar") : t("manyStars", { n: num(n) });
     };
   }
 
@@ -1363,14 +1631,14 @@ ${last}`;
     const days = [];
     for (let i = 13; i >= 0; i--) {
       const k = daysAgo(i);
-      days.push({ k, h: state.history.find((h) => h.date === k), lit: state.lastDate === k || state.history.some((h) => h.date === k) });
+      days.push({ k, h: state.history.find((h) => h.date === k) });
     }
     const colW = 300 / 14;
-    const chart = `<svg class="chart" viewBox="0 0 300 96" role="img" aria-label="How heavy each of the last 14 days felt">
+    const chart = `<svg class="chart" viewBox="0 0 300 96" role="img" aria-label="${t("chartLabel")}">
       <line x1="0" y1="72" x2="300" y2="72" stroke="rgba(236,235,248,.12)"/>
       ${days.map((d, i) => {
-        const x = i * colW + colW / 2;
-        const lab = `<text x="${x}" y="90" text-anchor="middle">${new Date(d.k + "T12:00").toLocaleDateString(undefined, { weekday: "narrow" })}</text>`;
+        const x = (lang === "ar" ? 13 - i : i) * colW + colW / 2;
+        const lab = `<text x="${x}" y="90" text-anchor="middle">${new Date(d.k + "T12:00").toLocaleDateString(locale(), { weekday: "narrow" })}</text>`;
         if (!d.h || !d.h.weight) return `<circle cx="${x}" cy="62" r="2" fill="rgba(236,235,248,.2)"/>${lab}`;
         const r = 3 + d.h.weight * 1.6, y = 72 - d.h.weight * 11;
         return `<circle cx="${x}" cy="${y}" r="${r}" fill="${d.h.weight >= 4 ? "#b58cff" : "#ffd27a"}" opacity=".85"/>${lab}`;
@@ -1378,40 +1646,39 @@ ${last}`;
     </svg>`;
     const hist = state.history.filter((h) => h.weight);
     const tagCount = {};
-    hist.slice(-30).forEach((h) => (h.tags || []).forEach((t) => (tagCount[t] = (tagCount[t] || 0) + 1)));
+    hist.slice(-30).forEach((h) => (h.tags || []).forEach((x) => (tagCount[x] = (tagCount[x] || 0) + 1)));
     const topTag = Object.entries(tagCount).sort((a, b) => b[1] - a[1])[0];
     const recent = hist.slice(-7), before = hist.slice(-14, -7);
     const avg = (a) => a.reduce((s, h) => s + h.weight, 0) / a.length;
-    let insight = "Check in for a few nights and patterns will show up here.";
+    let insight = t("insightEmpty");
     if (recent.length >= 3) {
-      insight = topTag ? `Lately, the thing weighing on you most is <b>${esc(topTag[0].toLowerCase())}</b>.` : "";
+      insight = topTag ? t("insightTag", { tag: esc(c().tags[topTag[0]] || topTag[0]) }) : "";
       if (before.length >= 3) {
         const d = avg(recent) - avg(before);
-        insight += d <= -0.5 ? " Your days have felt lighter this week than last. Something's working." : d >= 0.5 ? " This week has felt heavier than last. Be extra gentle with yourself." : " This week has felt about the same as last.";
+        insight += t(d <= -0.5 ? "insightLighter" : d >= 0.5 ? "insightHeavier" : "insightSame");
       }
     }
-    const kept = state.history.length;
     const time = nights.time || "21:00";
     el(`
       ${backBtn()}
-      <p class="eyebrow">Your nights</p>
-      <h2>How the days <em>have felt.</em></h2>
+      <p class="eyebrow">${t("nightsEyebrow")}</p>
+      <h2>${t("nightsTitle")}</h2>
       ${chart}
       <p class="soft">${insight}</p>
       <div class="stats">
-        <div><b>${state.fireflies}</b><span>nights lit</span></div>
-        <div><b>${state.best || state.streak}</b><span>best streak</span></div>
-        <div><b>${state.golden}</b><span>golden</span></div>
-        <div><b>${state.gifts.length}</b><span>gifts</span></div>
+        <div><b>${num(state.fireflies)}</b><span>${t("statLit")}</span></div>
+        <div><b>${num(state.best || state.streak)}</b><span>${t("statBest")}</span></div>
+        <div><b>${num(state.golden)}</b><span>${t("statGolden")}</span></div>
+        <div><b>${num(state.gifts.length)}</b><span>${t("statGifts")}</span></div>
       </div>
-      <h3>Nightly reminder</h3>
-      <p class="tiny">A set time makes a habit much easier to keep. Choose yours and add it to your calendar.</p>
-      <div class="row"><input type="time" id="time" value="${time}" aria-label="Reminder time"><a class="ghost" id="cal" target="_blank" rel="noopener">Add to Google Calendar</a></div>
-      <h3>What Luma remembers</h3>
-      ${state.memory.length ? `<ul class="list">${state.memory.map((m, i) => `<li><span>${esc(m)}</span><button data-forget="${i}" aria-label="Forget this">✕</button></li>`).join("")}</ul><p class="tiny">Luma uses these so you don't have to repeat yourself. Remove anything you like.</p>`
-                            : `<p class="tiny">Nothing yet. As you talk, Luma keeps a few short notes so it can remember you.</p>`}
-      ${state.gifts.length ? `<h3>Gifts you've opened</h3><ul class="list">${state.gifts.slice(0, 15).map((g) => `<li><span><b style="color:var(--glow);font-weight:600">${esc(g.kind)}.</b> ${esc(g.text)}</span></li>`).join("")}</ul>` : ""}
-      <p class="tiny">${kept} evening${kept === 1 ? "" : "s"} recorded.</p>
+      <h3>${t("reminderTitle")}</h3>
+      <p class="tiny">${t("reminderNote")}</p>
+      <div class="row"><input type="time" id="time" value="${time}" aria-label="${t("reminderTime")}"><a class="ghost" id="cal" target="_blank" rel="noopener">${t("addCal")}</a></div>
+      <h3>${t("remembersTitle")}</h3>
+      ${state.memory.length ? `<ul class="list">${state.memory.map((m, i) => `<li><span dir="auto">${esc(m)}</span><button data-forget="${i}" aria-label="${t("forget")}">✕</button></li>`).join("")}</ul><p class="tiny">${t("remembersNote")}</p>`
+                            : `<p class="tiny">${t("remembersNone")}</p>`}
+      ${state.gifts.length ? `<h3>${t("giftsTitle")}</h3><ul class="list">${state.gifts.slice(0, 15).map((g) => `<li><span dir="auto"><b style="color:var(--glow);font-weight:600">${esc(g.kind)}.</b> ${esc(g.text)}</span></li>`).join("")}</ul>` : ""}
+      <p class="tiny">${t("recorded", { n: num(state.history.length) })}</p>
     `);
     wireBack();
     const cal = $("#cal"), tInput = $("#time");
@@ -1424,8 +1691,8 @@ ${last}`;
       const end = new Date(d.getTime() + 10 * 60000);
       const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "";
       cal.href = "https://calendar.google.com/calendar/render?action=TEMPLATE"
-        + "&text=" + encodeURIComponent("Firefly: light tonight's firefly")
-        + "&details=" + encodeURIComponent("Seven quiet minutes for yourself. Open Firefly in Claude.")
+        + "&text=" + encodeURIComponent(t("calTitle"))
+        + "&details=" + encodeURIComponent(t("calDetails"))
         + "&dates=" + fmt(d) + "/" + fmt(end) + (tz ? "&ctz=" + encodeURIComponent(tz) : "")
         + "&recur=" + encodeURIComponent("RRULE:FREQ=DAILY");
     };
@@ -1436,14 +1703,14 @@ ${last}`;
   // After each conversation, Luma keeps a couple of short notes for next time.
   async function remember(s) {
     if (!s || s.remembered) return;
-    const said = s.turns.filter((t) => t.role === "user").map((t) => t.content).join("\n");
+    const said = s.turns.filter((x) => x.role === "user").map((x) => x.content).join("\n");
     if (said.length < 20 || aiOff || !sample) return;
     s.remembered = true;
     try {
       const facts = await sample.json(
         "Here is what a person shared in a calm evening check-in app:\n\n" + said.slice(-4000) +
         "\n\nAlready remembered:\n" + (state.memory.join("\n") || "(nothing)") +
-        "\n\nWrite up to 2 NEW short facts worth remembering for future evenings (their work, people in their life, what drains them, what they enjoy, what they hope for). Each under 15 words, third person. Skip anything already remembered. Reply with only a JSON array of strings; [] if nothing new.",
+        `\n\nWrite up to 2 NEW short facts worth remembering for future evenings (their work, people in their life, what drains them, what they enjoy, what they hope for). Each under 15 words, third person, written in ${lang === "ar" ? "simple Modern Standard Arabic" : "English"}. Skip anything already remembered. Reply with only a JSON array of strings; [] if nothing new.`,
         { modelTier: "quick", cache: false });
       if (Array.isArray(facts) && facts.length) { state.memory = state.memory.concat(facts.map(String).filter(Boolean)).slice(-14); persist(); }
     } catch (e) {}
@@ -1467,6 +1734,13 @@ ${last}`;
     }
     show("sounds");
   };
+  document.getElementById("lang-btn").onclick = () => {
+    lang = lang === "ar" ? "en" : "ar";
+    try { localStorage.setItem(LANG_LS, lang); } catch (e) {}
+    applyLang();
+    renderChrome();
+    show(screen);
+  };
 
   // ================= start =================
   const firstTouch = (e) => {
@@ -1476,7 +1750,7 @@ ${last}`;
   };
   addEventListener("pointerdown", firstTouch, true);
   addEventListener("keydown", firstTouch, true);
-  renderCount();
+  renderChrome();
   show("home");
   connectStore();
 })();

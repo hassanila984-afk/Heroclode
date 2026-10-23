@@ -945,7 +945,7 @@ ${last}${langNote()}`;
         let node = null;
         try { node = ac.createMediaElementSource(el); node.connect(out); } catch (e) { el.volume = 0.32; }
         el.play().catch(() => {});
-        return [{ stop: () => { el.pause(); el.removeAttribute("src"); el.load(); if (node) node.disconnect(); } }];
+        return [{ stop: () => { el.pause(); el.removeAttribute("src"); el.load(); if (node) node.disconnect(); }, kick: () => el.play().catch(() => {}), paused: () => el.paused }];
       },
       // Slow chords that drift every 8 s, with soft piano-like notes over them and a gentle echo.
       music(out) {
@@ -1074,6 +1074,10 @@ ${last}${langNote()}`;
       auto: () => prefs.auto !== false,
       setAuto(v) { prefs.auto = v; savePrefs(); },
       cuteOn: () => prefs.cute !== false,
+      // Is sound really coming out (not just scheduled while the browser blocks it)?
+      audible() { return !!ac && ac.state === "running" && Object.values(live).some((l) => !l.nodes.some((n) => n.paused && n.paused())); },
+      // Retry everything that was started before the browser allowed sound.
+      kick() { if (!ac) return; ac.resume().catch(() => {}); Object.values(live).forEach((l) => l.nodes.forEach((n) => n.kick && n.kick())); },
       // Recorded voice clips for Luma (published next to the page).
       voice(name) {
         if (prefs.cute === false || !ensure()) return;
@@ -2427,14 +2431,16 @@ ${last}${langNote()}`;
   };
 
   // ================= start =================
-  const firstTouch = (e) => {
-    removeEventListener("pointerdown", firstTouch, true);
-    removeEventListener("keydown", firstTouch, true);
-    if (sound.auto() && !sound.playing() && !(e.target && e.target.closest && e.target.closest("#sound-btn"))) sound.start(BG);
+  const UNLOCK = ["pointerdown", "touchstart", "keydown", "click"];
+  const firstTouch = () => {
+    if (sound.auto()) { if (sound.isOn(BG)) sound.kick(); else if (!sound.playing()) sound.start(BG); }
     if (sound.ensure()) sound.preloadVoices();
+    // keep listening until sound is really playing (some browsers need a second gesture)
+    setTimeout(() => { if (!sound.auto() || sound.audible()) UNLOCK.forEach((ev) => removeEventListener(ev, firstTouch, true)); }, 400);
   };
-  addEventListener("pointerdown", firstTouch, true);
-  addEventListener("keydown", firstTouch, true);
+  UNLOCK.forEach((ev) => addEventListener(ev, firstTouch, { capture: true, passive: true }));
+  // Start the song as soon as the page opens, if the browser allows sound without a touch.
+  if (sound.auto()) { sound.start(BG); setTimeout(() => { if (sound.audible()) UNLOCK.forEach((ev) => removeEventListener(ev, firstTouch, true)); }, 800); }
   renderChrome();
   show(state.onboarded ? "home" : "onboard");
   connectStore();

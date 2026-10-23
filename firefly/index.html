@@ -1129,6 +1129,23 @@ ${last}${langNote()}`;
       auto: () => prefs.auto !== false,
       setAuto(v) { prefs.auto = v; savePrefs(); },
       cuteOn: () => prefs.cute !== false,
+      // Play a one-off track (the intro music). Returns its clock and a fade-out.
+      clip(url, vol = 0.9) {
+        if (!ensure()) return null;
+        const el = new Audio(url); let g = null, node = null;
+        el.preload = "auto";
+        try { node = ac.createMediaElementSource(el); g = ac.createGain(); g.gain.value = vol; node.connect(g).connect(master); } catch (e) { el.volume = vol; }
+        el.play().catch(() => {});
+        changed();
+        return {
+          time: () => (el.paused ? null : el.currentTime),
+          kick: () => el.play().catch(() => {}),
+          fadeOut(ms = 900) {
+            if (g) g.gain.setTargetAtTime(0, ac.currentTime, ms / 3000);
+            setTimeout(() => { el.pause(); el.removeAttribute("src"); el.load(); if (node) node.disconnect(); }, ms + 100);
+          },
+        };
+      },
       bgTime() { const l = live[BG]; const n = l && l.nodes.find((x) => x.time); return n ? n.time() : null; },
       bgSeek(sec) { const l = live[BG]; const n = l && l.nodes.find((x) => x.seek); if (n) n.seek(sec); },
       // a temporary level for the background (the intro plays it louder); null goes back to the saved level
@@ -2495,7 +2512,9 @@ ${last}${langNote()}`;
   // so the cuts stay on the beat even if the song starts late.
   const intro = (() => {
     const IMG = (n) => "intro/" + n + ".webp";
-    const HIT = 6.15, BEAT = 0.909;
+    // "music/intro.mp3" is cut so its first big hit lands at 6.15 s; at 123 BPM a cut every 2 beats.
+    const HIT = 6.15, BEAT = 0.9756;
+    let track = null;
     const beat = (k) => HIT + k * BEAT;
     let root = null, stage = null, raf = 0, cues = [], next = 0, clock0 = 0, onDone = null, ended = false;
 
@@ -2611,8 +2630,13 @@ ${last}${langNote()}`;
     ];
 
     function now() {
-      const st = sound.bgTime();
+      const st = track && track.time();
       return st != null && st > 0.05 ? st : (performance.now() - clock0) / 1000;
+    }
+    // after the intro, the usual background song fades back in
+    function backToBackground() {
+      if (track) { track.fadeOut(1000); track = null; }
+      if (sound.auto()) setTimeout(() => { if (sound.isOn(BG)) sound.kick(); else sound.start(BG); }, 700);
     }
     function tick() {
       if (ended) return;
@@ -2624,7 +2648,7 @@ ${last}${langNote()}`;
       if (ended) return;
       ended = true;
       cancelAnimationFrame(raf);
-      sound.bgVolume(null);
+      backToBackground();
       const r = root;
       r.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 600, fill: "forwards" }).onfinish = () => r.remove();
       state.introSeen = true; persist();
@@ -2633,9 +2657,8 @@ ${last}${langNote()}`;
     function begin() {
       root.querySelector(".i-start").remove();
       sound.ensure();
-      if (sound.isOn(BG)) sound.kick(); else sound.start(BG);
-      sound.bgSeek(0);
-      sound.bgVolume(0.85);
+      if (sound.isOn(BG)) sound.stop(BG);
+      track = sound.clip("music/intro.mp3", 0.9);
       if (sound.ensure()) sound.preloadVoices();
       clock0 = performance.now();
       if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
@@ -2663,7 +2686,7 @@ ${last}${langNote()}`;
       const start = root.querySelector(".i-start");
       start.onclick = begin;
       start.onkeydown = (e) => { if (e.key === "Enter" || e.key === " ") begin(); };
-      root.querySelector(".i-skip").onclick = () => { if (root.querySelector(".i-start")) { sound.ensure(); if (!sound.isOn(BG)) sound.start(BG); else sound.kick(); } finish(); };
+      root.querySelector(".i-skip").onclick = () => { sound.ensure(); finish(); };
     }
     return { play };
   })();
@@ -2671,6 +2694,7 @@ ${last}${langNote()}`;
   // ================= start =================
   const UNLOCK = ["pointerdown", "touchstart", "keydown", "click"];
   const firstTouch = () => {
+    if (document.getElementById("intro")) { sound.ensure(); return; }   // the intro has its own music
     if (sound.auto()) { if (sound.isOn(BG)) sound.kick(); else if (!sound.playing()) sound.start(BG); }
     if (sound.ensure()) sound.preloadVoices();
     // keep listening until sound is really playing (some browsers need a second gesture)
@@ -2678,7 +2702,7 @@ ${last}${langNote()}`;
   };
   UNLOCK.forEach((ev) => addEventListener(ev, firstTouch, { capture: true, passive: true }));
   // Start the song as soon as the page opens, if the browser allows sound without a touch.
-  if (sound.auto()) { sound.start(BG); setTimeout(() => { if (sound.audible()) UNLOCK.forEach((ev) => removeEventListener(ev, firstTouch, true)); }, 800); }
+  if (sound.auto() && state.introSeen) { sound.start(BG); setTimeout(() => { if (sound.audible()) UNLOCK.forEach((ev) => removeEventListener(ev, firstTouch, true)); }, 800); }
   renderChrome();
   show(state.onboarded ? "home" : "onboard");
   // the first time, the intro plays over everything; the app is ready underneath

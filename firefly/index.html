@@ -580,7 +580,7 @@
       watchNote: "She glances now and then and only talks when she has something to say. Nothing from your screen is saved, only what she learns about you. Each look uses your Claude usage.",
       watchNoSupport: "iPad and phones don't let any web page see the screen live 🥺 Open me on a computer (Chrome is best) and we'll watch together!",
       watchBlocked: "claude.ai doesn't let me see your screen live 🥺 For now, send me a screenshot 📷",
-      watchEnded: "That was fun! Again sometime? 🌙", attach: "Send a picture", picSent: "📷",
+      watchEnded: "That was fun! Again sometime? 🌙", watchNoFrames: "I can't see your screen yet 🥺 Screenshot this note and send it:", attach: "Send a picture", picSent: "📷",
       bubbleTitle: "Float Luma over your other apps", bubblePh: "Reply…", micTitle: "Talk to Luma",
       earTitle: "Keep listening: say “Luma” when you're talking to her", voiceTitle: "Language you speak out loud (English / Arabic)", stEar: "listening for her name…", stCall: "📞 on a call: she only reacts to her name",
       friendSaid: "👥 A friend on the call: “{text}”",
@@ -689,7 +689,7 @@
       watchNote: "تلقي نظرة كل قليل ولا تتكلم إلا إذا كان عندها ما يستحق. لا يُحفظ شيء من شاشتك، فقط ما تتعلمه عنك. كل نظرة تستهلك من رصيدك في Claude.",
       watchNoSupport: "الآيباد والهواتف لا تسمح لأي صفحة ويب برؤية الشاشة مباشرة 🥺 افتحني من الحاسبة (Chrome أفضل) ونشاهد معًا!",
       watchBlocked: "claude.ai لا يسمح لي برؤية شاشتك مباشرة 🥺 حاليًا أرسل لي لقطة شاشة 📷",
-      watchEnded: "كانت حلوة! نعيدها مرة ثانية؟ 🌙", attach: "أرسل صورة", picSent: "📷",
+      watchEnded: "كانت حلوة! نعيدها مرة ثانية؟ 🌙", watchNoFrames: "بعدني ما أشوف شاشتك 🥺 صوّر هالملاحظة وأرسلها:", attach: "أرسل صورة", picSent: "📷",
       bubbleTitle: "لُمى فوق تطبيقاتك الثانية", bubblePh: "رد عليها…", micTitle: "احچي ويا لُمى",
       earTitle: "خليها تسمع: ناديها «لُمى» لما تحچي وياها", voiceTitle: "لغة كلامك بالصوت (إنكليزي / عربي)", stEar: "تسمع… تنتظر اسمها", stCall: "📞 بمكالمة: تنتبه بس لاسمها",
       friendSaid: "👥 صديقك بالمكالمة: «{text}»",
@@ -2342,7 +2342,7 @@ ${last}${langNote()}`;
         W.starting = false;
         if (!ok || !box.isConnected) { if (ok) AndroidLuma.stopCapture(); return; }
         window.__nativeCaptureEnded = () => stopWatch(true);
-        W.native = true; W.on = true;
+        W.native = true; W.on = true; W.since = Date.now(); W.warned = false;
         W.last = null; W.lastLook = 0; W.lastSpoke = 0; W.awaiting = false;
         $("#watchbar").hidden = false; $("#watch").hidden = true; $("#wfloat").hidden = false;
         $("#hint").textContent = t("watchNote");
@@ -2434,6 +2434,11 @@ ${last}${langNote()}`;
       if (W.lastSpoke && (now - W.lastSpoke) / 1000 < 50 * pace) return;
       W.looking = true;   // also keeps two ticks from looking at once
       const f = await grab();
+      // in the Android app, say so if no picture of the screen arrives (with the app's own note on why)
+      if (!f && W.native && !W.warned && Date.now() - W.since > 8000) {
+        W.warned = true;
+        addMsg("luma", t("watchNoFrames") + (AndroidLuma.captureInfo ? " (" + AndroidLuma.captureInfo() + ")" : ""));
+      }
       const th = f && W.on ? thumb(f) : null, d = th ? change(th, W.last) : 0;
       // look when the screen changed, or now and then while something keeps moving
       if (!th || (W.lastLook && d < 5 && !(d > 1.5 && since > 90 * pace))) { W.looking = false; return; }

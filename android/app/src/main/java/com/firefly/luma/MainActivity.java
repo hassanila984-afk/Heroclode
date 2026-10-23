@@ -105,6 +105,12 @@ public class MainActivity extends Activity {
     }
 
     @Override
+    protected void onResume() { super.onResume(); LumaService.appVisible(true); }
+
+    @Override
+    protected void onPause() { LumaService.appVisible(false); super.onPause(); }
+
+    @Override
     public void onBackPressed() {
         if (web.canGoBack()) web.goBack();
         else moveTaskToBack(true);   // keep Luma running instead of closing
@@ -198,6 +204,7 @@ public class MainActivity extends Activity {
         @JavascriptInterface public boolean capturing() { return LumaService.capturing(); }
         /** The screen right now, as a base64 JPEG (or "" when there is none). */
         @JavascriptInterface public String frame() { return LumaService.frame(); }
+        @JavascriptInterface public String captureInfo() { return LumaService.captureInfo(); }
 
         // ----- the phone's speech recognizer -----
         @JavascriptInterface public boolean canListen() { return SpeechRecognizer.isRecognitionAvailable(MainActivity.this); }

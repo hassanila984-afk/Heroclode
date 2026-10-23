@@ -63,13 +63,18 @@ public class LumaService extends Service {
     private VirtualDisplay display;
     private ImageReader reader;
     private HandlerThread captureThread;
-    private String lastFrame = "";
+    private String lastFrame = "", lastError = "";
+    private boolean appOpen;
     private boolean mic;
 
     // ----- what the page calls (through MainActivity.Bridge) -----
     static boolean bubbleOn() { return me != null && me.bubble != null; }
     static boolean capturing() { return me != null && me.projection != null; }
     static String frame() { return me == null ? "" : me.grab(); }
+    /** For troubleshooting from the page: what the screen capture is doing. */
+    static String captureInfo() { return me == null ? "no service" : (me.reader == null ? "not capturing" : "capturing") + (me.lastError.isEmpty() ? "" : " | " + me.lastError); }
+    /** Firefly itself is on screen: the bubble steps aside (it would sit on top of the chat). */
+    static void appVisible(boolean open) { main.post(() -> { if (me != null) { me.appOpen = open; if (me.bubble != null) me.bubble.setVisibility(open ? View.GONE : View.VISIBLE); } }); }
     static void say(String text, String mood) { main.post(() -> { if (me != null) me.show(text, mood); }); }
     /** Listening started while the app is open: let the service keep the microphone if it runs. */
     static void micOn(MainActivity a) { if (me != null && !me.mic) { me.mic = true; me.foreground(); } }
@@ -185,11 +190,13 @@ public class LumaService extends Service {
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
                 PixelFormat.TRANSLUCENT);
         lp.gravity = Gravity.TOP | Gravity.START;
-        lp.x = dp(12);
-        lp.y = dp(140);
+        DisplayMetrics screen = getResources().getDisplayMetrics();
+        lp.x = screen.widthPixels - dp(84);
+        lp.y = screen.heightPixels / 3;
         setFace("happy");
         dragAndTap(bubble);
         wm.addView(bubble, lp);
+        if (appOpen) bubble.setVisibility(View.GONE);
         bubble.setScaleX(0.4f); bubble.setScaleY(0.4f);
         bubble.animate().scaleX(1).scaleY(1).setDuration(260).start();
     }
@@ -304,6 +311,14 @@ public class LumaService extends Service {
             ByteBuffer buf = p.getBuffer();
             int pixel = p.getPixelStride(), row = p.getRowStride(), w = img.getWidth(), h = img.getHeight();
             Bitmap full = Bitmap.createBitmap(row / pixel, h, Bitmap.Config.ARGB_8888);
+            // each row may carry padding, and the last row usually doesn't: copy into a full-size buffer
+            int need = (row / pixel) * pixel * h;
+            if (buf.remaining() < need) {
+                ByteBuffer whole = ByteBuffer.allocate(need);
+                whole.put(buf);
+                whole.rewind();
+                buf = whole;
+            }
             full.copyPixelsFromBuffer(buf);
             Bitmap shot = Bitmap.createBitmap(full, 0, 0, w, h);
             ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -312,6 +327,7 @@ public class LumaService extends Service {
             lastFrame = Base64.encodeToString(out.toByteArray(), Base64.NO_WRAP);
             return lastFrame;
         } catch (Exception e) {
+            lastError = String.valueOf(e);
             return lastFrame;
         } finally {
             if (img != null) img.close();

@@ -219,26 +219,36 @@
     font-family: "Anton", "Archivo Black", Impact, sans-serif; direction: ltr; touch-action: manipulation;
   }
   #intro * { box-sizing: border-box; }
-  .i-start { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; cursor: pointer;
-    background: radial-gradient(circle at 50% 42%, rgba(123, 60, 255, .35), transparent 60%), var(--ik); }
+  /* title screen: alive before any sound */
+  .i-start { position: absolute; inset: 0; z-index: 6; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; cursor: pointer; overflow: hidden; }
+  .i-start::before { content: ""; position: absolute; inset: -40%; background: repeating-linear-gradient(-28deg, rgba(123, 60, 255, .22) 0 22px, transparent 22px 64px); animation: iSlide 6s linear infinite; }
+  .i-start::after { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at 50% 40%, transparent 30%, var(--ik) 78%); }
+  .i-start > * { position: relative; z-index: 1; }
   .i-logo { font-size: clamp(64px, 22vw, 150px); letter-spacing: .02em; line-height: .9; transform: skewX(-8deg);
-    text-shadow: 6px 6px 0 var(--iv), 12px 12px 0 rgba(255, 210, 122, .25); }
-  .i-with { font-family: "Instrument Serif", Georgia, serif; font-style: italic; font-size: clamp(22px, 6vw, 34px); color: var(--ig); margin-top: -4px; }
-  .i-fly { width: 14px; height: 14px; border-radius: 50%; background: #fff3c4; box-shadow: 0 0 18px 6px rgba(255, 210, 122, .8); animation: iFly 2.4s ease-in-out infinite; margin: 18px 0 30px; }
-  .i-tap { font-size: 18px; letter-spacing: .32em; color: var(--iw); animation: iBlink 1.3s steps(2) infinite; }
-  .i-hint { font-family: var(--body); font-size: 13px; color: rgba(251, 247, 255, .55); letter-spacing: 0; }
+    background: linear-gradient(100deg, var(--iw) 40%, #fff6d0 50%, var(--iw) 60%) 0 0 / 300% 100%; -webkit-background-clip: text; background-clip: text; color: transparent;
+    filter: drop-shadow(6px 6px 0 var(--iv)) drop-shadow(6px 6px 0 rgba(255, 210, 122, .35));
+    animation: iLogoIn .7s cubic-bezier(.2, 1.4, .4, 1) both, iShine 2.6s ease-in-out 1s infinite, iJitter 3.2s steps(1) 1.5s infinite; }
+  .i-with { font-family: "Instrument Serif", Georgia, serif; font-style: italic; font-size: clamp(22px, 6vw, 34px); color: var(--ig); margin-top: -2px; animation: iFadeUp .8s ease .35s both; }
+  .i-tap { margin-top: 26px; font-size: 18px; letter-spacing: .32em; color: var(--ik); background: var(--ig); padding: 8px 16px 6px; transform: skewX(-12deg); box-shadow: 5px 5px 0 var(--iv); animation: iFadeUp .6s ease .6s both, iPulse 1.1s ease-in-out 1.2s infinite; }
+  .i-hint { font-family: var(--body); font-size: 13px; color: rgba(251, 247, 255, .6); margin-top: 6px; animation: iFadeUp .6s ease .8s both; }
+  .i-peek { position: absolute; bottom: -4vh; left: 50%; height: 30vh; transform: translateX(-50%); z-index: 1; animation: iPeek .9s cubic-bezier(.3, 1.5, .5, 1) .5s both, iBob 2.6s ease-in-out 1.5s infinite; }
   .i-skip { position: absolute; z-index: 9; top: calc(env(safe-area-inset-top, 0px) + 14px); right: max(14px, env(safe-area-inset-right, 0px));
     font: 600 14px var(--body); color: var(--iw); background: rgba(255, 255, 255, .1); border: 1px solid rgba(255, 255, 255, .25); border-radius: 999px; padding: 8px 14px; }
   .i-shake, .i-stage { position: absolute; inset: 0; }
   .i-stage { transform-origin: 50% 50%; }
   .i-layer { position: absolute; inset: 0; pointer-events: none; }
-  /* backgrounds */
+  /* film grain over everything */
+  .i-grain { position: absolute; inset: -50%; z-index: 8; pointer-events: none; opacity: .09; mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    animation: iGrain .5s steps(4) infinite; }
+  /* backgrounds that never stand still */
   .i-bg-violet { background: var(--iv); }
   .i-bg-deep { background: var(--iv-deep); }
   .i-bg-gold { background: var(--ig); }
-  .i-halftone { background-image: radial-gradient(rgba(7, 5, 26, .35) 28%, transparent 30%); background-size: 9px 9px; }
-  .i-stripes { background: repeating-linear-gradient(-28deg, var(--iv) 0 26px, var(--iv-deep) 26px 52px); }
-  .i-rays { background: repeating-conic-gradient(from 0deg at 50% 55%, var(--iv) 0 8deg, var(--iv-deep) 8deg 16deg); }
+  .i-halftone { background-image: radial-gradient(rgba(7, 5, 26, .35) 28%, transparent 30%); background-size: 9px 9px; animation: iDots 3s linear infinite; }
+  .i-stripes { inset: -30%; background: repeating-linear-gradient(-28deg, var(--iv) 0 26px, var(--iv-deep) 26px 52px); animation: iSlide 1.4s linear infinite; }
+  .i-rays { inset: -60%; background: repeating-conic-gradient(from 0deg at 50% 50%, var(--iv) 0 8deg, var(--iv-deep) 8deg 16deg); animation: iSpin 6s linear infinite; }
+  .i-speed { inset: -60%; background: repeating-conic-gradient(from 0deg at 50% 50%, rgba(255, 255, 255, .55) 0 .6deg, transparent .6deg 7deg); animation: iSpin 2.5s linear infinite, iFlick .12s steps(2) infinite; opacity: .5; }
   /* type */
   .i-word { position: absolute; z-index: 3; left: 50%; top: 50%; white-space: nowrap; line-height: .9; text-transform: uppercase; }
   .i-word.i-back { z-index: 0; }
@@ -251,21 +261,40 @@
   .i-shadow { text-shadow: 5px 5px 0 var(--ik); }
   .i-gold { color: var(--ig); }
   .i-dark { color: var(--ik); }
+  .i-rgb { animation: iRgb .28s steps(3) 2; }
   .i-box { display: inline-block; padding: .04em .14em .02em; margin: 0 .03em; }
-  /* images */
+  /* images: an outer layer drifts slowly, the inner one makes the entrance */
+  .i-drift { position: absolute; inset: 0; animation: iDrift2 2.4s ease-out forwards; }
   .i-fig { position: absolute; height: 92vh; max-height: 900px; width: auto; filter: drop-shadow(10px 10px 0 rgba(7, 5, 26, .85)); }
   .i-panel { position: absolute; overflow: hidden; background: var(--ik); border: 4px solid var(--iw); box-shadow: 10px 10px 0 var(--ik); }
   .i-panel img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .i-strip { position: absolute; left: -10%; right: -10%; overflow: hidden; border-top: 5px solid var(--ig); border-bottom: 5px solid var(--ig); }
   .i-strip img { width: 100%; height: 100%; object-fit: cover; }
   .i-slash { position: absolute; inset: -20%; }
-  .i-flash { position: absolute; inset: 0; background: var(--iw); }
+  .i-shard { position: absolute; inset: 0; z-index: 2; }
+  .i-flash { position: absolute; inset: 0; z-index: 7; background: var(--iw); }
   .i-moon { position: absolute; border-radius: 50%; background: radial-gradient(circle at 40% 38%, #fff6d8, var(--ig) 55%, #e09a30); box-shadow: 0 0 80px 20px rgba(255, 210, 122, .35); }
   .i-dot { position: absolute; width: 6px; height: 6px; border-radius: 50%; background: #fff3c4; box-shadow: 0 0 12px 4px rgba(255, 210, 122, .7); }
   .i-chibi { position: absolute; left: 50%; bottom: 0; height: 46vh; transform: translateX(-50%); }
-  @keyframes iBlink { 50% { opacity: .15; } }
-  @keyframes iFly { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(10px, -8px); } }
+  .i-grid { position: absolute; inset: 14% 9% 20%; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 10px; transform: rotate(-4deg); }
+  .i-grid div { overflow: hidden; border: 3px solid var(--iw); box-shadow: 6px 6px 0 var(--ik); }
+  .i-grid img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 35%; }
+  @keyframes iSlide { to { transform: translateX(64px); } }
+  @keyframes iSpin { to { transform: rotate(360deg); } }
+  @keyframes iFlick { 50% { opacity: .25; } }
+  @keyframes iDots { to { background-position: 18px 9px; } }
+  @keyframes iGrain { 0% { transform: translate(0, 0); } 25% { transform: translate(-5%, 3%); } 50% { transform: translate(4%, -6%); } 75% { transform: translate(-3%, 5%); } }
+  @keyframes iLogoIn { from { transform: skewX(-8deg) scale(2.4); opacity: 0; } 70% { transform: skewX(-8deg) scale(.95); opacity: 1; } to { transform: skewX(-8deg) scale(1); } }
+  @keyframes iShine { 0%, 60% { background-position: 100% 0; } 100% { background-position: -100% 0; } }
+  @keyframes iJitter { 0%, 92%, 100% { translate: 0 0; } 94% { translate: -4px 2px; } 96% { translate: 5px -1px; } }
+  @keyframes iFadeUp { from { opacity: 0; transform: translateY(14px) skewX(-12deg); } }
+  @keyframes iPulse { 50% { box-shadow: 5px 5px 0 var(--iv), 0 0 26px rgba(255, 210, 122, .7); scale: 1.05; } }
+  @keyframes iPeek { from { transform: translate(-50%, 100%); } }
+  @keyframes iBob { 50% { translate: 0 -8px; } }
   @keyframes iDrift { from { transform: translate(0, 0); opacity: 0; } 20% { opacity: 1; } to { transform: translate(var(--dx), var(--dy)); opacity: 0; } }
+  @keyframes iDrift2 { from { transform: scale(1) translate(0, 0); } to { transform: scale(1.07) translate(-1.5%, -1%); } }
+  @keyframes iRgb { 0% { text-shadow: -6px 0 #ff2bd6, 6px 0 #2bd9ff; } 50% { text-shadow: 6px 0 #ff2bd6, -6px 0 #2bd9ff; } 100% { text-shadow: 5px 5px 0 var(--ik); } }
+  @keyframes iBlink { 50% { opacity: .15; } }
 
   /* Bottom navigation: always there, so nobody gets lost */
   .tabbar {
@@ -1170,10 +1199,11 @@ ${last}${langNote()}`;
       // how long sound takes to reach the speaker (pictures wait this long)
       latency() { if (!ac) return 0.03; return Math.min(0.3, (ac.outputLatency || 0) + (ac.baseLatency || 0)) || 0.03; },
       // Play a one-off track (the intro music). Returns its clock and a fade-out.
-      clip(url, vol = 0.9) {
+      clip(url, vol = 0.9, from = 0) {
         if (!ensure()) return null;
         const el = new Audio(url); let g = null, node = null;
         el.preload = "auto";
+        if (from) { try { el.currentTime = from; } catch (e) {} }
         try { node = ac.createMediaElementSource(el); g = ac.createGain(); g.gain.value = vol; node.connect(g).connect(master); } catch (e) { el.volume = vol; }
         el.play().catch(() => {});
         changed();
@@ -2564,13 +2594,16 @@ ${last}${langNote()}`;
     function layer(cls, style = "", html = "") { const d = document.createElement("div"); d.className = "i-layer " + cls; d.style.cssText = style; d.innerHTML = html; return add(d); }
     const clear = () => { stage.innerHTML = ""; };
     const anim = (node, frames, ms, opts = {}) => node.animate(frames, Object.assign({ duration: ms, easing: "cubic-bezier(.2,.9,.2,1)", fill: "forwards" }, opts));
-    function word(text, cls, x = 50, y = 50, rot = -8, ms = 200) {
+    function word(text, cls, x = 50, y = 50, rot = -8, ms = 160) {
       const d = document.createElement("div");
       d.className = "i-word " + cls; d.textContent = text;
       d.style.left = x + "%"; d.style.top = y + "%";
       const base = `translate(-50%, -50%) rotate(${rot}deg) skewX(-8deg)`;
       add(d);
       anim(d, [{ transform: base + " scale(2.8)", opacity: 0 }, { transform: base + " scale(.94)", opacity: 1, offset: 0.65 }, { transform: base + " scale(1)", opacity: 1 }], ms);
+      // then keep creeping, so nothing on screen is ever still
+      d.animate([{ translate: "0 0" }, { translate: `${rot < 0 ? -10 : 10}px 0` }], { duration: 1600, delay: ms, fill: "forwards", easing: "linear" });
+      if (/i-(xl|l)\b/.test(cls)) d.classList.add("i-rgb");
       return d;
     }
     function caption(text, y, cls = "") {
@@ -2585,10 +2618,11 @@ ${last}${langNote()}`;
       const d = layer("i-slash", `background:${color};inset:-10% auto -10% 0;width:55%`);
       anim(d, [{ transform: "skewX(-18deg) translateX(-140%)" }, { transform: "skewX(-18deg) translateX(260%)" }], ms, { easing: "cubic-bezier(.6,0,.3,1)" });
     }
-    function fig(name, side, fromVw, extra = "", ms = 300) {
+    function fig(name, side, fromVw, extra = "", ms = 240) {
+      const wrap = document.createElement("div"); wrap.className = "i-drift";
       const im = new Image(); im.src = IMG(name); im.className = "i-fig"; im.alt = "";
       im.style.cssText = `bottom:-6vh;${side}:-8vw;${extra}`;
-      add(im);
+      wrap.appendChild(im); add(wrap);
       anim(im, [{ transform: `translateX(${fromVw}vw) skewX(-8deg)`, opacity: 0 }, { transform: "translateX(0) skewX(0deg)", opacity: 1 }], ms);
       return im;
     }
@@ -2598,7 +2632,7 @@ ${last}${langNote()}`;
       d.style.cssText = `left:${x}%;top:${y}%;width:${w}%;height:${h}%;clip-path:polygon(${poly});`;
       d.innerHTML = `<img src="${IMG(name)}" alt="" style="object-position:${pos}">`;
       add(d);
-      anim(d, [{ transform: `translate(${from}) rotate(${rot}deg) scale(1.2)`, opacity: 0 }, { transform: `translate(0, 0) rotate(${rot}deg) scale(1)`, opacity: 1 }], 220);
+      anim(d, [{ transform: `translate(${from}) rotate(${rot}deg) scale(1.2)`, opacity: 0 }, { transform: `translate(0, 0) rotate(${rot}deg) scale(1)`, opacity: 1 }], 160);
       // slow push-in while it is on screen
       d.querySelector("img").animate([{ transform: "scale(1)" }, { transform: "scale(1.08)" }], { duration: 1100, fill: "forwards" });
       return d;
@@ -2622,6 +2656,21 @@ ${last}${langNote()}`;
       });
       add(d);
       return d;
+    }
+    // glass shards that sweep the screen on a cut
+    function shards(color = "#fbf7ff") {
+      const polys = ["0 0,70% 0,20% 100%,0 100%", "60% 0,100% 0,100% 55%,35% 100%,15% 100%", "40% 100%,100% 45%,100% 100%"];
+      polys.forEach((poly, k) => {
+        const d = layer("i-shard", `background:${k === 1 ? "#07051a" : color};clip-path:polygon(${poly})`);
+        anim(d, [{ transform: `translate(${k % 2 ? "" : "-"}110%, ${k === 2 ? 40 : -20}%)`, opacity: 1 }, { transform: "translate(0, 0)", opacity: 1, offset: 0.45 }, { transform: `translate(${k % 2 ? "-" : ""}120%, ${k === 2 ? -30 : 25}%)`, opacity: 1 }], 240, { delay: k * 20, easing: "cubic-bezier(.7,0,.3,1)" });
+      });
+    }
+    const speed = () => layer("i-speed");
+    function grid4() {
+      const g = document.createElement("div"); g.className = "i-grid";
+      g.innerHTML = ["face_smile", "face_soft", "face_smirk", "face_shy"].map((n) => `<div><img src="${IMG(n)}" alt=""></div>`).join("");
+      add(g);
+      [...g.children].forEach((c, k) => anim(c, [{ transform: "scale(0) rotate(-12deg)" }, { transform: "scale(1) rotate(0)" }], 140, { delay: k * 55, easing: "cubic-bezier(.3,1.6,.5,1)" }));
     }
     function fireflies(n) {
       for (let k = 0; k < n; k++) {
@@ -2647,45 +2696,48 @@ ${last}${langNote()}`;
     // stamps for ransom letters, one per letter
     const stamps = (word, step = 0.06) => [...word].map((_, k) => ["stamp" + (k % 4), k * step, 0.7]);
 
-    // [beat number, picture, sounds as [name, seconds after the beat, volume]]
+    // [beat number, picture, sounds as [name, seconds after the beat, volume]]. The music starts at beat 8.
+    const START_BEAT = 8;
     const EVENTS = [
-      [0, () => { clear(); layer("i-bg-deep"); moon(46, 72, 22); fireflies(16); caption("SOMEWHERE,", 34); }, [["punch", 0, 0.55]]],
-      [3, () => caption("THE NIGHT IS STILL AWAKE", 42), [["stamp1", 0, 0.4]]],
-      [4, () => flash(0.25), []],
-      [8, () => { clear(); layer("i-bg-deep i-halftone"); moon(40, 74, 20, 200); slash("#ffd27a"); fig("side", "right", 30, "right:-30vw;bottom:-14vh;"); }, [["punch", 0, 0.8]]],
-      [10, () => caption("…AND SO IS SHE.", 84, "i-gold"), [["stamp2", 0, 0.4]]],
-      [12, () => { clear(); layer("i-stripes"); flash(); slash("#ffd27a"); word("WELCOME", "i-xl i-shadow", 50, 46, -8); }, [["punch", 0, 1], ["glitch", 0, 0.8]]],
-      [14, () => slash("#07051a", 260), [["metal", 0, 0.6]]],
-      [16, () => flash(0.2, 120), []],
-      [18, () => { clear(); layer("i-bg-violet i-halftone"); word("LUMA", "i-xl i-outline i-back", 50, 13, -8, 240); fig("front", "left", -40, "bottom:-20vh;"); caption("YOUR NIGHT FRIEND", 92, "i-gold"); }, [["metal", 0, 1]]],
-      [20, () => { const l = stage.querySelector(".i-outline"); if (l) l.animate([{ marginLeft: "-10px" }, { marginLeft: "10px" }, { marginLeft: "0" }], { duration: 160 }); flash(0.3, 120); }, [["glitch", 0, 0.5]]],
-      [22, () => flash(0.6, 260), []],
-      // the drop: a cut every two beats
-      [23, () => { clear(); layer("i-bg-deep i-halftone"); const st = document.createElement("div"); st.className = "i-strip"; st.style.cssText = "top:26%;height:24%"; st.innerHTML = `<img src="${IMG("face_smirk")}" alt="" style="object-position:50% 46%">`; add(st); anim(st, [{ transform: "translateX(-100%) skewY(-4deg)" }, { transform: "translateX(0) skewY(-4deg)" }], 180); word("SHE LISTENS.", "i-l i-shadow", 50, 70, -6); }, [["punch", 0, 1], ["shutter", 0.02, 0.6]]],
-      [25, () => { clear(); layer("i-bg-violet"); panel("face_smile", 6, 10, 62, 58, -4, "0 4%,100% 0,94% 100%,4% 92%", "-60vw, 0"); word("SHE REMEMBERS.", "i-m i-shadow", 50, 82, -5); }, [["shutter", 0, 0.8]]],
-      [27, () => { clear(); layer("i-bg-gold i-halftone"); panel("face_soft", 32, 22, 62, 58, 5, "6% 0,100% 6%,96% 100%,0 94%", "60vw, 0"); word("SHE TEASES.", "i-m i-dark", 46, 14, -7); }, [["shutter", 0, 0.8]]],
-      [29, () => { clear(); layer("i-bg-deep"); panel("face_shy", 16, 14, 68, 60, -2, "3% 0,100% 3%,97% 100%,0 96%", "0, 60vh", "50% 40%"); word("SHE STAYS.", "i-l i-gold i-shadow", 50, 86, -6); }, [["shutter", 0, 0.8]]],
-      [31, () => { clear(); layer("i-stripes"); fig("turn", "right", 40, "bottom:-26vh;", 240); word("THE ONE", "i-m i-shadow", 30, 10, -8); }, [["punch", 0, 0.9]]],
-      [32, () => word("WHO WAITS UP", "i-m i-shadow", 40, 19, -8), [["stamp1", 0, 0.6]]],
-      [33, () => word("FOR YOU", "i-m i-gold i-shadow", 30, 28, -8), [["stamp2", 0, 0.6]]],
-      [34, () => { clear(); layer("i-bg-deep i-halftone"); flash(0.5, 120); ransom("TAKE", 26, -6); }, stamps("TAKE")],
+      [8, () => { clear(); layer("i-bg-deep i-halftone"); moon(42, 74, 20, 220); fireflies(14); fig("side", "right", 30, "right:-30vw;bottom:-14vh;"); flash(0.8); caption("THE NIGHT IS STILL AWAKE", 30); }, [["punch", 0, 0.8]]],
+      [10, () => { speed(); caption("…AND SO IS SHE.", 84, "i-gold"); }, [["stamp2", 0, 0.5]]],
+      [12, () => { clear(); layer("i-stripes"); speed(); flash(); word("WELCOME", "i-xl i-shadow", 50, 46, -8); shards("#ffd27a"); }, [["punch", 0, 1], ["glitch", 0, 0.8]]],
+      [14, () => { slash("#07051a", 240); word("TO THE NIGHT", "i-m i-gold i-shadow", 50, 60, -8); }, [["metal", 0, 0.6]]],
+      [16, () => { clear(); layer("i-bg-deep"); const st = document.createElement("div"); st.className = "i-strip"; st.style.cssText = "top:38%;height:20%"; st.innerHTML = `<img src="${IMG("face_soft")}" alt="" style="object-position:50% 44%">`; add(st); anim(st, [{ transform: "translateX(100%) skewY(4deg)" }, { transform: "translateX(0) skewY(4deg)" }], 150); word("WHO IS SHE?", "i-m i-shadow", 50, 74, -6); }, [["shutter", 0, 0.7]]],
+      [18, () => { clear(); layer("i-bg-violet i-halftone"); layer("i-rays", "opacity:.35"); word("LUMA", "i-xl i-outline i-back", 50, 13, -8, 200); fig("front", "left", -40, "bottom:-20vh;"); shards(); caption("YOUR NIGHT FRIEND", 92, "i-gold"); }, [["metal", 0, 1], ["glitch", 0.05, 0.5]]],
+      [20, () => { const l = stage.querySelector(".i-outline"); if (l) { l.classList.remove("i-rgb"); void l.offsetWidth; l.classList.add("i-rgb"); } flash(0.35, 100); }, [["glitch", 0, 0.6]]],
+      [21, () => flash(0.25, 90), []],
+      [22, () => { speed(); flash(0.55, 200); }, []],
+      // the drop: a face on every beat
+      [23, () => { clear(); layer("i-bg-deep i-halftone"); speed(); const st = document.createElement("div"); st.className = "i-strip"; st.style.cssText = "top:24%;height:24%"; st.innerHTML = `<img src="${IMG("face_smirk")}" alt="" style="object-position:50% 46%">`; add(st); anim(st, [{ transform: "translateX(-100%) skewY(-4deg)" }, { transform: "translateX(0) skewY(-4deg)" }], 140); word("SHE LISTENS.", "i-l i-shadow", 50, 70, -6); }, [["punch", 0, 1], ["shutter", 0.02, 0.6]]],
+      [24, () => { clear(); layer("i-bg-violet"); panel("face_smile", 6, 10, 62, 58, -4, "0 4%,100% 0,94% 100%,4% 92%", "-60vw, 0"); word("SHE REMEMBERS.", "i-m i-shadow", 50, 82, -5); }, [["shutter", 0, 0.8]]],
+      [25, () => { clear(); layer("i-bg-gold i-halftone"); panel("face_soft", 32, 22, 62, 58, 5, "6% 0,100% 6%,96% 100%,0 94%", "60vw, 0"); word("SHE TEASES.", "i-m i-dark", 46, 14, -7); }, [["shutter", 0, 0.8]]],
+      [26, () => { clear(); layer("i-bg-deep"); panel("face_shy", 16, 14, 68, 60, -2, "3% 0,100% 3%,97% 100%,0 96%", "0, 60vh", "50% 40%"); word("SHE STAYS.", "i-l i-gold i-shadow", 50, 86, -6); }, [["shutter", 0, 0.8]]],
+      [27, () => { clear(); layer("i-stripes"); grid4(); }, [["punch", 0, 0.9], ["stamp0", 0, 0.5], ["stamp1", 0.055, 0.5], ["stamp2", 0.11, 0.5], ["stamp3", 0.165, 0.5]]],
+      [29, () => { clear(); layer("i-stripes"); speed(); fig("turn", "right", 40, "bottom:-26vh;", 200); word("THE ONE", "i-m i-shadow", 30, 10, -8); shards("#7b3cff"); }, [["punch", 0, 0.9]]],
+      [30, () => word("WHO WAITS UP", "i-m i-shadow", 40, 19, -8), [["stamp1", 0, 0.6]]],
+      [31, () => word("FOR YOU", "i-m i-gold i-shadow", 30, 28, -8), [["stamp2", 0, 0.6]]],
+      [32, () => { clear(); layer("i-bg-violet"); layer("i-rays", "opacity:.5"); speed(); word("EVERY", "i-l i-shadow", 50, 40, -8); }, [["metal", 0, 0.7]]],
+      [33, () => word("NIGHT.", "i-l i-gold i-shadow", 50, 58, -8), [["punch", 0, 0.6]]],
+      [34, () => { clear(); layer("i-bg-deep i-halftone"); flash(0.5, 100); ransom("TAKE", 26, -6); }, stamps("TAKE")],
       [35, () => ransom("YOUR", 48, 4), stamps("YOUR")],
-      [36, () => { ransom("TIME.", 70, -4); flash(0.9, 200); }, stamps("TIME.").concat([["shatter", 0.26, 1]])],
-      [38, () => { clear(); layer("i-bg-violet"); slash("#07051a"); moon(80, 50, 46, 260); word("THE NIGHT", "i-l i-shadow", 50, 24, -6); }, [["punch", 0, 0.9]]],
+      [36, () => { ransom("TIME.", 70, -4); flash(0.9, 180); }, stamps("TIME.").concat([["shatter", 0.26, 1]])],
+      [37, () => { shards(); speed(); }, []],
+      [38, () => { clear(); layer("i-bg-violet"); slash("#07051a"); moon(80, 50, 46, 220); word("THE NIGHT", "i-l i-shadow", 50, 24, -6); }, [["punch", 0, 0.9]]],
       [39, () => word("IS YOURS.", "i-l i-gold i-shadow", 50, 72, -6), [["metal", 0, 0.5]]],
       [40, () => {
-        clear(); layer("", "background:radial-gradient(circle at 50% 40%, rgba(123,60,255,.55), transparent 65%), #07051a"); flash(); fireflies(20);
-        word("FIREFLY", "i-xl i-shadow", 50, 30, -6, 260);
+        clear(); layer("", "background:radial-gradient(circle at 50% 40%, rgba(123,60,255,.55), transparent 65%), #07051a"); layer("i-rays", "opacity:.18"); flash(); fireflies(20);
+        word("FIREFLY", "i-xl i-shadow", 50, 30, -6, 220); shards("#ffd27a");
       }, [["bell", 0, 0.8], ["metal", 0, 0.8]]],
-      [41, () => { const w = document.createElement("div"); w.className = "i-word i-with"; w.textContent = "with Luma"; w.style.cssText = "left:50%;top:44%;transform:translate(-50%,-50%)"; add(w); anim(w, [{ opacity: 0, letterSpacing: ".5em" }, { opacity: 1, letterSpacing: "0em" }], 380); }, []],
-      [42, () => { const c = new Image(); c.src = poseImg("chibi", "happy"); c.className = "i-chibi"; c.alt = ""; add(c); anim(c, [{ transform: "translate(-50%, 100%)" }, { transform: "translate(-50%, -6%)", offset: 0.7 }, { transform: "translate(-50%, 0)" }], 420, { easing: "cubic-bezier(.3,1.5,.5,1)" }); sound.cute("excited"); }, []],
-      [45, () => finish(), []],
+      [41, () => { const w = document.createElement("div"); w.className = "i-word i-with"; w.textContent = "with Luma"; w.style.cssText = "left:50%;top:44%;transform:translate(-50%,-50%)"; add(w); anim(w, [{ opacity: 0, letterSpacing: ".5em" }, { opacity: 1, letterSpacing: "0em" }], 300); }, []],
+      [41.5, () => { const c = new Image(); c.src = poseImg("chibi", "happy"); c.className = "i-chibi"; c.alt = ""; add(c); anim(c, [{ transform: "translate(-50%, 100%)" }, { transform: "translate(-50%, -6%)", offset: 0.7 }, { transform: "translate(-50%, 0)" }], 380, { easing: "cubic-bezier(.3,1.5,.5,1)" }); sound.cute("excited"); }, []],
+      [44, () => finish(), []],
     ];
     // whooshes that end exactly on these beats, and a riser into the drop
-    const WHOOSH_INTO = [8, 12, 18, 31, 38, 40];
+    const WHOOSH_INTO = [12, 16, 18, 27, 29, 32, 38, 40];
     function buildCues() {
       const list = [];
-      for (let i = 0; i <= 44; i++) if (KICKS.has(i) || SNARES.has(i)) list.push([B(i), () => pulse(i), false]);
+      for (let i = START_BEAT; i <= 44; i++) if (KICKS.has(i) || SNARES.has(i)) list.push([B(i), () => pulse(i), false]);
       for (const [i, fn, sfx] of EVENTS) list.push([B(i), fn, sfx]);
       for (const i of WHOOSH_INTO) list.push([B(i) - 0.26, null, [["@whoosh", 0, 0.26]]]);
       list.push([B(19), null, [["@riser", 0, B(23) - B(19)]]]);
@@ -2730,13 +2782,16 @@ ${last}${langNote()}`;
       if (onDone) onDone();
     }
     function begin() {
-      root.querySelector(".i-start").remove();
+      const st = root.querySelector(".i-start");
+      st.style.pointerEvents = "none";
+      st.animate([{ transform: "scale(1)", opacity: 1, filter: "brightness(1)" }, { transform: "scale(1.25)", opacity: 0, filter: "brightness(2.5)" }], { duration: 260, easing: "ease-in", fill: "forwards" }).onfinish = () => st.remove();
       sound.ensure();
       if (sound.isOn(BG)) sound.stop(BG);
       sound.loadSfx(["punch", "metal", "bell", "shutter", "shatter", "glitch", "stamp0", "stamp1", "stamp2", "stamp3"]);
-      track = sound.clip("music/intro.mp3", 0.9);
+      const from = B(START_BEAT) - 0.25;
+      track = sound.clip("music/intro.mp3", 0.9, from);
       sound.preloadVoices();
-      clock0 = performance.now();
+      clock0 = performance.now() - from * 1000;
       if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
         layer("", "background:radial-gradient(circle at 50% 40%, rgba(123,60,255,.5), transparent 65%), #07051a");
         word("FIREFLY", "i-xl", 50, 40, 0); timers.push(setTimeout(finish, 2500)); return;
@@ -2749,18 +2804,21 @@ ${last}${langNote()}`;
       root.id = "intro";
       root.innerHTML = `
         <div class="i-shake"><div class="i-stage"></div></div>
+        <div class="i-grain"></div>
         <div class="i-start" role="button" tabindex="0" aria-label="Start">
           <div class="i-logo">FIREFLY</div>
           <div class="i-with">with Luma</div>
-          <div class="i-fly"></div>
           <div class="i-tap">TAP TO START</div>
           <div class="i-hint">🎧 ${lang === "ar" ? "شغّل الصوت" : "Sound on"}</div>
+          <img class="i-peek" src="${poseImg("chibi", "excited")}" alt="">
         </div>
         <button class="i-skip" type="button">${lang === "ar" ? "تخطَّ ›" : "Skip ›"}</button>`;
       document.body.appendChild(root);
       shaker = root.querySelector(".i-shake");
       stage = root.querySelector(".i-stage");
       const start = root.querySelector(".i-start");
+      // fireflies drift on the title screen too
+      for (let k = 0; k < 14; k++) { const d = document.createElement("div"); d.className = "i-dot"; d.style.cssText = `left:${(k * 53) % 100}%;top:${10 + ((k * 37) % 80)}%;--dx:${((k * 29) % 60) - 30}px;--dy:${-30 - ((k * 17) % 50)}px;animation:iDrift ${3 + (k % 4)}s ease-in-out ${(k % 5) * 0.4}s infinite`; start.appendChild(d); }
       start.onclick = begin;
       start.onkeydown = (e) => { if (e.key === "Enter" || e.key === " ") begin(); };
       root.querySelector(".i-skip").onclick = () => { sound.ensure(); finish(); };

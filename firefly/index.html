@@ -2,7 +2,7 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700&family=Amiri:wght@400;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700&family=Amiri:wght@400;700&family=Anton&family=Archivo+Black&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap">
 <style>
   /* Layout: a living night meadow fills the screen; one quiet glass panel floats over its lower part and changes with each step of the evening. The land always sits just above the panel. */
   :root {
@@ -211,6 +211,60 @@
   .list button { border: 0; background: none; color: var(--haze); padding: 0 4px; font-size: 15px; }
   .chart { width: 100%; aspect-ratio: 300 / 96; display: block; }
   .chart text { fill: var(--haze); font: 11px var(--body); }
+
+  /* ===== Intro: Persona-style opening, in Firefly's violet, gold and black ===== */
+  #intro {
+    --iv: #7b3cff; --iv-deep: #2a1060; --ig: #ffd27a; --ik: #07051a; --iw: #fbf7ff;
+    position: fixed; inset: 0; z-index: 50; overflow: hidden; background: var(--ik); color: var(--iw);
+    font-family: "Anton", "Archivo Black", Impact, sans-serif; direction: ltr; touch-action: manipulation;
+  }
+  #intro * { box-sizing: border-box; }
+  .i-start { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; cursor: pointer;
+    background: radial-gradient(circle at 50% 42%, rgba(123, 60, 255, .35), transparent 60%), var(--ik); }
+  .i-logo { font-size: clamp(64px, 22vw, 150px); letter-spacing: .02em; line-height: .9; transform: skewX(-8deg);
+    text-shadow: 6px 6px 0 var(--iv), 12px 12px 0 rgba(255, 210, 122, .25); }
+  .i-with { font-family: "Instrument Serif", Georgia, serif; font-style: italic; font-size: clamp(22px, 6vw, 34px); color: var(--ig); margin-top: -4px; }
+  .i-fly { width: 14px; height: 14px; border-radius: 50%; background: #fff3c4; box-shadow: 0 0 18px 6px rgba(255, 210, 122, .8); animation: iFly 2.4s ease-in-out infinite; margin: 18px 0 30px; }
+  .i-tap { font-size: 18px; letter-spacing: .32em; color: var(--iw); animation: iBlink 1.3s steps(2) infinite; }
+  .i-hint { font-family: var(--body); font-size: 13px; color: rgba(251, 247, 255, .55); letter-spacing: 0; }
+  .i-skip { position: absolute; z-index: 9; top: calc(env(safe-area-inset-top, 0px) + 14px); right: max(14px, env(safe-area-inset-right, 0px));
+    font: 600 14px var(--body); color: var(--iw); background: rgba(255, 255, 255, .1); border: 1px solid rgba(255, 255, 255, .25); border-radius: 999px; padding: 8px 14px; }
+  .i-stage { position: absolute; inset: 0; }
+  .i-layer { position: absolute; inset: 0; pointer-events: none; }
+  /* backgrounds */
+  .i-bg-violet { background: var(--iv); }
+  .i-bg-deep { background: var(--iv-deep); }
+  .i-bg-gold { background: var(--ig); }
+  .i-halftone { background-image: radial-gradient(rgba(7, 5, 26, .35) 28%, transparent 30%); background-size: 9px 9px; }
+  .i-stripes { background: repeating-linear-gradient(-28deg, var(--iv) 0 26px, var(--iv-deep) 26px 52px); }
+  .i-rays { background: repeating-conic-gradient(from 0deg at 50% 55%, var(--iv) 0 8deg, var(--iv-deep) 8deg 16deg); }
+  /* type */
+  .i-word { position: absolute; z-index: 3; left: 50%; top: 50%; white-space: nowrap; line-height: .9; text-transform: uppercase; }
+  .i-word.i-back { z-index: 0; }
+  .i-word.i-with { text-transform: none; }
+  .i-xl { font-size: clamp(70px, 24vw, 220px); }
+  .i-l { font-size: clamp(46px, 15vw, 130px); }
+  .i-m { font-size: clamp(30px, 9vw, 72px); }
+  .i-s { font-family: var(--body); font-weight: 700; font-size: clamp(14px, 4vw, 22px); letter-spacing: .28em; text-shadow: 0 2px 12px rgba(7, 5, 26, .9); }
+  .i-outline { color: transparent; -webkit-text-stroke: 3px var(--ig); }
+  .i-shadow { text-shadow: 5px 5px 0 var(--ik); }
+  .i-gold { color: var(--ig); }
+  .i-dark { color: var(--ik); }
+  .i-box { display: inline-block; padding: .04em .14em .02em; margin: 0 .03em; }
+  /* images */
+  .i-fig { position: absolute; height: 92vh; max-height: 900px; width: auto; filter: drop-shadow(10px 10px 0 rgba(7, 5, 26, .85)); }
+  .i-panel { position: absolute; overflow: hidden; background: var(--ik); border: 4px solid var(--iw); box-shadow: 10px 10px 0 var(--ik); }
+  .i-panel img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .i-strip { position: absolute; left: -10%; right: -10%; overflow: hidden; border-top: 5px solid var(--ig); border-bottom: 5px solid var(--ig); }
+  .i-strip img { width: 100%; height: 100%; object-fit: cover; }
+  .i-slash { position: absolute; inset: -20%; }
+  .i-flash { position: absolute; inset: 0; background: var(--iw); }
+  .i-moon { position: absolute; border-radius: 50%; background: radial-gradient(circle at 40% 38%, #fff6d8, var(--ig) 55%, #e09a30); box-shadow: 0 0 80px 20px rgba(255, 210, 122, .35); }
+  .i-dot { position: absolute; width: 6px; height: 6px; border-radius: 50%; background: #fff3c4; box-shadow: 0 0 12px 4px rgba(255, 210, 122, .7); }
+  .i-chibi { position: absolute; left: 50%; bottom: 0; height: 46vh; transform: translateX(-50%); }
+  @keyframes iBlink { 50% { opacity: .15; } }
+  @keyframes iFly { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(10px, -8px); } }
+  @keyframes iDrift { from { transform: translate(0, 0); opacity: 0; } 20% { opacity: 1; } to { transform: translate(var(--dx), var(--dy)); opacity: 0; } }
 
   /* Bottom navigation: always there, so nobody gets lost */
   .tabbar {
@@ -571,7 +625,7 @@
 
   // ---- strings for navigation, smart suggestions and getting to know you ----
   Object.assign(S.en, {
-    tabHome: "Meadow", tabLuma: "Luma", tabSounds: "Sounds", tabYou: "You",
+    replayIntro: "Replay intro ▶", tabHome: "Meadow", tabLuma: "Luma", tabSounds: "Sounds", tabYou: "You",
     another: "Something else ↻", quietThings: "Quiet things",
     s_ritual: "Tonight's ritual", s_ritualD: "7 calm minutes, then a firefly.", s_ritualB: "Let's start",
     s_ritualFirst: "Light your first firefly", s_ritualFirstD: "7 calm minutes with Luma.",
@@ -600,7 +654,7 @@
     quickDefault: "I'm okay|Tired 😮‍💨|Don't know what to say|Make me laugh|You talk",
   });
   Object.assign(S.ar, {
-    tabHome: "المرج", tabLuma: "لُمى", tabSounds: "الأصوات", tabYou: "أنت",
+    replayIntro: "أعد المقدمة ▶", tabHome: "المرج", tabLuma: "لُمى", tabSounds: "الأصوات", tabYou: "أنت",
     another: "شي ثاني ↻", quietThings: "أشياء هادئة",
     s_ritual: "طقس الليلة", s_ritualD: "سبع دقائق هادئة، وبعدها يراعة.", s_ritualB: "يلا نبدأ",
     s_ritualFirst: "ضوّي أول يراعة", s_ritualFirstD: "سبع دقائق هادئة ويا لُمى.",
@@ -756,7 +810,7 @@
   const LS = "firefly-v1";
   function blank() {
     return { name: "", fireflies: 0, golden: 0, streak: 0, best: 0, lastDate: null, graceDate: null,
-      memory: [], style: [], onboarded: false, answers: {}, intention: null, history: [], stars: [], gifts: [], seenGifts: [] };
+      memory: [], style: [], onboarded: false, introSeen: false, answers: {}, intention: null, history: [], stars: [], gifts: [], seenGifts: [] };
   }
   let state = blank();
   try { const saved = JSON.parse(localStorage.getItem(LS)); if (saved && typeof saved === "object") state = Object.assign(blank(), saved); } catch (e) {}
@@ -945,7 +999,8 @@ ${last}${langNote()}`;
         let node = null;
         try { node = ac.createMediaElementSource(el); node.connect(out); } catch (e) { el.volume = 0.32; }
         el.play().catch(() => {});
-        return [{ stop: () => { el.pause(); el.removeAttribute("src"); el.load(); if (node) node.disconnect(); }, kick: () => el.play().catch(() => {}), paused: () => el.paused }];
+        return [{ stop: () => { el.pause(); el.removeAttribute("src"); el.load(); if (node) node.disconnect(); }, kick: () => el.play().catch(() => {}), paused: () => el.paused,
+          time: () => (el.paused ? null : el.currentTime), seek: (sec) => { try { el.currentTime = sec; } catch (e) {} } }];
       },
       // Slow chords that drift every 8 s, with soft piano-like notes over them and a gentle echo.
       music(out) {
@@ -1074,6 +1129,10 @@ ${last}${langNote()}`;
       auto: () => prefs.auto !== false,
       setAuto(v) { prefs.auto = v; savePrefs(); },
       cuteOn: () => prefs.cute !== false,
+      bgTime() { const l = live[BG]; const n = l && l.nodes.find((x) => x.time); return n ? n.time() : null; },
+      bgSeek(sec) { const l = live[BG]; const n = l && l.nodes.find((x) => x.seek); if (n) n.seek(sec); },
+      // a temporary level for the background (the intro plays it louder); null goes back to the saved level
+      bgVolume(v) { const l = live[BG]; if (l && ac) l.g.gain.setTargetAtTime(v == null ? volOf(BG) : v, ac.currentTime, v == null ? 1.2 : 0.3); },
       // Is sound really coming out (not just scheduled while the browser blocks it)?
       audible() { return !!ac && ac.state === "running" && Object.values(live).some((l) => !l.nodes.some((n) => n.paused && n.paused())); },
       // Retry everything that was started before the browser allowed sound.
@@ -2346,7 +2405,7 @@ ${last}${langNote()}`;
       ${state.style.length ? `<ul class="list">${state.style.map((m) => `<li><span dir="auto">${esc(m)}</span></li>`).join("")}</ul><div class="row split"><p class="tiny">${t("styleNote")}</p><button class="text-btn" id="style-reset">${t("styleReset")}</button></div>`
                            : `<p class="tiny">${t("styleNone")}</p>`}
       ${state.gifts.length ? `<h3>${t("giftsTitle")}</h3><ul class="list">${state.gifts.slice(0, 15).map((g) => `<li><span dir="auto"><b style="color:var(--glow);font-weight:600">${esc(g.kind)}.</b> ${esc(g.text)}</span></li>`).join("")}</ul>` : ""}
-      <p class="tiny">${t("recorded", { n: num(state.history.length) })}</p>
+      <div class="row split"><p class="tiny">${t("recorded", { n: num(state.history.length) })}</p><button class="text-btn" id="replay">${t("replayIntro")}</button></div>
     `);
     wireBack();
     $$("[data-to]").forEach((b) => b.onclick = () => show(b.dataset.to));
@@ -2367,6 +2426,7 @@ ${last}${langNote()}`;
     };
     setCal(); tInput.oninput = setCal;
     $$("[data-forget]").forEach((b) => b.onclick = () => { state.memory.splice(Number(b.dataset.forget), 1); persist(); show("nights"); });
+    $("#replay").onclick = () => intro.play(() => show("nights"));
     const sr = $("#style-reset");
     if (sr) sr.onclick = () => { state.style = []; persist(); show("nights"); };
   }
@@ -2430,6 +2490,184 @@ ${last}${langNote()}`;
     show(screen);
   };
 
+  // ================= Intro: a 20-second Persona-style opening, cut to the song =================
+  // Cues are timed to the song itself ("Radio": quiet build until 6.15 s, then a hit every ~0.91 s),
+  // so the cuts stay on the beat even if the song starts late.
+  const intro = (() => {
+    const IMG = (n) => "intro/" + n + ".webp";
+    const HIT = 6.15, BEAT = 0.909;
+    const beat = (k) => HIT + k * BEAT;
+    let root = null, stage = null, raf = 0, cues = [], next = 0, clock0 = 0, onDone = null, ended = false;
+
+    const add = (node) => { stage.appendChild(node); return node; };
+    function layer(cls, style = "", html = "") { const d = document.createElement("div"); d.className = "i-layer " + cls; d.style.cssText = style; d.innerHTML = html; return add(d); }
+    const clear = () => { stage.innerHTML = ""; };
+    const anim = (node, frames, ms, opts = {}) => node.animate(frames, Object.assign({ duration: ms, easing: "cubic-bezier(.2,.9,.2,1)", fill: "forwards" }, opts));
+    // A word that slams in from big to its place
+    function word(text, cls, x = 50, y = 50, rot = -8, delay = 0) {
+      const d = document.createElement("div");
+      d.className = "i-word " + cls; d.textContent = text;
+      d.style.left = x + "%"; d.style.top = y + "%"; d.style.opacity = "0";
+      const base = `translate(-50%, -50%) rotate(${rot}deg) skewX(-8deg)`;
+      add(d);
+      anim(d, [{ transform: base + " scale(2.6)", opacity: 0 }, { transform: base + " scale(.95)", opacity: 1, offset: 0.7 }, { transform: base + " scale(1)", opacity: 1 }], 280, { delay });
+      return d;
+    }
+    // Small spaced-out caption that fades up
+    function caption(text, y, cls = "", delay = 0) {
+      const d = document.createElement("div");
+      d.className = "i-word i-s " + cls; d.textContent = text; d.style.left = "50%"; d.style.top = y + "%"; d.style.opacity = "0";
+      add(d);
+      anim(d, [{ transform: "translate(-50%, -30%)", opacity: 0, letterSpacing: ".6em" }, { transform: "translate(-50%, -50%)", opacity: 1, letterSpacing: ".28em" }], 900, { delay });
+      return d;
+    }
+    function flash(o = 0.9) { anim(layer("i-flash"), [{ opacity: o }, { opacity: 0 }], 170); }
+    function slash(color, ms = 340) {
+      const d = layer("i-slash", `background:${color};inset:-10% auto -10% 0;width:55%`);
+      anim(d, [{ transform: "skewX(-18deg) translateX(-140%)" }, { transform: "skewX(-18deg) translateX(260%)" }], ms, { easing: "cubic-bezier(.6,0,.3,1)" });
+      return d;
+    }
+    function fig(name, side, fromVw, extra = "") {
+      const im = new Image(); im.src = IMG(name); im.className = "i-fig"; im.alt = "";
+      im.style.cssText = `bottom:-6vh;${side}:-8vw;${extra}`;
+      add(im);
+      anim(im, [{ transform: `translateX(${fromVw}vw) skewX(-6deg)`, opacity: 0 }, { transform: "translateX(0) skewX(0deg)", opacity: 1 }], 380);
+      return im;
+    }
+    function panel(name, x, y, w, h, rot, poly, from, pos = "50% 35%") {
+      const d = document.createElement("div");
+      d.className = "i-panel";
+      d.style.cssText = `left:${x}%;top:${y}%;width:${w}%;height:${h}%;clip-path:polygon(${poly});`;
+      d.innerHTML = `<img src="${IMG(name)}" alt="" style="object-position:${pos}">`;
+      add(d);
+      anim(d, [{ transform: `translate(${from}) rotate(${rot}deg) scale(1.15)`, opacity: 0 }, { transform: `translate(0, 0) rotate(${rot}deg) scale(1)`, opacity: 1 }], 300);
+      return d;
+    }
+    // Letters cut out like a ransom note, each in its own box
+    function ransom(text, y, rot) {
+      const looks = [["#fbf7ff", "#07051a"], ["#07051a", "#fbf7ff"], ["#ffd27a", "#07051a"], ["#7b3cff", "#fbf7ff"]];
+      const fonts = ['"Anton", Impact, sans-serif', '"Archivo Black", Impact, sans-serif', '"Instrument Serif", Georgia, serif'];
+      const d = document.createElement("div");
+      d.className = "i-word i-l"; d.style.left = "50%"; d.style.top = y + "%";
+      d.style.transform = `translate(-50%, -50%) rotate(${rot}deg)`;
+      [...text].forEach((ch, k) => {
+        const s = document.createElement("span");
+        const [bg, fg] = looks[(k + text.length) % looks.length];
+        s.className = "i-box"; s.textContent = ch;
+        s.style.cssText = `background:${bg};color:${fg};font-family:${fonts[(k * 7 + text.length) % 3]};${fonts[(k * 7 + text.length) % 3].includes("Serif") ? "font-style:italic;" : ""}transform:rotate(${((k * 37) % 15) - 7}deg);display:inline-block;opacity:0`;
+        d.appendChild(s);
+        anim(s, [{ transform: s.style.transform + " scale(2)", opacity: 0 }, { transform: s.style.transform + " scale(1)", opacity: 1 }], 200, { delay: k * 45 });
+      });
+      add(d);
+      return d;
+    }
+    function fireflies(n) {
+      for (let k = 0; k < n; k++) {
+        const d = document.createElement("div");
+        d.className = "i-dot";
+        d.style.cssText = `left:${(k * 53) % 100}%;top:${20 + ((k * 37) % 70)}%;--dx:${((k * 29) % 60) - 30}px;--dy:${-30 - ((k * 17) % 50)}px;animation:iDrift ${3 + (k % 4)}s ease-in-out ${(k % 5) * 0.4}s infinite`;
+        add(d);
+      }
+    }
+    function moon(size, x, y) {
+      const m = document.createElement("div");
+      m.className = "i-moon"; m.style.cssText = `width:${size}vmin;height:${size}vmin;left:${x}%;top:${y}%;transform:translate(-50%,-50%) scale(.2)`;
+      add(m);
+      anim(m, [{ transform: "translate(-50%, -50%) scale(.2)", opacity: 0 }, { transform: "translate(-50%, -50%) scale(1)", opacity: 1 }], 2400);
+      return m;
+    }
+
+    const SCENES = [
+      // the quiet build: night, fireflies, a silhouette
+      [0.0, () => { clear(); layer("i-bg-deep", "opacity:.0").animate([{ opacity: 0 }, { opacity: 1 }], { duration: 2500, fill: "forwards" }); fireflies(16); caption("SOMEWHERE,", 30); }],
+      [1.8, () => caption("THE NIGHT IS STILL AWAKE", 37)],
+      [3.0, () => { moon(46, 72, 24); const f = fig("side", "right", 10, "filter:brightness(0);opacity:0;right:-30vw;bottom:-14vh;"); f.animate([{ filter: "brightness(0)" }, { filter: "brightness(.85)" }], { duration: 3000, fill: "forwards" }); }],
+      [5.0, () => caption("…AND SO IS SHE.", 82, "i-gold")],
+      // the hits
+      [HIT, () => { clear(); layer("i-stripes"); flash(); slash("#ffd27a"); setTimeout(() => slash("#07051a"), 90); word("WELCOME", "i-xl i-shadow", 50, 46, -8, 140); }],
+      [beat(1), () => { clear(); layer("i-bg-violet i-halftone"); word("LUMA", "i-xl i-outline i-back", 50, 13, -8); fig("front", "left", -40, "bottom:-20vh;"); caption("YOUR NIGHT FRIEND", 92, "i-gold"); }],
+      [beat(2), () => { flash(.5); const l = stage.querySelector(".i-outline"); if (l) l.animate([{ marginLeft: "-8px" }, { marginLeft: "8px" }, { marginLeft: "0" }], { duration: 180 }); }],
+      [beat(3), () => { const r = layer("i-rays", "opacity:.0;z-index:-1"); stage.prepend(r); r.animate([{ opacity: 0, transform: "rotate(0)" }, { opacity: .55, transform: "rotate(12deg)" }], { duration: 900, fill: "forwards" }); }],
+      [beat(4), () => { clear(); layer("i-bg-deep i-halftone"); const s = document.createElement("div"); s.className = "i-strip"; s.style.cssText = "top:26%;height:24%"; s.innerHTML = `<img src="${IMG("face_smirk")}" alt="" style="object-position:50% 46%">`; add(s); anim(s, [{ transform: "translateX(-100%) skewY(-4deg)" }, { transform: "translateX(0) skewY(-4deg)" }], 260); word("SHE LISTENS.", "i-l i-shadow", 50, 70, -6, 120); }],
+      [beat(5), () => { clear(); layer("i-bg-violet"); panel("face_smile", 6, 10, 62, 58, -4, "0 4%,100% 0,94% 100%,4% 92%", "-60vw, 0"); word("SHE REMEMBERS.", "i-m i-shadow", 50, 82, -5, 100); }],
+      [beat(6), () => { clear(); layer("i-bg-gold i-halftone"); panel("face_soft", 32, 22, 62, 58, 5, "6% 0,100% 6%,96% 100%,0 94%", "60vw, 0"); word("SHE TEASES.", "i-m i-dark", 46, 14, -7, 100); }],
+      [beat(7), () => { clear(); layer("i-bg-deep"); panel("face_shy", 16, 14, 68, 60, -2, "3% 0,100% 3%,97% 100%,0 96%", "0, 60vh", "50% 40%"); word("SHE STAYS.", "i-l i-gold i-shadow", 50, 86, -6, 120); }],
+      [beat(8), () => { clear(); layer("i-stripes"); fig("turn", "right", 40, "bottom:-26vh;"); word("THE ONE", "i-m i-shadow", 30, 10, -8); word("WHO WAITS UP", "i-m i-shadow", 40, 19, -8, 120); word("FOR YOU", "i-m i-gold i-shadow", 30, 28, -8, 240); }],
+      [beat(10), () => { clear(); layer("i-bg-deep i-halftone"); flash(.6); ransom("TAKE", 26, -6); }],
+      [beat(11), () => { ransom("YOUR", 48, 4); }],
+      [beat(12), () => { flash(.7); ransom("TIME.", 70, -4); }],
+      [beat(13), () => { clear(); layer("i-bg-violet"); slash("#07051a"); moon(80, 50, 46); setTimeout(() => word("THE NIGHT", "i-l i-shadow", 50, 24, -6), 120); }],
+      [beat(14), () => { word("IS YOURS.", "i-l i-gold i-shadow", 50, 72, -6); }],
+      [beat(15), () => {
+        clear(); layer("", "background:radial-gradient(circle at 50% 40%, rgba(123,60,255,.55), transparent 65%), #07051a"); flash(); fireflies(20);
+        word("FIREFLY", "i-xl i-shadow", 50, 30, -6);
+        const w = document.createElement("div"); w.className = "i-word i-with"; w.textContent = "with Luma"; w.style.cssText = "left:50%;top:44%;transform:translate(-50%,-50%);opacity:0"; add(w);
+        anim(w, [{ opacity: 0 }, { opacity: 1 }], 600, { delay: 400 });
+        const c = new Image(); c.src = poseImg("chibi", "happy"); c.className = "i-chibi"; c.alt = ""; add(c);
+        anim(c, [{ transform: "translate(-50%, 100%)" }, { transform: "translate(-50%, -6%)", offset: 0.7 }, { transform: "translate(-50%, 0)" }], 700, { delay: 500, easing: "cubic-bezier(.3,1.5,.5,1)" });
+        setTimeout(() => sound.cute("excited"), 900);
+      }],
+      [beat(16.6), () => finish()],
+    ];
+
+    function now() {
+      const st = sound.bgTime();
+      return st != null && st > 0.05 ? st : (performance.now() - clock0) / 1000;
+    }
+    function tick() {
+      if (ended) return;
+      const tt = now();
+      while (next < cues.length && tt >= cues[next][0]) { try { cues[next][1](); } catch (e) {} next++; }
+      raf = requestAnimationFrame(tick);
+    }
+    function finish() {
+      if (ended) return;
+      ended = true;
+      cancelAnimationFrame(raf);
+      sound.bgVolume(null);
+      const r = root;
+      r.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 600, fill: "forwards" }).onfinish = () => r.remove();
+      state.introSeen = true; persist();
+      if (onDone) onDone();
+    }
+    function begin() {
+      root.querySelector(".i-start").remove();
+      sound.ensure();
+      if (sound.isOn(BG)) sound.kick(); else sound.start(BG);
+      sound.bgSeek(0);
+      sound.bgVolume(0.85);
+      if (sound.ensure()) sound.preloadVoices();
+      clock0 = performance.now();
+      if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        layer("", "background:radial-gradient(circle at 50% 40%, rgba(123,60,255,.5), transparent 65%), #07051a");
+        word("FIREFLY", "i-xl", 50, 40, 0); setTimeout(finish, 2500); return;
+      }
+      cues = SCENES; next = 0; raf = requestAnimationFrame(tick);
+    }
+    function play(done) {
+      onDone = done; ended = false;
+      root = document.createElement("div");
+      root.id = "intro";
+      root.innerHTML = `
+        <div class="i-stage"></div>
+        <div class="i-start" role="button" tabindex="0" aria-label="Start">
+          <div class="i-logo">FIREFLY</div>
+          <div class="i-with">with Luma</div>
+          <div class="i-fly"></div>
+          <div class="i-tap">TAP TO START</div>
+          <div class="i-hint">🎧 ${lang === "ar" ? "شغّل الصوت" : "Sound on"}</div>
+        </div>
+        <button class="i-skip" type="button">${lang === "ar" ? "تخطَّ ›" : "Skip ›"}</button>`;
+      document.body.appendChild(root);
+      stage = root.querySelector(".i-stage");
+      const start = root.querySelector(".i-start");
+      start.onclick = begin;
+      start.onkeydown = (e) => { if (e.key === "Enter" || e.key === " ") begin(); };
+      root.querySelector(".i-skip").onclick = () => { if (root.querySelector(".i-start")) { sound.ensure(); if (!sound.isOn(BG)) sound.start(BG); else sound.kick(); } finish(); };
+    }
+    return { play };
+  })();
+
   // ================= start =================
   const UNLOCK = ["pointerdown", "touchstart", "keydown", "click"];
   const firstTouch = () => {
@@ -2443,6 +2681,8 @@ ${last}${langNote()}`;
   if (sound.auto()) { sound.start(BG); setTimeout(() => { if (sound.audible()) UNLOCK.forEach((ev) => removeEventListener(ev, firstTouch, true)); }, 800); }
   renderChrome();
   show(state.onboarded ? "home" : "onboard");
+  // the first time, the intro plays over everything; the app is ready underneath
+  if (!state.introSeen) intro.play(() => { suggestAt = 0; show(state.onboarded ? "home" : "onboard"); });
   connectStore();
 })();
 </script>

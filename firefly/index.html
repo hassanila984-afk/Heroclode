@@ -394,12 +394,12 @@ ${last}`;
   // Everything is synthesized live: nature layers plus optional binaural tones.
   const SOUND_LS = "firefly-sound";
   const LAYERS = [
+    { id: "music", name: "Calm music", vol: 0.55 },
     { id: "rain", name: "Rain", vol: 0.6 },
     { id: "ocean", name: "Ocean waves", vol: 0.6 },
     { id: "crickets", name: "Crickets", vol: 0.35 },
     { id: "wind", name: "Wind in grass", vol: 0.45 },
     { id: "hum", name: "Brown noise", vol: 0.5 },
-    { id: "pad", name: "Night chords", vol: 0.4 },
   ];
   const TONES = {
     off: { name: "Off" },
@@ -409,7 +409,7 @@ ${last}`;
   };
   const sound = (() => {
     let ac = null, master = null, analyser = null, buffers = {}, live = {}, tone = null, toneKey = "off", timer = null, timerEnd = 0, timerMin = 0;
-    let prefs = { vol: {} };
+    let prefs = { vol: {}, auto: true };
     try { prefs = Object.assign(prefs, JSON.parse(localStorage.getItem(SOUND_LS)) || {}); } catch (e) {}
     const savePrefs = () => { try { localStorage.setItem(SOUND_LS, JSON.stringify(prefs)); } catch (e) {} };
     const volOf = (id) => prefs.vol[id] ?? LAYERS.find((l) => l.id === id).vol;
@@ -462,16 +462,47 @@ ${last}`;
         return [a, l1, l2];
       },
       hum(out) { const a = src("brown"); a.connect(filt("lowpass", 500)).connect(out); return [a]; },
-      pad(out) {
-        const lp = filt("lowpass", 1100); lp.connect(out);
-        const nodes = [];
-        [110, 164.81, 220, 261.63, 329.63].forEach((f, i) => {
+      // Slow chords that drift every 8 s, with soft piano-like notes over them and a gentle echo.
+      music(out) {
+        const hz = (m) => 440 * Math.pow(2, (m - 69) / 12);
+        const CHORDS = [[45, 52, 55, 59, 60], [41, 48, 52, 55, 57], [48, 52, 55, 59, 62], [43, 50, 55, 59, 64]]; // Am9 Fmaj7 Cmaj9 G6
+        const SCALE = [69, 72, 74, 76, 79, 81, 84, 86]; // A minor pentatonic
+        const echo = ac.createDelay(2), fb = ac.createGain(), tone = filt("lowpass", 2200), wet = ac.createGain();
+        echo.delayTime.value = 0.42; fb.gain.value = 0.38; wet.gain.value = 0.35;
+        echo.connect(tone).connect(fb).connect(echo); tone.connect(wet).connect(out);
+        const padBus = filt("lowpass", 900); padBus.connect(out);
+        const voices = CHORDS[0].map((m, i) => {
           const o = ac.createOscillator(), g = ac.createGain();
-          o.type = i % 2 ? "sine" : "triangle"; o.frequency.value = f; o.detune.value = (i - 2) * 4;
-          g.gain.value = 0.07; o.connect(g).connect(lp); o.start();
-          nodes.push(o, lfo(0.03 + i * 0.013, 0.06, g.gain));
+          o.type = i ? "sine" : "triangle"; o.frequency.value = hz(m); o.detune.value = (i - 2) * 3;
+          g.gain.value = i ? 0.045 : 0.06; o.connect(g).connect(padBus); o.start();
+          return o;
         });
-        return nodes;
+        let chord = 0;
+        const turn = setInterval(() => {
+          chord = (chord + 1) % CHORDS.length;
+          voices.forEach((o, i) => o.frequency.setTargetAtTime(hz(CHORDS[chord][i]), ac.currentTime, 1.2));
+        }, 8000);
+        let last = 3;
+        const note = () => {
+          last = Math.max(0, Math.min(SCALE.length - 1, last + Math.round((Math.random() - 0.5) * 4)));
+          const f = hz(SCALE[last]), t = ac.currentTime + 0.02;
+          [[f, "triangle", 0.09], [f * 2, "sine", 0.025]].forEach(([fr, type, v]) => {
+            const o = ac.createOscillator(), g = ac.createGain();
+            o.type = type; o.frequency.value = fr;
+            g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(v, t + 0.012); g.gain.exponentialRampToValueAtTime(0.0001, t + 3);
+            o.connect(g); g.connect(out); g.connect(echo);
+            o.start(t); o.stop(t + 3.1);
+          });
+        };
+        let alive = true, tid = null;
+        const play = () => {
+          if (!alive) return;
+          if (Math.random() < 0.82) note();
+          if (Math.random() < 0.18) setTimeout(() => alive && note(), 260);
+          tid = setTimeout(play, 900 + Math.random() * 1500);
+        };
+        tid = setTimeout(play, 1200);
+        return voices.concat({ stop: () => { alive = false; clearTimeout(tid); clearInterval(turn); } });
       },
       crickets(out) {
         const chirp = (f, pan) => {
@@ -555,6 +586,8 @@ ${last}`;
       vol: volOf,
       setVol(id, v) { prefs.vol[id] = v; savePrefs(); if (live[id]) live[id].g.gain.setTargetAtTime(v, ac.currentTime, 0.1); },
       onChange(f) { listeners.push(f); },
+      auto: () => prefs.auto !== false,
+      setAuto(v) { prefs.auto = v; savePrefs(); },
       wave(arr) { if (!analyser || !this.playing()) return false; analyser.getByteTimeDomainData(arr); return true; },
       chime() {
         if (!ensure()) return;
@@ -1200,12 +1233,16 @@ ${last}`;
     $("[data-done]").onclick = () => show("home");
     $$("[data-l]").forEach((row) => {
       const id = row.dataset.l;
-      row.querySelector("button").onclick = () => { sound.isOn(id) ? sound.stop(id) : sound.start(id); };
+      row.querySelector("button").onclick = () => {
+        const on = sound.isOn(id);
+        on ? sound.stop(id) : sound.start(id);
+        if (id === "music") sound.setAuto(!on);
+      };
       row.querySelector("input").oninput = (e) => sound.setVol(id, Number(e.target.value));
     });
     $$("[data-tone]").forEach((b) => b.onclick = () => sound.setTone(b.dataset.tone));
     $$("[data-timer]").forEach((b) => b.onclick = () => { sound.ensure(); sound.setTimer(Number(b.dataset.timer)); });
-    $("#stop-all").onclick = () => { sound.stopAll(); sound.setTimer(0); };
+    $("#stop-all").onclick = () => { sound.stopAll(); sound.setTimer(0); sound.setAuto(false); };
     const refresh = () => {
       if (screen !== "sounds") return;
       $$("[data-l]").forEach((row) => { const on = sound.isOn(row.dataset.l); row.classList.toggle("on", on); row.querySelector("button").setAttribute("aria-pressed", on); });
@@ -1249,7 +1286,7 @@ ${last}`;
       <div class="row split">
         <div class="row">
           ${speech ? `<button class="ghost" id="read">Read it to me</button>` : ""}
-          <button class="text-btn" id="ambience">Add rain and chords</button>
+          <button class="text-btn" id="ambience">Add rain and music</button>
         </div>
         <button class="text-btn" id="another">Another story</button>
       </div>
@@ -1274,7 +1311,7 @@ ${last}`;
     };
     write();
     $("#another").onclick = () => { stopReading(); write(); };
-    $("#ambience").onclick = () => { sound.start("rain"); sound.start("pad"); $("#ambience").textContent = "Rain and chords on"; };
+    $("#ambience").onclick = () => { sound.start("rain"); sound.start("music"); $("#ambience").textContent = "Rain and music on"; };
     function stopReading() { if (speech) speechSynthesis.cancel(); reading = false; const r = $("#read"); if (r) r.textContent = "Read it to me"; }
     if (speech) $("#read").onclick = () => {
       if (reading) return stopReading();
@@ -1422,14 +1459,23 @@ ${last}`;
   document.getElementById("sound-btn").onclick = () => {
     if (screen === "sounds") return show("home");
     if (["breathe", "checkin", "talk", "release", "tomorrow"].includes(screen)) {
-      // mid-ritual: toggle a quiet rain instead of leaving the step
-      sound.isOn("rain") ? sound.stop("rain") : sound.start("rain");
+      // mid-ritual: toggle the music instead of leaving the step
+      const on = sound.isOn("music");
+      on ? sound.stop("music") : sound.start("music");
+      sound.setAuto(!on);
       return;
     }
     show("sounds");
   };
 
   // ================= start =================
+  const firstTouch = (e) => {
+    removeEventListener("pointerdown", firstTouch, true);
+    removeEventListener("keydown", firstTouch, true);
+    if (sound.auto() && !sound.playing() && !(e.target && e.target.closest && e.target.closest("#sound-btn"))) sound.start("music");
+  };
+  addEventListener("pointerdown", firstTouch, true);
+  addEventListener("keydown", firstTouch, true);
   renderCount();
   show("home");
   connectStore();

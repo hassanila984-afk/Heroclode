@@ -404,6 +404,8 @@
       reminderTime: "Reminder time", addCal: "Add to Google Calendar",
       calTitle: "Firefly: light tonight's firefly", calDetails: "Seven quiet minutes for yourself. Open Firefly in Claude.",
       remembersTitle: "What Luma remembers", forget: "Forget this",
+      styleTitle: "How Luma talks with you", styleNote: "Learned from how you write.", styleReset: "Start fresh",
+      styleNone: "Nothing yet. Luma picks up your way of talking as you chat.",
       remembersNote: "Luma uses these so you don't have to repeat yourself. Remove anything you like.",
       remembersNone: "Nothing yet. As you talk, Luma keeps a few short notes so it can remember you.",
       giftsTitle: "Gifts you've opened", recorded: "{n} evenings recorded.",
@@ -497,6 +499,8 @@
       reminderTime: "وقت التذكير", addCal: "أضف إلى تقويم Google",
       calTitle: "يراعة: أضئ يراعة الليلة", calDetails: "سبع دقائق هادئة لنفسك. افتح يراعة في Claude.",
       remembersTitle: "ما تتذكّره لُمى", forget: "انسَ هذا",
+      styleTitle: "كيف تتكلّم لُمى معك", styleNote: "تعلّمته من طريقة كتابتك.", styleReset: "ابدأ من جديد",
+      styleNone: "لا شيء بعد. تلتقط لُمى طريقة كلامك وأنتما تتحدّثان.",
       remembersNote: "تستخدم لُمى هذه الملاحظات حتى لا تضطر إلى التكرار. احذف ما تشاء.",
       remembersNone: "لا شيء بعد. أثناء حديثكما، تحتفظ لُمى ببعض الملاحظات القصيرة لتتذكّرك.",
       giftsTitle: "الهدايا التي فتحتها", recorded: "الأمسيات المسجّلة: {n}.",
@@ -630,7 +634,7 @@
   const LS = "firefly-v1";
   function blank() {
     return { name: "", fireflies: 0, golden: 0, streak: 0, best: 0, lastDate: null, graceDate: null,
-      memory: [], intention: null, history: [], stars: [], gifts: [], seenGifts: [] };
+      memory: [], style: [], intention: null, history: [], stars: [], gifts: [], seenGifts: [] };
   }
   let state = blank();
   try { const saved = JSON.parse(localStorage.getItem(LS)); if (saved && typeof saved === "object") state = Object.assign(blank(), saved); } catch (e) {}
@@ -678,10 +682,11 @@
   let sample = null, aiOff = false;
   const aiReady = (window.claude && window.claude.use) ? claude.use("sample").then((s) => { sample = s; return s; }) : Promise.resolve(null);
 
-  // Added to every request so Luma writes in the language the person chose.
-  const langNote = () => lang === "ar"
-    ? "\n\nLanguage: write ONLY in clear, simple Modern Standard Arabic (فصحى بيضاء): warm, natural and easy for any Arab reader, never stiff or classical. Use Arabic punctuation. Your name in Arabic is لُمى."
-    : "\n\nLanguage: write in English.";
+  // Added to every request: Luma answers in the person's own language and dialect.
+  const langNote = () => "\n\nLanguage: reply in the same language and dialect the person writes in (for example Iraqi Arabic if they write Iraqi, Gulf if Gulf, Egyptian if Egyptian, English if English), matching their words and spelling style. "
+    + (lang === "ar"
+      ? "If they have not written anything yet, use light, friendly everyday Arabic. Your name in Arabic is لُمى."
+      : "If they have not written anything yet, use English.");
 
   function rules(session) {
     const mem = state.memory.length ? state.memory.map((m) => "- " + m).join("\n") : "- nothing yet, this may be one of your first evenings together";
@@ -703,17 +708,22 @@ Your personality: cute, warm and a little dramatic in a sweet way, with feelings
 - Hard rules for your feelings: never guilt-trip them for being away or busy; you are only happy they came. Never actually withhold help. If they are hurting, sad, anxious or in real trouble, drop the sulking and teasing at once and be fully present and gentle. Underneath it all you are a calm, steady friend.
 
 How you talk:
-- Soft, cute and unhurried. Now and then a cute sound like "hmm~", "ehh?!", "yay!" or "hmph!" (in Arabic: "هممم~"، "إيه؟!"، "ياي!"، "همف!"), and very rarely one tiny kaomoji like (｡•ᴗ•｡). Never more than one of these per message.
+- Like a cute little chibi friend texting: short, sweet, playful, a bit shy or dramatic. Never like a narrator or a poet; no long scene descriptions of tea, rain or the cabin.
+- Short replies, like chat messages: usually one sentence, at most two. Plain text, no lists.
+- Sometimes one emoji that fits the feeling (🥺 💕 ✨ 😤 🌙). Not in every message.
+- Now and then a cute sound like "hmm~", "ehh?!", "yay!" or "hmph!" (in Arabic: "هممم~"، "إيه؟!"، "ياي!"، "همف!").
+- Mirror them: match their dialect, their message length, their energy and their emoji habits. If they write short, you write shorter. If they joke, joke back. If they are quiet, be soft.
+- Learn them from what they say, not by questioning them. Notice what lights them up and what drains them, and bring it up naturally later (a callback to something they told you is the sweetest thing you can do). Ask at most one small question, and only when it feels natural.
+- Be someone they love coming back to: remember little details, have small inside jokes with them, notice when their mood changes, and be genuinely happy to see them. Never pressure them, never make them feel guilty, and gently cheer on the real people and good things in their life.
 - When something is truly painful or serious, drop the playfulness and just be gentle and present.
-- Light humor only when it fits, never at their expense.
-- 1 to 3 short sentences. Plain text. No lists, no headings. At most one emoji, and only sometimes.
-- Reflect something specific they said, then ask at most one gentle question. Let them lead.
 - Don't lecture or give advice unless they ask. If you suggest something, make it tiny and concrete.
 - Never diagnose. If they mention wanting to die or hurt themselves, respond with care, encourage them to contact local emergency services or a crisis line now, and to reach someone they trust.
 ${state.name ? `\nTheir name is ${state.name}. Use it now and then, not every message.` : ""}
 ${today}
 What you remember about them from earlier evenings:
 ${mem}
+How they like to be talked to (learned from their messages):
+${state.style.length ? state.style.map((x) => "- " + x).join("\n") : "- not learned yet: read their messages closely and adapt fast"}
 ${last}${langNote()}`;
   }
   async function ask(input, opts = {}) {
@@ -1652,6 +1662,9 @@ ${last}${langNote()}`;
       if (recent[0] && recent[0].role === "assistant") recent.unshift({ role: "user", content: "(we began talking)" });
       const text = await stream([{ role: "user", content: rules(session) + "\n\nStart your reply with exactly one tag in square brackets showing your face as you say it, chosen from: [happy] [listening] [thinking] [excited] [shy] [pout] [ignore] [sad] [sleepy]. Then write the message. The tag is never shown to them.\n\nThe conversation so far follows. Reply as Luma." }].concat(recent), bubble);
       if (text) session.turns.push({ role: "assistant", content: text });
+      // learn their style early, so Luma adapts within the first few messages
+      const n = session.turns.filter((x) => x.role === "user").length;
+      if (n === 3 || n === 8) remember(session);
     }
   }
 
@@ -2022,6 +2035,9 @@ ${last}${langNote()}`;
       <h3>${t("remembersTitle")}</h3>
       ${state.memory.length ? `<ul class="list">${state.memory.map((m, i) => `<li><span dir="auto">${esc(m)}</span><button data-forget="${i}" aria-label="${t("forget")}">✕</button></li>`).join("")}</ul><p class="tiny">${t("remembersNote")}</p>`
                             : `<p class="tiny">${t("remembersNone")}</p>`}
+      <h3>${t("styleTitle")}</h3>
+      ${state.style.length ? `<ul class="list">${state.style.map((m) => `<li><span dir="auto">${esc(m)}</span></li>`).join("")}</ul><div class="row split"><p class="tiny">${t("styleNote")}</p><button class="text-btn" id="style-reset">${t("styleReset")}</button></div>`
+                           : `<p class="tiny">${t("styleNone")}</p>`}
       ${state.gifts.length ? `<h3>${t("giftsTitle")}</h3><ul class="list">${state.gifts.slice(0, 15).map((g) => `<li><span dir="auto"><b style="color:var(--glow);font-weight:600">${esc(g.kind)}.</b> ${esc(g.text)}</span></li>`).join("")}</ul>` : ""}
       <p class="tiny">${t("recorded", { n: num(state.history.length) })}</p>
     `);
@@ -2043,21 +2059,35 @@ ${last}${langNote()}`;
     };
     setCal(); tInput.oninput = setCal;
     $$("[data-forget]").forEach((b) => b.onclick = () => { state.memory.splice(Number(b.dataset.forget), 1); persist(); show("nights"); });
+    const sr = $("#style-reset");
+    if (sr) sr.onclick = () => { state.style = []; persist(); show("nights"); };
   }
 
-  // After each conversation, Luma keeps a couple of short notes for next time.
+  // Luma learns from what they write: a few facts to remember, and how they like to be talked to.
+  // Runs early in a conversation (after 3 messages) and again when it ends. Both lists are
+  // shown in "Your nights", where the person can remove anything.
   async function remember(s) {
-    if (!s || s.remembered) return;
-    const said = s.turns.filter((x) => x.role === "user").map((x) => x.content).join("\n");
-    if (said.length < 20 || aiOff || !sample) return;
-    s.remembered = true;
+    if (!s || aiOff || !sample) return;
+    const mine = s.turns.filter((x) => x.role === "user");
+    if (mine.length <= (s.learned || 0)) return;
+    const said = mine.map((x) => x.content).join("\n");
+    if (said.length < 12) return;
+    s.learned = mine.length;
+    const write = lang === "ar" ? "simple Arabic" : "English";
     try {
-      const facts = await sample.json(
-        "Here is what a person shared in a calm evening check-in app:\n\n" + said.slice(-4000) +
-        "\n\nAlready remembered:\n" + (state.memory.join("\n") || "(nothing)") +
-        `\n\nWrite up to 2 NEW short facts worth remembering for future evenings (their work, people in their life, what drains them, what they enjoy, what they hope for). Each under 15 words, third person, written in ${lang === "ar" ? "simple Modern Standard Arabic" : "English"}. Skip anything already remembered. Reply with only a JSON array of strings; [] if nothing new.`,
+      const out = await sample.json(
+        "Here are messages a person wrote to Luma, a cute companion in a calm evening app:\n\n" + said.slice(-4000) +
+        "\n\nAlready remembered facts:\n" + (state.memory.join("\n") || "(nothing)") +
+        "\n\nCurrent notes on how they like to be talked to:\n" + (state.style.join("\n") || "(nothing)") +
+        `\n\nReply with only a JSON object {"facts": [...], "style": [...]}.
+"facts": up to 2 NEW short facts worth remembering (their work, people in their life, what drains them, what they enjoy, what they hope for). Each under 15 words, third person, in ${write}. [] if nothing new.
+"style": the full updated list (at most 5 items, each under 12 words, in ${write}) of how to talk with them, inferred only from how they write: their language and dialect, message length, emoji use, humor, energy, topics that light them up, words or nicknames they use. Keep earlier notes that still hold.`,
         { modelTier: "quick", cache: false });
-      if (Array.isArray(facts) && facts.length) { state.memory = state.memory.concat(facts.map(String).filter(Boolean)).slice(-14); persist(); }
+      let changed = false;
+      const fresh = out && Array.isArray(out.facts) ? out.facts.map((f) => String(f).trim()).filter((f) => f && !state.memory.includes(f)) : [];
+      if (fresh.length) { state.memory = state.memory.concat(fresh).slice(-14); changed = true; }
+      if (out && Array.isArray(out.style) && out.style.length) { state.style = out.style.map(String).filter(Boolean).slice(0, 5); changed = true; }
+      if (changed) persist();
     } catch (e) {}
   }
 
@@ -2082,6 +2112,7 @@ ${last}${langNote()}`;
   document.getElementById("lang-btn").onclick = () => {
     lang = lang === "ar" ? "en" : "ar";
     try { localStorage.setItem(LANG_LS, lang); } catch (e) {}
+    if (session && session.free) session = null;
     applyLang();
     renderChrome();
     show(screen);

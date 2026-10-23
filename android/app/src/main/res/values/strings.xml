@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="access_name">Luma can tap for me</string>
+    <string name="access_about">Lets Luma read the buttons on your screen and tap, type or scroll when you ask her. She asks you on her bubble before every tap or typing, and never touches banking, payment, password, settings or app-store screens.</string>
+</resources>

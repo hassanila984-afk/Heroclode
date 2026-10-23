@@ -48,5 +48,15 @@
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="A floating companion bubble the user turned on, shown over other apps" />
         </service>
+
+        <!-- Luma's hands (off until the person turns it on in Accessibility settings) -->
+        <service
+            android:name=".LumaAccess"
+            android:label="@string/access_name"
+            android:exported="false"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter><action android:name="android.accessibilityservice.AccessibilityService" /></intent-filter>
+            <meta-data android:name="android.accessibilityservice" android:resource="@xml/luma_access" />
+        </service>
     </application>
 </manifest>

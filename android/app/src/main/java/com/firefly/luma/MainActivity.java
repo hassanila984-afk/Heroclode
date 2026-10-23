@@ -241,9 +241,27 @@ public class MainActivity extends Activity {
         }
         // ----- things she can do on the phone when asked (each opens the right app; nothing is sent or bought) -----
         @JavascriptInterface public String doAction(String name, String arg) {
-            try { return Actions.run(MainActivity.this, name, arg == null ? "" : arg.trim()); }
+            String a = arg == null ? "" : arg.trim();
+            try {
+                switch (name) {
+                    case "tap": case "type": case "scroll": case "back": case "home": case "notifications":
+                        return LumaAccess.act(name, a);   // asked on her bubble first
+                    default: return Actions.run(MainActivity.this, name, a);
+                }
+            }
             catch (Exception e) { return "failed"; }
         }
+
+        // ----- her hands (Accessibility; the person turns it on themselves) -----
+        @JavascriptInterface public boolean accessOn() { return LumaAccess.on(); }
+        @JavascriptInterface public void accessOpen() {
+            runOnUiThread(() -> {
+                Toast.makeText(MainActivity.this, "Find “Luma can tap for me” and turn it on", Toast.LENGTH_LONG).show();
+                startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS));
+            });
+        }
+        /** The app on screen and its buttons, as JSON ("" when she can't see any). */
+        @JavascriptInterface public String screen() { return LumaAccess.screen(); }
 
         @JavascriptInterface public void stopSpeaking() { runOnUiThread(() -> { if (voice != null) voice.stop(); }); }
     }

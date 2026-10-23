@@ -97,6 +97,13 @@ public class LumaService extends Service {
     static void appVisible(boolean open) { main.post(() -> { if (me != null) { me.appOpen = open; if (open) me.lastActivity = System.currentTimeMillis(); if (me.bubble != null) { me.bubble.setVisibility(open ? View.GONE : View.VISIBLE); if (!open && me.asleep) me.wake(); } } }); }
     static void say(String text, String mood) { main.post(() -> { if (me != null) me.show(text, mood); }); }
     /** Listening started while the app is open: let the service keep the microphone if it runs. */
+    /** Asks "Tap “Send”?" on her bubble; runs yes only if the person taps Yes. False when there's no bubble to ask on. */
+    static boolean confirm(String question, Runnable yes) {
+        if (me == null || me.bubble == null) return false;
+        main.post(() -> { if (me != null) me.ask(question, yes); });
+        return true;
+    }
+
     static void micOn(MainActivity a) { if (me != null && !me.mic) { me.mic = true; me.foreground(); } }
 
     @Override public IBinder onBind(Intent i) { return null; }
@@ -284,7 +291,69 @@ public class LumaService extends Service {
         main.postDelayed(life, 45_000);
     }
 
+    // ----- asking before she touches anything -----
+    private LinearLayout askRow;
+    private Runnable askYes;
+    private final Runnable askTimeout = () -> answer(false);
+
+    private TextView chip(String text, int bg, int fg) {
+        TextView c = new TextView(this);
+        c.setText(text);
+        c.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+        c.setTextColor(fg);
+        c.setGravity(Gravity.CENTER);
+        c.setPadding(dp(14), dp(6), dp(14), dp(6));
+        GradientDrawable d = new GradientDrawable();
+        d.setColor(bg);
+        d.setCornerRadius(dp(16));
+        c.setBackground(d);
+        c.setElevation(dp(4));
+        return c;
+    }
+
+    private void ask(String question, Runnable yes) {
+        if (bubble == null) return;
+        if (askRow == null) {
+            askRow = new LinearLayout(this);
+            askRow.setOrientation(LinearLayout.HORIZONTAL);
+            TextView ok = chip("✓ Yes", 0xFFFFD27A, 0xFF07051A), no = chip("✕ No", 0xF01A1342, 0xFFFBF7FF);
+            ok.setOnClickListener(v -> answer(true));
+            no.setOnClickListener(v -> answer(false));
+            askRow.addView(ok);
+            LinearLayout.LayoutParams gap = new LinearLayout.LayoutParams(-2, -2);
+            gap.leftMargin = dp(8);
+            askRow.addView(no, gap);
+            LinearLayout.LayoutParams ap = new LinearLayout.LayoutParams(-2, -2);
+            ap.topMargin = dp(6);
+            panel.addView(askRow, ap);
+        }
+        askYes = yes;
+        show(question, "thinking");
+        main.removeCallbacks(hideWords);   // the question stays until answered
+        askRow.setVisibility(View.VISIBLE);
+        main.removeCallbacks(askTimeout);
+        main.postDelayed(askTimeout, 20_000);
+    }
+
+    private void answer(boolean yes) {
+        main.removeCallbacks(askTimeout);
+        Runnable r = askYes;
+        askYes = null;
+        if (askRow != null) askRow.setVisibility(View.GONE);
+        if (yes && r != null) {
+            // out of the way first, so the tap lands on the app and not on her
+            if (bubble != null) bubble.setVisibility(View.INVISIBLE);
+            main.postDelayed(() -> {
+                try { r.run(); } catch (Exception ignored) { }
+                main.postDelayed(() -> { if (bubble != null && !appOpen) bubble.setVisibility(View.VISIBLE); show("Done~ ✨", "happy"); }, 400);
+            }, 250);
+        } else if (r != null) {
+            show("Okay, I won't 🙂", "listening");
+        }
+    }
+
     private void wordsDone() {
+        if (askYes != null) return;   // still waiting for a yes or no
         if (words != null) words.setVisibility(View.GONE);
         if (panel != null && inputRow.getVisibility() != View.VISIBLE) panel.setVisibility(View.GONE);
         stopWiggle();

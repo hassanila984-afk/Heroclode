@@ -439,7 +439,7 @@
       rareGift: "Rare gift", rareText: "A golden firefly. They're rare, and this one chose your meadow. It will glow there for good.",
       letter: "A letter from Luma", lumaWriting: "Luma is writing",
       soundsEyebrow: "Sounds", soundsTitle: "Tune the night.", volume: "{name} volume",
-      layer_music: "Calm music", layer_rain: "Rain", layer_ocean: "Ocean waves", layer_crickets: "Crickets", layer_wind: "Wind in grass", layer_hum: "Brown noise",
+      layer_song: "Radio · Bershy", layer_music: "Calm music", layer_rain: "Rain", layer_ocean: "Ocean waves", layer_crickets: "Crickets", layer_wind: "Wind in grass", layer_hum: "Brown noise",
       lumaSounds: "Luma's sounds", lumaSoundsNote: "Cute little sounds when Luma reacts.",
       stListening: "listening…", stThinking: "thinking…", stTyping: "typing…",
       tonesTitle: "Brainwave tones",
@@ -534,7 +534,7 @@
       rareGift: "هدية نادرة", rareText: "يراعة ذهبية. إنها نادرة، وقد اختارت مرجك، وستبقى تتوهّج فيه إلى الأبد.",
       letter: "رسالة من لُمى", lumaWriting: "لُمى تكتب",
       soundsEyebrow: "الأصوات", soundsTitle: "اضبط أنغام الليل.", volume: "مستوى صوت {name}",
-      layer_music: "موسيقى هادئة", layer_rain: "مطر", layer_ocean: "أمواج البحر", layer_crickets: "صراصير الليل", layer_wind: "ريح في العشب", layer_hum: "ضجيج بنّي",
+      layer_song: "Radio · Bershy", layer_music: "موسيقى هادئة", layer_rain: "مطر", layer_ocean: "أمواج البحر", layer_crickets: "صراصير الليل", layer_wind: "ريح في العشب", layer_hum: "ضجيج بنّي",
       lumaSounds: "أصوات لُمى", lumaSoundsNote: "أصوات صغيرة لطيفة حين تتفاعل لُمى.",
       stListening: "تستمع إليك…", stThinking: "تفكّر…", stTyping: "تكتب…",
       tonesTitle: "نغمات موجات الدماغ",
@@ -867,7 +867,9 @@ ${last}${langNote()}`;
   // ================= sound engine =================
   // Everything is synthesized live: nature layers plus optional binaural tones.
   const SOUND_LS = "firefly-sound";
+  const BG = "song";   // what plays in the background on its own
   const LAYERS = [
+    { id: "song", name: "Radio · Bershy", vol: 0.32 },
     { id: "music", name: "Calm music", vol: 0.55 },
     { id: "rain", name: "Rain", vol: 0.6 },
     { id: "ocean", name: "Ocean waves", vol: 0.6 },
@@ -936,6 +938,15 @@ ${last}${langNote()}`;
         return [a, l1, l2];
       },
       hum(out) { const a = src("brown"); a.connect(filt("lowpass", 500)).connect(out); return [a]; },
+      // The background song, streamed from its file and looped.
+      song(out) {
+        const el = new Audio("music/radio.mp3");
+        el.loop = true; el.preload = "auto";
+        let node = null;
+        try { node = ac.createMediaElementSource(el); node.connect(out); } catch (e) { el.volume = 0.32; }
+        el.play().catch(() => {});
+        return [{ stop: () => { el.pause(); el.removeAttribute("src"); el.load(); if (node) node.disconnect(); } }];
+      },
       // Slow chords that drift every 8 s, with soft piano-like notes over them and a gentle echo.
       music(out) {
         const hz = (m) => 440 * Math.pow(2, (m - 69) / 12);
@@ -2142,7 +2153,7 @@ ${last}${langNote()}`;
       row.querySelector("button").onclick = () => {
         const on = sound.isOn(id);
         on ? sound.stop(id) : sound.start(id);
-        if (id === "music") sound.setAuto(!on);
+        if (id === BG) sound.setAuto(!on);
       };
       row.querySelector("input").oninput = (e) => sound.setVol(id, Number(e.target.value));
     });
@@ -2395,8 +2406,8 @@ ${last}${langNote()}`;
     if (screen === "sounds") return show("home");
     if (["breathe", "checkin", "talk", "release", "tomorrow"].includes(screen)) {
       // mid-ritual: toggle the music instead of leaving the step
-      const on = sound.isOn("music");
-      on ? sound.stop("music") : sound.start("music");
+      const on = sound.isOn(BG);
+      on ? sound.stop(BG) : sound.start(BG);
       sound.setAuto(!on);
       return;
     }
@@ -2419,7 +2430,7 @@ ${last}${langNote()}`;
   const firstTouch = (e) => {
     removeEventListener("pointerdown", firstTouch, true);
     removeEventListener("keydown", firstTouch, true);
-    if (sound.auto() && !sound.playing() && !(e.target && e.target.closest && e.target.closest("#sound-btn"))) sound.start("music");
+    if (sound.auto() && !sound.playing() && !(e.target && e.target.closest && e.target.closest("#sound-btn"))) sound.start(BG);
     if (sound.ensure()) sound.preloadVoices();
   };
   addEventListener("pointerdown", firstTouch, true);

@@ -539,7 +539,7 @@
       stListening: "listening…", stThinking: "thinking…", stTyping: "typing…", stWatching: "watching with you…",
       watchBtn: "👀 Watch with me", watchOn: "Luma is watching your screen", watchFloat: "📌 Float", watchStop: "Stop",
       watchNote: "She glances now and then and only talks when she has something to say. Nothing from your screen is saved, only what she learns about you. Each look uses your Claude usage.",
-      watchNoSupport: "This device can't share its screen with a web page (iPad and phones can't) 🥺 Send me a screenshot instead 📷",
+      watchNoSupport: "iPad and phones don't let any web page see the screen live 🥺 Open me on a computer (Chrome is best) and we'll watch together!",
       watchBlocked: "Screen sharing isn't allowed here 🥺 Send me a screenshot instead 📷",
       watchEnded: "That was fun! Again sometime? 🌙", attach: "Send a picture", picSent: "📷",
       tonesTitle: "Brainwave tones",
@@ -639,7 +639,7 @@
       stListening: "تستمع إليك…", stThinking: "تفكّر…", stTyping: "تكتب…", stWatching: "تشاهد معك…",
       watchBtn: "👀 شاهدي معي", watchOn: "لُمى تشاهد شاشتك", watchFloat: "📌 نافذة عائمة", watchStop: "إيقاف",
       watchNote: "تلقي نظرة كل قليل ولا تتكلم إلا إذا كان عندها ما يستحق. لا يُحفظ شيء من شاشتك، فقط ما تتعلمه عنك. كل نظرة تستهلك من رصيدك في Claude.",
-      watchNoSupport: "هذا الجهاز لا يسمح بمشاركة الشاشة مع صفحة ويب (الآيباد والهواتف لا تسمح) 🥺 أرسل لي لقطة شاشة بدلًا منها 📷",
+      watchNoSupport: "الآيباد والهواتف لا تسمح لأي صفحة ويب برؤية الشاشة مباشرة 🥺 افتحني من الحاسبة (Chrome أفضل) ونشاهد معًا!",
       watchBlocked: "مشاركة الشاشة غير مسموحة هنا 🥺 أرسل لي لقطة شاشة بدلًا منها 📷",
       watchEnded: "كانت حلوة! نعيدها مرة ثانية؟ 🌙", attach: "أرسل صورة", picSent: "📷",
       tonesTitle: "نغمات موجات الدماغ",
@@ -2142,7 +2142,7 @@ ${last}${langNote()}`;
     }
     async function startWatch() {
       if (W.on || ctl) return;
-      if (!canShare) { addMsg("luma", t("watchNoSupport")); luma.set("chibi:sad"); $("#pic").click(); return; }
+      if (!canShare) { addMsg("luma", t("watchNoSupport")); luma.set("chibi:sad"); return; }
       openFloat();   // in the same tap, so the browser allows it
       let st;
       try { st = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 2 }, audio: false }); }

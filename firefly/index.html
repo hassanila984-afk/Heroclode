@@ -1,0 +1,868 @@
+<title>Firefly</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700&display=swap">
+<style>
+  /* Layout: a living night meadow fills the screen; one quiet glass panel floats over its lower half and changes with each step of the evening. */
+  :root {
+    --night: #0b0d2a;
+    --dusk: #2b1f52;
+    --glow: #ffd27a;
+    --glow-deep: #f2a83b;
+    --mist: #ecebf8;
+    --haze: #a9a6cc;
+    --glass: rgba(20, 20, 52, 0.62);
+    --glass-line: rgba(236, 235, 248, 0.14);
+    --chip: rgba(236, 235, 248, 0.08);
+    --luma: rgba(255, 210, 122, 0.10);
+    --me: rgba(236, 235, 248, 0.12);
+    --display: "Instrument Serif", "Iowan Old Style", Georgia, serif;
+    --body: "Manrope", system-ui, -apple-system, "Segoe UI", sans-serif;
+    color-scheme: dark;
+  }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--night);
+    color: var(--mist);
+    font: 16px/1.55 var(--body);
+    overflow: hidden;
+  }
+  #sky { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+
+  .top {
+    position: fixed; z-index: 3;
+    top: calc(env(safe-area-inset-top, 0px) + 14px);
+    left: max(16px, env(safe-area-inset-left, 0px));
+    right: max(16px, env(safe-area-inset-right, 0px));
+    display: flex; justify-content: space-between; align-items: center; gap: 12px;
+    pointer-events: none;
+  }
+  .brand { font-family: var(--display); font-size: 24px; font-style: italic; letter-spacing: .01em; color: var(--glow); text-shadow: 0 0 18px rgba(255, 210, 122, .45); }
+  .count { font-size: 13px; color: var(--haze); letter-spacing: .04em; }
+  .top button { pointer-events: auto; }
+
+  .stage {
+    position: fixed; z-index: 2; left: 0; right: 0; bottom: 0;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: 0 calc(env(safe-area-inset-bottom, 0px) + 16px);
+    display: flex; justify-content: center;
+    max-height: 100%;
+  }
+  .panel {
+    width: 100%; max-width: 520px;
+    background: var(--glass);
+    border: 1px solid var(--glass-line);
+    border-radius: 26px;
+    padding: 22px 20px 20px;
+    backdrop-filter: blur(18px) saturate(1.2);
+    -webkit-backdrop-filter: blur(18px) saturate(1.2);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, .45);
+    display: flex; flex-direction: column; gap: 14px;
+    max-height: calc(100dvh - 110px - env(safe-area-inset-top, 0px));
+    min-height: 0;
+    animation: rise .6s cubic-bezier(.2, .8, .2, 1) both;
+  }
+  @keyframes rise { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+
+  .eyebrow { font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--haze); margin: 0; }
+  h1, h2 { font-family: var(--display); font-weight: 400; margin: 0; text-wrap: balance; line-height: 1.1; }
+  h1 { font-size: 40px; }
+  h2 { font-size: 30px; }
+  h1 em, h2 em { color: var(--glow); }
+  p { margin: 0; }
+  .soft { color: var(--haze); font-size: 15px; }
+
+  button { font: inherit; color: inherit; cursor: pointer; }
+  button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--glow); outline-offset: 2px; }
+  .primary {
+    border: 0; border-radius: 999px; padding: 14px 22px;
+    background: linear-gradient(180deg, var(--glow), var(--glow-deep));
+    color: #2a1a05; font-weight: 700; font-size: 16px;
+    box-shadow: 0 0 28px rgba(255, 210, 122, .35);
+    transition: transform .15s, box-shadow .3s;
+  }
+  .primary:hover { box-shadow: 0 0 40px rgba(255, 210, 122, .55); }
+  .primary:active { transform: scale(.97); }
+  .primary:disabled { opacity: .45; box-shadow: none; cursor: default; }
+  .ghost {
+    border: 1px solid var(--glass-line); background: transparent; border-radius: 999px;
+    padding: 12px 18px; color: var(--mist); font-weight: 600;
+  }
+  .text-btn { border: 0; background: none; color: var(--haze); padding: 6px 4px; font-size: 14px; text-decoration: underline; text-underline-offset: 3px; }
+  .round {
+    border: 1px solid var(--glass-line); background: var(--glass); color: var(--mist);
+    border-radius: 999px; padding: 7px 13px; font-size: 13px; font-weight: 600;
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .row.end { justify-content: flex-end; }
+  .row.split { justify-content: space-between; }
+
+  .note {
+    border: 1px solid var(--glass-line); border-radius: 18px; padding: 14px 16px;
+    background: var(--luma);
+  }
+  .note .who { font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--glow); margin-bottom: 4px; }
+  .note blockquote { margin: 0; font-family: var(--display); font-size: 21px; line-height: 1.3; font-style: italic; }
+
+  /* breathing orb */
+  .orb-wrap { display: grid; place-items: center; height: 190px; }
+  .orb {
+    width: 70px; height: 70px; border-radius: 50%;
+    background: radial-gradient(circle, #fff3cf 0%, var(--glow) 40%, rgba(255, 210, 122, 0) 72%);
+    box-shadow: 0 0 60px rgba(255, 210, 122, .5);
+    transform: scale(1);
+    transition: transform 4s ease-in-out;
+  }
+  .breath-word { font-family: var(--display); font-size: 30px; text-align: center; min-height: 40px; }
+
+  /* weight check-in */
+  .weights { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+  .weights button {
+    border: 1px solid var(--glass-line); background: var(--chip); border-radius: 16px;
+    padding: 12px 2px 10px; display: flex; flex-direction: column; align-items: center; gap: 8px;
+    font-size: 12px; color: var(--haze); min-width: 0;
+  }
+  .weights i { display: block; border-radius: 50%; background: var(--haze); opacity: .8; }
+  .weights button[aria-pressed="true"] { border-color: var(--glow); color: var(--mist); background: rgba(255, 210, 122, .12); }
+  .weights button[aria-pressed="true"] i { background: var(--glow); }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chips button {
+    border: 1px solid var(--glass-line); background: var(--chip); border-radius: 999px;
+    padding: 8px 14px; font-size: 14px; color: var(--mist);
+  }
+  .chips button[aria-pressed="true"] { border-color: var(--glow); background: rgba(255, 210, 122, .14); }
+
+  /* conversation */
+  .talk { display: flex; flex-direction: column; gap: 10px; overflow-y: auto; min-height: 120px; flex: 1; padding-right: 2px; overscroll-behavior: contain; }
+  .msg { max-width: 88%; padding: 10px 14px; border-radius: 18px; white-space: pre-wrap; overflow-wrap: anywhere; animation: rise .35s ease both; }
+  .msg.luma { background: var(--luma); border: 1px solid rgba(255, 210, 122, .18); align-self: flex-start; border-bottom-left-radius: 6px; }
+  .msg.me { background: var(--me); align-self: flex-end; border-bottom-right-radius: 6px; }
+  .msg.wait { color: var(--haze); font-style: italic; }
+  .dots::after { content: ""; animation: dots 1.4s steps(4) infinite; }
+  @keyframes dots { 0% { content: ""; } 25% { content: "."; } 50% { content: ".."; } 75% { content: "..."; } }
+  .composer { display: flex; gap: 8px; align-items: flex-end; }
+  textarea, input[type="text"] {
+    flex: 1; min-width: 0; font: inherit; color: var(--mist);
+    background: rgba(0, 0, 0, .25); border: 1px solid var(--glass-line); border-radius: 18px;
+    padding: 12px 14px; resize: none;
+  }
+  textarea { max-height: 120px; }
+  ::placeholder { color: var(--haze); opacity: .8; }
+  .send { flex: none; width: 48px; height: 48px; padding: 0; display: grid; place-items: center; }
+  .send svg { width: 20px; height: 20px; }
+  .tiny { font-size: 12px; color: var(--haze); }
+
+  .stats { display: flex; gap: 20px; flex-wrap: wrap; }
+  .stats div { display: flex; flex-direction: column; }
+  .stats b { font-family: var(--display); font-size: 30px; font-weight: 400; color: var(--glow); line-height: 1; font-variant-numeric: tabular-nums; }
+  .stats span { font-size: 13px; color: var(--haze); }
+  .progress { height: 4px; border-radius: 4px; background: var(--chip); overflow: hidden; }
+  .progress i { display: block; height: 100%; background: linear-gradient(90deg, var(--glow-deep), var(--glow)); border-radius: 4px; transition: width 1s ease; }
+  .steps { display: flex; gap: 6px; }
+  .steps i { flex: 1; height: 3px; border-radius: 3px; background: var(--chip); }
+  .steps i.on { background: var(--glow); }
+
+  @media (max-height: 640px) {
+    h1 { font-size: 32px; } h2 { font-size: 25px; }
+    .orb-wrap { height: 140px; }
+    .panel { padding: 18px 16px 16px; gap: 11px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
+</style>
+
+<canvas id="sky" aria-hidden="true"></canvas>
+
+<div class="top">
+  <span class="brand">Firefly</span>
+  <div class="row">
+    <span class="count" id="count"></span>
+    <button class="round" id="sound" aria-pressed="false">Rain: off</button>
+  </div>
+</div>
+
+<div class="stage"><section class="panel" id="panel" aria-live="polite"></section></div>
+
+<script>
+(() => {
+  // ================= state =================
+  const LS = "firefly-v1";
+  const MILESTONES = [
+    { at: 1, label: "your first firefly" },
+    { at: 3, label: "a light in the cabin window" },
+    { at: 7, label: "the old tree blossoms" },
+    { at: 14, label: "shooting stars" },
+    { at: 30, label: "the northern lights" },
+  ];
+  const WEIGHTS = [
+    { v: 1, label: "Light", size: 8 },
+    { v: 2, label: "Okay", size: 12 },
+    { v: 3, label: "Heavy", size: 16 },
+    { v: 4, label: "Very", size: 20 },
+    { v: 5, label: "Crushing", size: 25 },
+  ];
+  const WEIGHT_WORDS = ["", "light", "okay", "heavy", "very heavy", "crushing"];
+  const TAGS = ["Work", "Tiredness", "People", "Money", "Worry", "Health", "Boredom", "Nothing much"];
+
+  function blank() {
+    return { fireflies: 0, streak: 0, lastDate: null, memory: [], intention: null, history: [] };
+  }
+  let state = blank();
+  try {
+    const saved = JSON.parse(localStorage.getItem(LS));
+    if (saved && typeof saved === "object") state = Object.assign(blank(), saved);
+  } catch (e) {}
+
+  const dayKey = (d = new Date()) =>
+    d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+  const yesterday = () => { const d = new Date(); d.setDate(d.getDate() - 1); return dayKey(d); };
+  const doneTonight = () => state.lastDate === dayKey();
+
+  // Each person's evenings are kept privately in the artifact's store
+  // (falls back to this browser only when the store is unavailable).
+  let docRef = null, writing = Promise.resolve();
+  function persist() {
+    try { localStorage.setItem(LS, JSON.stringify(state)); } catch (e) {}
+    if (!docRef) return;
+    const body = JSON.parse(JSON.stringify(state));
+    writing = writing.then(() => docRef.set(body)).catch(() => {});
+  }
+  async function connectStore() {
+    if (!window.claude || !window.claude.use) return;
+    const [db, user] = await Promise.all([claude.use("db"), claude.use("user")]);
+    if (!db || !user) return;
+    const id = await user.id();
+    if (!id) return;
+    try {
+      const ref = db.doc("data/users/" + id + "/firefly");
+      const snap = await ref.get();
+      docRef = ref;
+      if (snap.exists) {
+        const remote = Object.assign(blank(), snap.data());
+        if ((remote.fireflies || 0) >= (state.fireflies || 0)) {
+          state = remote;
+          try { localStorage.setItem(LS, JSON.stringify(state)); } catch (e) {}
+          sky.setCount(state.fireflies);
+          renderCount();
+          if (screen === "home") show("home");
+        } else persist();
+      } else if (state.fireflies) persist();
+    } catch (e) { docRef = null; }
+  }
+
+  // ================= Luma (real AI) =================
+  let sample = null, aiOff = false;
+  const aiReady = (window.claude && window.claude.use) ? claude.use("sample").then((s) => { sample = s; return s; }) : Promise.resolve(null);
+
+  function rules(session) {
+    const mem = state.memory.length ? state.memory.map((m) => "- " + m).join("\n") : "- nothing yet, this may be one of your first evenings together";
+    const last = state.intention && state.intention.date !== dayKey()
+      ? `Last time they planned this small thing: "${state.intention.text}"` + (state.intention.done === true ? " (they did it)." : state.intention.done === false ? " (it didn't happen, and that's fine)." : ".")
+      : "";
+    return `You are Luma, a gentle companion inside Firefly, an app people open for a calm 5 to 10 minutes in the evening, usually after work. Many of them are tired, close to burnout, or have lost their passion for work.
+
+How you talk:
+- Warm, calm and unhurried, like a kind friend sitting on a porch at night. A little playful. Light humor only when it fits, never at their expense.
+- 1 to 3 short sentences. Plain text. No lists, no headings. At most one emoji, and only sometimes.
+- Reflect something specific they said, then ask at most one gentle question. Let them lead.
+- Don't lecture or give advice unless they ask. If you suggest something, make it tiny and concrete.
+- Never diagnose. If they mention wanting to die or hurt themselves, respond with care, encourage them to contact local emergency services or a crisis line now, and to reach someone they trust.
+
+Tonight they said the day felt ${WEIGHT_WORDS[session.weight] || "unknown"}${session.tags.length ? ", and what weighed on it was: " + session.tags.join(", ") : ""}.
+What you remember about them from earlier evenings:
+${mem}
+${last}`;
+  }
+
+  async function ask(input, opts = {}) {
+    await aiReady;
+    if (!sample || aiOff) throw { code: "not_granted" };
+    return sample(input, Object.assign({ modelTier: "quick" }, opts));
+  }
+  function aiFailure(e) {
+    const code = e && e.code;
+    if (["not_granted", "sampling_disabled", "not_declared", "capability_disabled", "capability_removed"].includes(code)) {
+      aiOff = true;
+      return "off";
+    }
+    if (code === "cancelled") return "cancelled";
+    if (code === "rate_limited") return "Luma needs a short rest. Try again in a minute.";
+    if (code === "session_expired") return "You've been signed out. Sign in again to keep talking.";
+    if (code === "refused") return "Let's try saying that a different way.";
+    return "Lost the thread for a second. Try sending that again.";
+  }
+
+  // ================= sound =================
+  let audio = null;
+  function startRain() {
+    try {
+      const ac = new (window.AudioContext || window.webkitAudioContext)();
+      const len = ac.sampleRate * 3, buf = ac.createBuffer(1, len, ac.sampleRate), ch = buf.getChannelData(0);
+      let last = 0;
+      for (let i = 0; i < len; i++) { const w = Math.random() * 2 - 1; last = (last + 0.02 * w) / 1.02; ch[i] = last * 3.2; }
+      const src = ac.createBufferSource(); src.buffer = buf; src.loop = true;
+      const lp = ac.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 1100;
+      const hp = ac.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 120;
+      const g = ac.createGain(); g.gain.value = 0;
+      src.connect(hp).connect(lp).connect(g).connect(ac.destination);
+      src.start();
+      g.gain.linearRampToValueAtTime(0.5, ac.currentTime + 2);
+      audio = { ac, g };
+    } catch (e) { audio = null; }
+  }
+  function chime() {
+    if (!audio) return;
+    const { ac } = audio;
+    [880, 1318.5, 1760].forEach((f, i) => {
+      const o = ac.createOscillator(), g = ac.createGain();
+      o.type = "sine"; o.frequency.value = f;
+      const t = ac.currentTime + i * 0.12;
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(0.08, t + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 2.4);
+      o.connect(g).connect(ac.destination); o.start(t); o.stop(t + 2.5);
+    });
+  }
+  const soundBtn = document.getElementById("sound");
+  soundBtn.addEventListener("click", () => {
+    if (!audio) { startRain(); soundBtn.textContent = "Rain: on"; soundBtn.setAttribute("aria-pressed", "true"); return; }
+    const on = audio.ac.state === "running";
+    if (on) { audio.ac.suspend(); soundBtn.textContent = "Rain: off"; soundBtn.setAttribute("aria-pressed", "false"); }
+    else { audio.ac.resume(); soundBtn.textContent = "Rain: on"; soundBtn.setAttribute("aria-pressed", "true"); }
+  });
+
+  // ================= the sky =================
+  const sky = (() => {
+    const cv = document.getElementById("sky"), cx = cv.getContext("2d");
+    const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    let W = 0, H = 0, F = 0, floorTarget = 0, count = 0, flies = [], lanterns = [], newcomer = null, shooting = null, lastShoot = 0;
+    const rnd = (a, b) => a + Math.random() * (b - a);
+    const stars = Array.from({ length: 170 }, () => ({ x: Math.random(), y: Math.random() * 0.62, r: rnd(0.4, 1.5), p: rnd(0, 6.3), s: rnd(0.5, 2) }));
+    const blossoms = Array.from({ length: 34 }, () => ({ a: rnd(0, 6.3), d: Math.sqrt(Math.random()), r: rnd(1.4, 2.8) }));
+    function fit() {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      W = innerWidth; H = innerHeight;
+      cv.width = W * dpr; cv.height = H * dpr;
+      cx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      if (!F) F = floorTarget || H * 0.8;
+    }
+    // The land sits just above the panel, so the meadow is never hidden behind it.
+    function setFloor(y) {
+      floorTarget = Math.max(H * 0.34, Math.min(H * 0.86, y));
+      if (!F || still) F = floorTarget;
+    }
+    const farY = (x) => F - 46 + Math.sin(x / W * 5.2 + 1) * 22 + Math.sin(x / W * 13) * 7;
+    const nearY = (x) => F + 6 + Math.sin(x / W * 3.4 + 2.2) * 16 + Math.sin(x / W * 9.1) * 6;
+    function makeFly() {
+      return { x: rnd(0.05, 0.95) * W, y: rnd(0.5, 0.97) * F, vx: rnd(-0.2, 0.2), vy: rnd(-0.15, 0.15), p: rnd(0, 6.3), sp: rnd(0.8, 1.8) };
+    }
+    function setCount(n) {
+      count = n;
+      const want = Math.min(n, 90);
+      while (flies.length < want) flies.push(makeFly());
+      flies.length = want;
+    }
+    function glow(x, y, r, a, color = "255,214,130") {
+      const g = cx.createRadialGradient(x, y, 0, x, y, r);
+      g.addColorStop(0, `rgba(255,250,225,${a})`);
+      g.addColorStop(0.25, `rgba(${color},${a * 0.8})`);
+      g.addColorStop(1, `rgba(${color},0)`);
+      cx.fillStyle = g;
+      cx.beginPath(); cx.arc(x, y, r, 0, 6.3); cx.fill();
+    }
+    function draw(t) {
+      const s = t / 1000;
+      if (Math.abs(F - floorTarget) > 0.5) {
+        const next = F + (floorTarget - F) * 0.06;
+        for (const f of flies) f.y *= next / F;
+        F = next;
+      }
+      // sky
+      const g = cx.createLinearGradient(0, 0, 0, H);
+      g.addColorStop(0, "#070822"); g.addColorStop(0.55, "#1a1747"); g.addColorStop(0.78, "#3a2559"); g.addColorStop(1, "#0b0d2a");
+      cx.fillStyle = g; cx.fillRect(0, 0, W, H);
+      // aurora
+      if (count >= 30) {
+        for (let b = 0; b < 3; b++) {
+          cx.beginPath();
+          for (let x = 0; x <= W; x += 12) {
+            const y = H * (0.12 + b * 0.05) + Math.sin(x / W * 4 + s * 0.25 + b) * H * 0.04;
+            x === 0 ? cx.moveTo(x, y) : cx.lineTo(x, y);
+          }
+          cx.strokeStyle = b === 1 ? "rgba(120,240,200,.10)" : "rgba(110,200,255,.08)";
+          cx.lineWidth = 40 + b * 18; cx.stroke();
+        }
+      }
+      // stars
+      for (const st of stars) {
+        const a = 0.35 + 0.45 * Math.sin(s * st.s + st.p) ** 2;
+        cx.fillStyle = `rgba(236,235,248,${a})`;
+        cx.beginPath(); cx.arc(st.x * W, st.y * H, st.r, 0, 6.3); cx.fill();
+      }
+      // moon
+      const mx = W * 0.8, my = H * 0.17;
+      glow(mx, my, 110, 0.18, "200,200,255");
+      cx.fillStyle = "#f4efd8"; cx.beginPath(); cx.arc(mx, my, 24, 0, 6.3); cx.fill();
+      cx.fillStyle = "rgba(11,13,42,.9)"; cx.beginPath(); cx.arc(mx + 9, my - 5, 21, 0, 6.3); cx.fill();
+      // shooting stars
+      if (count >= 14 && !still) {
+        if (!shooting && s - lastShoot > 9) { shooting = { x: rnd(0.1, 0.6) * W, y: rnd(0.05, 0.25) * H, t: 0 }; lastShoot = s; }
+        if (shooting) {
+          shooting.t += 0.016;
+          const k = shooting.t, x = shooting.x + k * 520, y = shooting.y + k * 210, a = Math.max(0, 1 - k * 1.4);
+          const sg = cx.createLinearGradient(x - 90, y - 36, x, y);
+          sg.addColorStop(0, "rgba(255,255,255,0)"); sg.addColorStop(1, `rgba(255,255,255,${a})`);
+          cx.strokeStyle = sg; cx.lineWidth = 2; cx.beginPath(); cx.moveTo(x - 90, y - 36); cx.lineTo(x, y); cx.stroke();
+          if (a <= 0) shooting = null;
+        }
+      }
+      // far hill
+      cx.fillStyle = "#1b1846"; cx.beginPath(); cx.moveTo(0, H);
+      for (let x = 0; x <= W; x += 8) cx.lineTo(x, farY(x));
+      cx.lineTo(W, H); cx.fill();
+      // tree
+      const tx = W * 0.22, ty = nearY(tx);
+      cx.fillStyle = "#0a0a20";
+      cx.fillRect(tx - 4, ty - 64, 8, 66);
+      cx.beginPath(); cx.arc(tx, ty - 80, 36, 0, 6.3); cx.arc(tx - 26, ty - 64, 24, 0, 6.3); cx.arc(tx + 26, ty - 66, 26, 0, 6.3); cx.fill();
+      if (count >= 7) {
+        for (const b of blossoms) {
+          const bx = tx + Math.cos(b.a) * b.d * 46, by = ty - 76 + Math.sin(b.a) * b.d * 30;
+          cx.fillStyle = `rgba(255,180,205,${0.55 + 0.25 * Math.sin(s + b.a)})`;
+          cx.beginPath(); cx.arc(bx, by, b.r, 0, 6.3); cx.fill();
+        }
+      }
+      // near hill
+      cx.fillStyle = "#0a0a20"; cx.beginPath(); cx.moveTo(0, H);
+      for (let x = 0; x <= W; x += 8) cx.lineTo(x, nearY(x));
+      cx.lineTo(W, H); cx.fill();
+      // cabin
+      const hx = W * 0.7, hy = nearY(hx) + 4;
+      cx.fillStyle = "#0a0a20";
+      cx.fillRect(hx - 26, hy - 34, 52, 36);
+      cx.beginPath(); cx.moveTo(hx - 34, hy - 32); cx.lineTo(hx, hy - 58); cx.lineTo(hx + 34, hy - 32); cx.fill();
+      cx.fillRect(hx + 12, hy - 58, 7, 18);
+      if (count >= 3) {
+        glow(hx - 6, hy - 18, 40, 0.35);
+        cx.fillStyle = "#ffcf73"; cx.fillRect(hx - 13, hy - 24, 14, 12);
+        cx.fillStyle = "#0a0a20"; cx.fillRect(hx - 6.5, hy - 24, 1.5, 12); cx.fillRect(hx - 13, hy - 18.5, 14, 1.5);
+      } else {
+        cx.fillStyle = "#15153a"; cx.fillRect(hx - 13, hy - 24, 14, 12);
+      }
+      // fireflies
+      for (const f of flies) {
+        if (!still) {
+          f.vx += rnd(-0.03, 0.03); f.vy += rnd(-0.03, 0.03);
+          f.vx = Math.max(-0.45, Math.min(0.45, f.vx)); f.vy = Math.max(-0.35, Math.min(0.35, f.vy));
+          f.x += f.vx; f.y += f.vy;
+          if (f.x < 10 || f.x > W - 10) f.vx *= -1;
+          if (f.y < F * 0.45 && f.vy < 0) f.vy *= -1;
+          if (f.y > F + 4 && f.vy > 0) f.vy *= -1;
+        }
+        const a = 0.25 + 0.75 * Math.max(0, Math.sin(s * f.sp + f.p));
+        glow(f.x, f.y, 11, a * 0.85);
+      }
+      // tonight's firefly rising into the meadow
+      if (newcomer) {
+        newcomer.k = Math.min(1, newcomer.k + 0.006);
+        const e = 1 - (1 - newcomer.k) ** 3;
+        const x = newcomer.x0 + (newcomer.x1 - newcomer.x0) * e + Math.sin(newcomer.k * 12) * 18 * (1 - e);
+        const y = newcomer.y0 + (newcomer.y1 - newcomer.y0) * e;
+        glow(x, y, 34 - 18 * e, 1);
+        if (newcomer.k >= 1) {
+          const f = makeFly(); f.x = x; f.y = y; flies.push(f);
+          newcomer = null;
+        }
+      }
+      // released worries
+      for (const l of lanterns) {
+        l.age += 0.016;
+        l.y -= 0.55; l.x += Math.sin(l.age * 1.3 + l.p) * 0.35;
+        const a = Math.max(0, Math.min(1, l.age * 1.5) * (1 - l.age / 9));
+        glow(l.x, l.y, 46, a * 0.55, "255,170,90");
+        cx.fillStyle = `rgba(255,205,140,${a * 0.9})`;
+        cx.beginPath(); cx.roundRect ? cx.roundRect(l.x - 9, l.y - 12, 18, 22, 6) : cx.rect(l.x - 9, l.y - 12, 18, 22); cx.fill();
+        cx.fillStyle = `rgba(236,235,248,${a * 0.85})`;
+        cx.font = "italic 15px 'Instrument Serif', Georgia, serif"; cx.textAlign = "center";
+        cx.fillText(l.text, l.x, l.y + 34);
+      }
+      lanterns = lanterns.filter((l) => l.age < 9);
+    }
+    function loop(t) { draw(t); if (!still) requestAnimationFrame(loop); }
+    fit();
+    addEventListener("resize", () => { fit(); if (still) draw(0); });
+    requestAnimationFrame(loop);
+    return {
+      setCount,
+      setFloor,
+      release(text) {
+        const short = text.length > 34 ? text.slice(0, 32) + "…" : text;
+        lanterns.push({ x: W * rnd(0.3, 0.7), y: F - 10, text: short, age: 0, p: rnd(0, 6) });
+        if (still) draw(0);
+      },
+      lightOne() {
+        newcomer = { x0: W / 2, y0: F + 30, x1: rnd(0.25, 0.75) * W, y1: rnd(0.55, 0.9) * F, k: 0 };
+        count++;
+        if (still) { setCount(count); draw(0); }
+      },
+    };
+  })();
+  sky.setCount(state.fireflies);
+
+  // ================= screens =================
+  const panel = document.getElementById("panel");
+  let screen = "home";
+  let session = null;
+  const el = (html) => { panel.innerHTML = html; panel.style.animation = "none"; void panel.offsetWidth; panel.style.animation = ""; };
+  const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const $ = (sel) => panel.querySelector(sel);
+  const stepBar = (n) => `<div class="steps" aria-label="Step ${n} of 5">${[1, 2, 3, 4, 5].map((i) => `<i class="${i <= n ? "on" : ""}"></i>`).join("")}</div>`;
+
+  function renderCount() {
+    document.getElementById("count").textContent = state.fireflies ? `${state.fireflies} firefl${state.fireflies === 1 ? "y" : "ies"}` : "";
+  }
+  function nextMilestone() { return MILESTONES.find((m) => m.at > state.fireflies); }
+  function prevMilestoneAt() { const done = MILESTONES.filter((m) => m.at <= state.fireflies); return done.length ? done[done.length - 1].at : 0; }
+
+  function show(name) {
+    screen = name;
+    ({ home, breathe, checkin, talk, release, tomorrow, close })[name]();
+    syncFloor();
+  }
+  function syncFloor() { sky.setFloor(panel.getBoundingClientRect().top - 8); }
+  new ResizeObserver(syncFloor).observe(panel);
+  addEventListener("resize", syncFloor);
+
+  // ---------- home ----------
+  function home() {
+    const h = new Date().getHours();
+    const part = h < 5 ? "Late night" : h < 12 ? "Morning" : h < 17 ? "Afternoon" : "Evening";
+    const weekday = new Date().toLocaleDateString(undefined, { weekday: "long" });
+    const next = nextMilestone();
+    const from = prevMilestoneAt();
+    const pct = next ? Math.round(((state.fireflies - from) / (next.at - from)) * 100) : 100;
+    const pendingIntention = state.intention && state.intention.date !== dayKey() && state.intention.done == null;
+    const first = !state.fireflies;
+    const greeting = first ? "Hello. <em>Breathe out.</em>" : doneTonight() ? "Tonight's light <em>is lit.</em>" : `Welcome back. <em>Sit a while.</em>`;
+    const lead = first
+      ? "Seven quiet minutes each evening. Talk it out with Luma, let a worry go, and light a firefly over the meadow. Come back each night and the hill slowly comes alive."
+      : doneTonight()
+        ? "You've already lit tonight's firefly. Stay and listen to the rain, or talk to Luma again."
+        : "The meadow kept your fireflies safe. Ready for tonight's?";
+    el(`
+      <p class="eyebrow">${esc(weekday)} · ${part}</p>
+      <h1>${greeting}</h1>
+      <p class="soft">${lead}</p>
+      ${pendingIntention ? `
+        <div class="note" id="intent">
+          <div class="who">Last time you planned</div>
+          <blockquote>${esc(state.intention.text)}</blockquote>
+          <div class="row" style="margin-top:10px">
+            <button class="ghost" data-did="1">It happened</button>
+            <button class="text-btn" data-did="0">Not yet, that's okay</button>
+          </div>
+        </div>` : ""}
+      ${state.fireflies ? `
+        <div class="stats">
+          <div><b>${state.fireflies}</b><span>firefl${state.fireflies === 1 ? "y" : "ies"} lit</span></div>
+          <div><b>${state.streak}</b><span>evening${state.streak === 1 ? "" : "s"} in a row</span></div>
+        </div>` : ""}
+      ${next ? `<div><div class="progress"><i style="width:${pct}%"></i></div><p class="tiny" style="margin-top:6px">${next.at - state.fireflies} more evening${next.at - state.fireflies === 1 ? "" : "s"} until ${next.label}</p></div>` : `<p class="tiny">The whole hill is awake. Every firefly here is an evening you showed up for yourself.</p>`}
+      <div class="row">
+        ${doneTonight()
+          ? `<button class="primary" id="go-talk">Talk to Luma</button>`
+          : `<button class="primary" id="begin">${first ? "Light your first firefly" : "Begin tonight · 7 min"}</button>`}
+      </div>
+    `);
+    const begin = $("#begin");
+    if (begin) begin.onclick = () => { session = { weight: 0, tags: [], turns: [], worries: [], intention: "" }; show("breathe"); };
+    const talkBtn = $("#go-talk");
+    if (talkBtn) talkBtn.onclick = () => { session = session || { weight: 0, tags: [], turns: [], worries: [], intention: "", again: true }; session.again = true; show("talk"); };
+    panel.querySelectorAll("[data-did]").forEach((b) => b.onclick = () => {
+      state.intention.done = b.dataset.did === "1";
+      persist();
+      $("#intent").innerHTML = state.intention.done
+        ? `<div class="who">Nicely done</div><blockquote>Small things done tired count double.</blockquote>`
+        : `<div class="who">That's okay</div><blockquote>Tomorrow is a fresh page.</blockquote>`;
+    });
+  }
+
+  // ---------- 1. breathe ----------
+  let breathTimer = null;
+  function breathe() {
+    el(`
+      ${stepBar(1)}
+      <p class="eyebrow">Arrive</p>
+      <h2>Leave the day at the door.</h2>
+      <div class="orb-wrap"><div class="orb" id="orb"></div></div>
+      <p class="breath-word" id="word">Breathe in</p>
+      <div class="row split">
+        <button class="text-btn" id="skip">Skip</button>
+        <button class="ghost" id="next" hidden>Continue</button>
+      </div>
+    `);
+    const orb = $("#orb"), word = $("#word");
+    const phases = [["Breathe in", 4000, 2.3], ["Hold", 2000, 2.3], ["Breathe out", 6000, 1]];
+    let i = 0, rounds = 0;
+    clearTimeout(breathTimer);
+    const step = () => {
+      if (screen !== "breathe") return;
+      const [w, ms, scale] = phases[i % 3];
+      word.textContent = w;
+      orb.style.transitionDuration = ms + "ms";
+      orb.style.transform = `scale(${scale})`;
+      i++;
+      if (i % 3 === 0) rounds++;
+      if (rounds >= 3) { word.textContent = "Good. You're here now."; $("#next").hidden = false; return; }
+      breathTimer = setTimeout(step, ms);
+    };
+    breathTimer = setTimeout(step, 400);
+    $("#skip").onclick = $("#next").onclick = () => { clearTimeout(breathTimer); show("checkin"); };
+  }
+
+  // ---------- 2. check in ----------
+  function checkin() {
+    el(`
+      ${stepBar(2)}
+      <p class="eyebrow">Check in</p>
+      <h2>How heavy did today feel?</h2>
+      <div class="weights" role="group" aria-label="How heavy today felt">
+        ${WEIGHTS.map((w) => `<button data-w="${w.v}" aria-pressed="${session.weight === w.v}"><i style="width:${w.size}px;height:${w.size}px"></i>${w.label}</button>`).join("")}
+      </div>
+      <p class="soft">What weighed on it? Pick any.</p>
+      <div class="chips" role="group" aria-label="What weighed on today">
+        ${TAGS.map((t) => `<button data-t="${t}" aria-pressed="${session.tags.includes(t)}">${t}</button>`).join("")}
+      </div>
+      <div class="row end"><button class="primary" id="next" ${session.weight ? "" : "disabled"}>Talk it out</button></div>
+    `);
+    panel.querySelectorAll("[data-w]").forEach((b) => b.onclick = () => {
+      session.weight = Number(b.dataset.w);
+      panel.querySelectorAll("[data-w]").forEach((x) => x.setAttribute("aria-pressed", x === b));
+      $("#next").disabled = false;
+    });
+    panel.querySelectorAll("[data-t]").forEach((b) => b.onclick = () => {
+      const t = b.dataset.t, on = session.tags.includes(t);
+      session.tags = on ? session.tags.filter((x) => x !== t) : session.tags.concat(t);
+      b.setAttribute("aria-pressed", !on);
+    });
+    $("#next").onclick = () => show("talk");
+  }
+
+  // ---------- 3. talk with Luma ----------
+  let ctl = null;
+  function talk() {
+    el(`
+      ${session.again ? "" : stepBar(3)}
+      <p class="eyebrow">Talk it out</p>
+      <div class="talk" id="talk"></div>
+      <form class="composer" id="form">
+        <textarea id="say" rows="1" placeholder="Say anything. Luma's listening." maxlength="1200" aria-label="Your message"></textarea>
+        <button class="primary send" aria-label="Send"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+      </form>
+      <div class="row split">
+        <span class="tiny" id="hint">Luma is an AI. In a crisis, call your local emergency number.</span>
+        <button class="ghost" id="next">${session.again ? "Back to the meadow" : "I'm ready to let go"}</button>
+      </div>
+    `);
+    const box = $("#talk"), say = $("#say");
+    for (const t of session.turns) addMsg(t.role === "user" ? "me" : "luma", t.content);
+    say.addEventListener("input", () => { say.style.height = "auto"; say.style.height = Math.min(120, say.scrollHeight) + "px"; });
+    say.addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); $("#form").requestSubmit(); } });
+    $("#form").onsubmit = (e) => {
+      e.preventDefault();
+      const text = say.value.trim();
+      if (!text || ctl) return;
+      say.value = ""; say.style.height = "auto";
+      addMsg("me", text);
+      session.turns.push({ role: "user", content: text });
+      lumaReply();
+    };
+    $("#next").onclick = () => { if (ctl) ctl.abort(); show(session.again ? "home" : "release"); };
+    if (!session.turns.length) lumaOpen();
+
+    function addMsg(who, text) {
+      const m = document.createElement("div");
+      m.className = "msg " + who;
+      m.textContent = text;
+      box.appendChild(m);
+      box.scrollTop = box.scrollHeight;
+      return m;
+    }
+    function waiting() {
+      const m = addMsg("luma", "");
+      m.classList.add("wait");
+      m.innerHTML = '<span class="dots">Luma is thinking</span>';
+      return m;
+    }
+    function fallback() {
+      addMsg("luma", "I can't talk in this view, but writing it out still helps. Type whatever's on your mind. It stays here, just for you.");
+      $("#hint").textContent = "Luma's voice needs Claude access in this view.";
+    }
+    async function stream(input, bubble) {
+      ctl = new AbortController();
+      try {
+        const { text } = await ask(input, {
+          cache: false, signal: ctl.signal,
+          onText: ({ text }) => { bubble.classList.remove("wait"); bubble.textContent = text; box.scrollTop = box.scrollHeight; },
+        });
+        return text;
+      } catch (e) {
+        const r = aiFailure(e);
+        if (r === "off") { bubble.remove(); fallback(); }
+        else if (r === "cancelled") { if (!e.text) bubble.remove(); }
+        else { bubble.classList.add("wait"); bubble.textContent = (e.text ? e.text + "\n\n" : "") + r; }
+        return null;
+      } finally { ctl = null; }
+    }
+    async function lumaOpen() {
+      const bubble = waiting();
+      const opener = session.again
+        ? "They came back to talk again tonight after finishing their evening ritual. Write a short, warm opening line that invites them to say what's on their mind."
+        : "Write your opening line for tonight. Greet them warmly, acknowledge how the day felt in your own words, and ask one gentle question about it. If you remember something from earlier evenings that fits, you may mention it lightly.";
+      const text = await stream([{ role: "user", content: rules(session) + "\n\n" + opener }], bubble);
+      if (text) session.turns.push({ role: "assistant", content: text });
+    }
+    async function lumaReply() {
+      if (aiOff) { addMsg("luma", "Saved. Keep going if there's more. 🌙"); return; }
+      const bubble = waiting();
+      const recent = session.turns.slice(-16);
+      if (recent[0] && recent[0].role === "assistant") recent.unshift({ role: "user", content: "(we began talking)" });
+      const input = [{ role: "user", content: rules(session) + "\n\nThe conversation so far follows. Reply as Luma." }].concat(recent);
+      const text = await stream(input, bubble);
+      if (text) session.turns.push({ role: "assistant", content: text });
+    }
+  }
+
+  // ---------- 4. let a worry go ----------
+  function release() {
+    el(`
+      ${stepBar(4)}
+      <p class="eyebrow">Let go</p>
+      <h2>Put a worry in a lantern.</h2>
+      <p class="soft">Write it down, then release it. It will float away over the hill. You can pick it back up tomorrow if you really want to.</p>
+      <form class="composer" id="form">
+        <input type="text" id="worry" maxlength="120" placeholder="The thing that's still circling…" aria-label="A worry to release" autocomplete="off">
+        <button class="ghost">Release</button>
+      </form>
+      <p class="tiny" id="released"></p>
+      <div class="row split">
+        <button class="text-btn" id="skip">Nothing to let go tonight</button>
+        <button class="primary" id="next" ${session.worries.length ? "" : "hidden"}>Continue</button>
+      </div>
+    `);
+    const sync = () => {
+      $("#released").textContent = session.worries.length ? `${session.worries.length} lantern${session.worries.length > 1 ? "s" : ""} released. Add another, or continue.` : "";
+      $("#next").hidden = !session.worries.length;
+    };
+    sync();
+    $("#form").onsubmit = (e) => {
+      e.preventDefault();
+      const w = $("#worry").value.trim();
+      if (!w) return;
+      $("#worry").value = "";
+      session.worries.push(w);
+      sky.release(w);
+      sync();
+    };
+    $("#skip").onclick = $("#next").onclick = () => show("tomorrow");
+  }
+
+  // ---------- 5. one small thing for tomorrow ----------
+  function tomorrow() {
+    el(`
+      ${stepBar(5)}
+      <p class="eyebrow">Tomorrow</p>
+      <h2>One small, kind thing <em>for tomorrow.</em></h2>
+      <p class="soft">Tiny on purpose. Something you could do even on a tired day.</p>
+      <input type="text" id="plan" maxlength="120" placeholder="Take a real lunch break, outside" aria-label="One small thing for tomorrow" autocomplete="off" value="${esc(session.intention)}">
+      <div class="row split">
+        <button class="text-btn" id="idea">Ask Luma for an idea</button>
+        <button class="primary" id="next">Light my firefly</button>
+      </div>
+    `);
+    const plan = $("#plan"), idea = $("#idea");
+    if (aiOff) idea.hidden = true;
+    idea.onclick = async () => {
+      idea.disabled = true; idea.textContent = "Luma is thinking…";
+      const talked = session.turns.slice(-8).map((t) => (t.role === "user" ? "Them: " : "Luma: ") + t.content).join("\n");
+      try {
+        const { text } = await ask(
+          rules(session) + "\n\nTonight's conversation:\n" + (talked || "(they didn't talk much)") +
+          "\n\nSuggest ONE tiny, kind, concrete thing they could do tomorrow, fitted to what they shared. Under 12 words. Reply with only the suggestion, no quotes.",
+          { cache: false });
+        plan.value = text.trim().replace(/^["“]|["”]$/g, "");
+        idea.textContent = "Another idea";
+      } catch (e) {
+        const r = aiFailure(e);
+        idea.textContent = r === "off" ? "" : "Try again";
+        if (r === "off") idea.hidden = true;
+      } finally { idea.disabled = false; }
+    };
+    $("#next").onclick = () => { session.intention = plan.value.trim(); show("close"); };
+  }
+
+  // ---------- 6. light the firefly ----------
+  function close() {
+    const already = doneTonight();
+    if (!already) {
+      state.streak = state.lastDate === yesterday() ? state.streak + 1 : 1;
+      state.fireflies += 1;
+      state.lastDate = dayKey();
+      sky.lightOne();
+      chime();
+    }
+    if (session.intention) state.intention = { text: session.intention, date: dayKey(), done: null };
+    state.history = state.history.concat({ date: dayKey(), weight: session.weight, tags: session.tags }).slice(-60);
+    persist();
+    renderCount();
+    const unlocked = MILESTONES.find((m) => m.at === state.fireflies && m.at > 1);
+    el(`
+      <p class="eyebrow">${already ? "Tonight" : "Firefly no. " + state.fireflies}</p>
+      <h2>${already ? "Still glowing." : "There it goes. <em>Goodnight.</em>"}</h2>
+      ${unlocked ? `<p class="soft">Something new on the hill: ${unlocked.label}.</p>` : ""}
+      <div class="note"><div class="who">Luma</div><blockquote id="goodnight"><span class="dots">Writing you a note</span></blockquote></div>
+      ${state.streak > 1 ? `<p class="tiny">${state.streak} evenings in a row. The meadow notices.</p>` : ""}
+      <div class="row end"><button class="primary" id="done">Back to the meadow</button></div>
+    `);
+    $("#done").onclick = () => show("home");
+    const note = $("#goodnight");
+    const talked = session.turns.slice(-10).map((t) => (t.role === "user" ? "Them: " : "Luma: ") + t.content).join("\n");
+    const fallbackNote = "You showed up for yourself tonight. That's the whole job. Sleep well.";
+    ask(rules(session) + "\n\nTonight's conversation:\n" + (talked || "(they kept it quiet tonight)") +
+        (session.worries.length ? `\nThey released ${session.worries.length} worry lantern(s).` : "") +
+        (session.intention ? `\nTomorrow's small thing: ${session.intention}` : "") +
+        "\n\nWrite a goodnight note to them: 1 or 2 short sentences, warm and specific to tonight. Plain text only.",
+        { cache: false, onText: ({ text }) => { note.textContent = text; } })
+      .then(({ text }) => { note.textContent = text; })
+      .catch(() => { note.textContent = fallbackNote; });
+    remember();
+  }
+
+  // After each evening, Luma keeps a couple of short notes for next time.
+  async function remember() {
+    const said = session.turns.filter((t) => t.role === "user").map((t) => t.content).join("\n");
+    if (said.length < 20 || aiOff) return;
+    try {
+      const facts = await sample.json(
+        "Here is what a person shared tonight in a calm evening check-in app:\n\n" + said.slice(-4000) +
+        "\n\nAlready remembered:\n" + (state.memory.join("\n") || "(nothing)") +
+        "\n\nWrite up to 2 NEW short facts worth remembering for future evenings (their work, people in their life, what drains them, what they enjoy, what they hope for). Each under 15 words, third person. Skip anything already remembered. Reply with only a JSON array of strings; [] if nothing new.",
+        { modelTier: "quick", cache: false });
+      if (Array.isArray(facts) && facts.length) {
+        state.memory = state.memory.concat(facts.map(String).filter(Boolean)).slice(-14);
+        persist();
+      }
+    } catch (e) {}
+  }
+
+  // ================= start =================
+  renderCount();
+  show("home");
+  connectStore();
+})();
+</script>

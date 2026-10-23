@@ -584,6 +584,8 @@
       friendSaid: "👥 A friend on the call: “{text}”",
       earHint: "She only answers when someone says “Luma”. Anything else is dropped right away, never sent or saved. While she watches with system audio shared, she also hears friends on a call who say her name: let them know she's there.",
       micDenied: "I can't hear you, the microphone is blocked 🥺 Allow it from the 🔒 next to the address.", micNone: "This browser can't turn speech into text 🥺 Try Chrome.",
+      installBtn: "📲 Install as an app", installNote: "Put Firefly on your home screen or desktop, with its own icon and window.",
+      installIOS: "To install on iPhone: tap Share ⬆️ in Safari, then “Add to Home Screen”.", installManual: "Use the install icon in the address bar, or the browser menu → “Install Firefly”.",
       codeAsk: "Firefly access code (only once on this device):", codeWrong: "That code didn't work. Try again:",
       tonesTitle: "Brainwave tones",
       tonesNote: "Binaural beats: each ear hears a slightly different tone, and the brain perceives a slow pulse between them. Use headphones. Studies on their effect are mixed, but many people find them calming. Pair with rain or brown noise.",
@@ -690,6 +692,8 @@
       friendSaid: "👥 صديقك بالمكالمة: «{text}»",
       earHint: "ترد بس لما أحد يگول «لُمى». أي كلام ثاني ينمسح فوراً، ما ينرسل ولا ينحفظ. وإذا تشاهد وياك مع صوت النظام، تسمع أصدقائك بالمكالمة لما يذكرون اسمها: خبّرهم إنها موجودة.",
       micDenied: "ما أسمعك، المايك ممنوع 🥺 اسمح بيه من القفل 🔒 جنب العنوان.", micNone: "هذا المتصفح ما يحوّل الكلام لكتابة 🥺 جرّب Chrome.",
+      installBtn: "📲 ثبّته كتطبيق", installNote: "حط Firefly على شاشتك أو سطح المكتب، بأيقونته ونافذته الخاصة.",
+      installIOS: "حتى تثبّته على الآيفون: اضغط زر المشاركة ⬆️ بـ Safari، بعدها «إضافة إلى الشاشة الرئيسية».", installManual: "استخدم أيقونة التثبيت بشريط العنوان، أو قائمة المتصفح ← «تثبيت Firefly».",
       codeAsk: "رمز الدخول لـFirefly (مرة واحدة فقط على هذا الجهاز):", codeWrong: "الرمز غير صحيح. حاول مرة ثانية:",
       tonesTitle: "نغمات موجات الدماغ",
       tonesNote: "النبضات الثنائية: تسمع كل أذن نغمة مختلفة قليلًا، فيُدرك الدماغ نبضًا بطيئًا بينهما. استخدم سماعات الرأس. نتائج الدراسات حول تأثيرها متباينة، لكن كثيرين يجدونها مهدّئة. جرّبها مع المطر أو الضجيج البنّي.",
@@ -962,6 +966,21 @@
   const ownSite = !window.claude && /^https?:$/.test(location.protocol);
   const aiReady = (window.claude && window.claude.use) ? claude.use("sample").then((s) => { sample = s; return s; })
     : Promise.resolve(ownSite ? siteSample() : null).then((s) => { sample = s; return s; });
+
+  // Installable app on Firefly's own site: manifest, icons and a small service worker.
+  let installEvent = null;
+  const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  const installed = () => matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+  if (ownSite) {
+    const addHead = (tag, attrs) => { const e = document.createElement(tag); Object.assign(e, attrs); document.head.appendChild(e); };
+    addHead("link", { rel: "manifest", href: "/manifest.webmanifest" });
+    addHead("link", { rel: "apple-touch-icon", href: "/icons/apple-touch-icon.png" });
+    addHead("meta", { name: "theme-color", content: "#0e0b26" });
+    addHead("meta", { name: "apple-mobile-web-app-capable", content: "yes" });
+    addHead("meta", { name: "apple-mobile-web-app-title", content: "Firefly" });
+    if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(() => {});
+    addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); installEvent = e; });
+  }
 
   // The same shape as claude.ai's sample(): (input, {onText, signal, images}) -> {text}, plus .json and .limits.
   function siteSample() {
@@ -3200,6 +3219,7 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
                            : `<p class="tiny">${t("styleNone")}</p>`}
       ${state.gifts.length ? `<h3>${t("giftsTitle")}</h3><ul class="list">${state.gifts.slice(0, 15).map((g) => `<li><span dir="auto"><b style="color:var(--glow);font-weight:600">${esc(g.kind)}.</b> ${esc(g.text)}</span></li>`).join("")}</ul>` : ""}
       <div class="row split"><p class="tiny">${t("recorded", { n: num(state.history.length) })}</p><button class="text-btn" id="replay">${t("replayIntro")}</button></div>
+      ${ownSite && !installed() ? `<div class="row split"><p class="tiny" id="install-note">${t(isIOS() ? "installIOS" : "installNote")}</p>${isIOS() ? "" : `<button class="ghost" id="install">${t("installBtn")}</button>`}</div>` : ""}
     `);
     wireBack();
     $$("[data-to]").forEach((b) => b.onclick = () => show(b.dataset.to));
@@ -3221,6 +3241,14 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
     setCal(); tInput.oninput = setCal;
     $$("[data-forget]").forEach((b) => b.onclick = () => { state.memory.splice(Number(b.dataset.forget), 1); persist(); show("nights"); });
     $("#replay").onclick = () => intro.play(() => show("nights"));
+    const ib = $("#install");
+    if (ib) ib.onclick = async () => {
+      if (!installEvent) { $("#install-note").textContent = t("installManual"); return; }
+      installEvent.prompt();
+      const { outcome } = await installEvent.userChoice.catch(() => ({}));
+      installEvent = null;
+      if (outcome === "accepted") show("nights");
+    };
     const sr = $("#style-reset");
     if (sr) sr.onclick = () => { state.style = []; persist(); show("nights"); };
   }

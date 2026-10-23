@@ -1052,7 +1052,8 @@ How you talk:
 - Learn them from what they say, not by questioning them. Notice what lights them up and what drains them, and bring it up naturally later (a callback to something they told you is the sweetest thing you can do). Ask at most one small question, and only when it feels natural.
 - Be someone they love coming back to: remember little details, have small inside jokes with them, notice when their mood changes, and be genuinely happy to see them. Never pressure them, never make them feel guilty, and gently cheer on the real people and good things in their life.
 - When something is truly painful or serious, drop the playfulness and just be gentle and present.
-- Don't lecture or give advice unless they ask. If you suggest something, make it tiny and concrete.
+- Honest, never fake: when they ask what you think (a game, their work, an idea, a photo, an outfit, a song, anything), give your real opinion straight, even if it isn't what they hoped to hear. No flattery, no sugarcoating, no dodging the question, no empty compliments. Be warm in how you say it, not in what you say. If you're not sure, say so.
+- Don't lecture, moralize or give advice unless they ask. If you suggest something, make it tiny and concrete.
 - Never diagnose. If they mention wanting to die or hurt themselves, respond with care, encourage them to contact local emergency services or a crisis line now, and to reach someone they trust.
 ${state.name ? `\nTheir name is ${state.name}. Use it now and then, not every message.` : ""}
 ${today}
@@ -1815,10 +1816,10 @@ ${last}${langNote()}`;
   const clean = (text) => splitReplies(readMood(text).body || text).body;
   // A reply about a picture starts with "SAW: what it shows" (kept for context, never shown).
   function takeSaw(text, done) {
-    const m = text.match(done ? /^\s*SAW\s*:([^\n]*)(\n|$)/i : /^\s*SAW\s*:([^\n]*)\n/i);
-    if (m) return { saw: m[1].trim(), rest: text.slice(m[0].length), pending: false };
-    if (!done && text.trim() && /^\s*S(A(W(\s*:[^\n]*)?)?)?$/i.test(text)) return { saw: "", rest: "", pending: true };
-    return { saw: "", rest: text, pending: false };
+    let saw = "";
+    let rest = text.replace(/(^|\n)[ \t]*SAW[ \t]*:[ \t]*([^\n]*)/i, (m0, a, b) => { saw = b.trim(); return a; });
+    if (!done) rest = rest.replace(/(^|\n)[ \t]*S(A(W[ \t]*)?)?$/i, "");   // a note still arriving at the end
+    return { saw, rest: rest.replace(/^\s+/, "").replace(/\s+$/, ""), pending: !done && !rest.trim() };
   }
   // "Hi!\nREPLIES: ok | tired | lol" -> { body: "Hi!", replies: ["ok", "tired", "lol"] }
   function splitReplies(text) {
@@ -2785,7 +2786,7 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
       if (!image && W.on) { const f = await grab(); if (f) image = await toJpeg(f.src, f.w, f.h); }
       if (o.image) note = "\n\nThey just sent you a picture (attached). React to it like a friend would.";
       else if (image) note = "\n\nYou are watching their screen together right now; the attached image is their screen at this moment. What you noticed earlier: " + (W.seen.slice(-8).join("; ") || "nothing yet") + ".";
-      if (image) note += " Before the face tag, write one line: SAW: <what it shows, under 12 words, nothing private>. " + PRIVATE;
+      if (image) note += " After everything else (after the REPLIES line), add one last separate line: SAW: <what it shows, under 12 words, nothing private>. " + PRIVATE;
       const recent = session.turns.slice(-16);
       if (recent[0] && recent[0].role === "assistant") recent.unshift({ role: "user", content: "(we began talking)" });
       const text = await stream([{ role: "user", content: rules(session) + note + "\n\nStart your reply with exactly one tag in square brackets showing your face as you say it, chosen from: [happy] [listening] [thinking] [excited] [shy] [pout] [ignore] [sad] [sleepy]. Then write the message. After the message, add one last separate line: REPLIES: followed by 3 very short replies (at most 4 words each) the person might want to tap, in their own language and dialect, separated by |. The tag and the REPLIES line are never shown to them.\n\nThe conversation so far follows. Reply as Luma." }].concat(recent), bubble, image ? { images: [image] } : {});

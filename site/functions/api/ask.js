@@ -1,5 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { configured, sessionFrom, sameOrigin, json } from "../../lib/auth.js";
+import { configured, sessionFrom, sameOrigin, json, apiKey } from "../../lib/auth.js";
 
 // Luma's brain on Firefly's own site. Only signed-in devices may call it, the model is fixed on the
 // server, and every request is size-capped, so a stolen page or cookie can't run up a big bill.
@@ -12,6 +12,8 @@ export async function onRequestPost({ request, env }) {
   const who = await sessionFrom(request, env);
   if (!who) return json({ error: "signed_out" }, 401);
   if (Number(request.headers.get("content-length") || 0) > MAX_BODY) return json({ error: "too_large" }, 413);
+  const key = await apiKey(env);
+  if (!key) return json({ error: "not_configured" }, 503);
   if (!(await underDailyLimit(env, who.id))) return json({ error: "daily_limit" }, 429);
 
   let body;
@@ -38,7 +40,7 @@ export async function onRequestPost({ request, env }) {
   images.forEach((data) => lastTurn.unshift({ type: "image", source: { type: "base64", media_type: "image/jpeg", data } }));
 
   const model = MODELS.includes(env.MODEL) ? env.MODEL : "claude-haiku-5-5";
-  const client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
+  const client = new Anthropic({ apiKey: key });
   const params = { model, max_tokens: 1500, output_config: { effort: "low" }, messages };
   // Opus and Sonnet can hand a refused reply to another model instead of failing
   const stream = model === "claude-haiku-5-5"

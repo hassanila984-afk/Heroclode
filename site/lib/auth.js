@@ -22,7 +22,30 @@ export async function sameSecret(a, b) {
 }
 
 export function configured(env) {
-  return !!(env.ANTHROPIC_API_KEY && env.ACCESS_CODE && env.SESSION_SECRET && env.ACCESS_CODE.length >= 16 && env.SESSION_SECRET.length >= 32);
+  return !!(env.ACCESS_CODE && env.SESSION_SECRET && env.ACCESS_CODE.length >= 16 && env.SESSION_SECRET.length >= 32);
+}
+
+// The Anthropic key: a Cloudflare secret if one is set, otherwise the one saved through /setup.html,
+// kept in KV encrypted with a key derived from SESSION_SECRET.
+async function vaultKey(env) {
+  const raw = await crypto.subtle.digest("SHA-256", enc.encode("firefly-vault\u0000" + env.SESSION_SECRET));
+  return crypto.subtle.importKey("raw", raw, "AES-GCM", false, ["encrypt", "decrypt"]);
+}
+export async function saveApiKey(env, apiKey) {
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const ct = new Uint8Array(await crypto.subtle.encrypt({ name: "AES-GCM", iv }, await vaultKey(env), enc.encode(apiKey)));
+  const all = new Uint8Array(iv.length + ct.length); all.set(iv); all.set(ct, iv.length);
+  await env.FIREFLY_KV.put("vault:anthropic", btoa(String.fromCharCode(...all)));
+}
+export async function apiKey(env) {
+  if (env.ANTHROPIC_API_KEY) return env.ANTHROPIC_API_KEY;
+  const stored = env.FIREFLY_KV && (await env.FIREFLY_KV.get("vault:anthropic"));
+  if (!stored) return null;
+  try {
+    const all = Uint8Array.from(atob(stored), (c) => c.charCodeAt(0));
+    const pt = await crypto.subtle.decrypt({ name: "AES-GCM", iv: all.slice(0, 12) }, await vaultKey(env), all.slice(12));
+    return new TextDecoder().decode(pt);
+  } catch (e) { return null; }
 }
 
 export async function newSession(env) {

@@ -2261,7 +2261,12 @@ ${last}${langNote()}`;
       $("#bubble").hidden = !(window.documentPictureInPicture || document.pictureInPictureEnabled);
     }
     $("#mic").hidden = !SR;
-    if (free) { $("#ear").hidden = !SR; $("#ear").onclick = () => (EAR.on ? earStop() : earStart()); }
+    if (free) {
+      $("#ear").hidden = !SR;
+      $("#ear").onclick = () => (EAR.on ? earStop(true) : earStart(true));
+      // the open mic is remembered: it comes back on by itself next time
+      if (SR && earWanted()) setTimeout(() => { if (box.isConnected && !EAR.on) earStart(false); }, 600);
+    }
     $("#mic").onclick = () => listen();
 
     function toJpeg(src, w, h, max = 1280) {
@@ -2438,7 +2443,8 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
         form { width: 100%; display: flex; gap: 6px; }
         input { flex: 1; min-width: 0; font: inherit; color: #fbf7ff; background: rgba(0, 0, 0, .35); border: 1px solid rgba(255, 255, 255, .18); border-radius: 999px; padding: 9px 12px; }
         button { flex: none; width: 40px; height: 40px; border-radius: 50%; border: 0; background: #ffd27a; color: #07051a; font-size: 17px; cursor: pointer; }
-        button.mic { background: rgba(255, 255, 255, .12); }
+        button.mic, button.ear { background: rgba(255, 255, 255, .12); }
+        button.ear.on { background: #ffd27a; }
         button.mic.on { background: #ff5a7a; animation: pulse 1.1s ease-in-out infinite; }
         @keyframes bob { 50% { transform: translateY(-5px); } }
         @keyframes hop { 40% { transform: translateY(-14px) scale(1.06); } }
@@ -2446,10 +2452,11 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
         @keyframes pulse { 50% { box-shadow: 0 0 0 7px rgba(255, 90, 122, .3); } }
       </style>`;
       d.body.innerHTML = `<div class="av"><img alt=""></div><div class="st"></div><div class="say" dir="auto"></div>
-        <form><button type="button" class="mic" title="${t("micTitle")}" ${SR ? "" : "hidden"}>🎤</button><input dir="auto" placeholder="${t("bubblePh")}"><button aria-label="${t("send")}">➤</button></form>`;
+        <form><button type="button" class="ear" title="${t("earTitle")}" ${SR ? "" : "hidden"}>👂</button><button type="button" class="mic" title="${t("micTitle")}" ${SR ? "" : "hidden"}>🎤</button><input dir="auto" placeholder="${t("bubblePh")}"><button aria-label="${t("send")}">➤</button></form>`;
       const input = d.querySelector("input");
       d.querySelector("form").onsubmit = (e) => { e.preventDefault(); const v = input.value.trim(); if (!v || ctl) return; input.value = ""; send(v); bubbleSay("…"); };
       d.querySelector(".mic").onclick = () => listen();
+      d.querySelector(".ear").onclick = () => (EAR.on ? earStop(true) : earStart(true));
       win.addEventListener("pagehide", () => { clearInterval(BB.timer); BB.win = null; });
       BB.shown = ""; BB.face = "";
       if (!BB.text) { const last = [...session.turns].reverse().find((x) => x.role === "assistant"); BB.text = last ? clean(last.content) : ""; }
@@ -2471,6 +2478,7 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
         const sy = d.querySelector(".say"); sy.textContent = BB.text; sy.classList.remove("in"); void sy.offsetWidth; sy.classList.add("in");
       }
       d.querySelector(".mic").classList.toggle("on", !!rec);
+      d.querySelector(".ear").classList.toggle("on", EAR.on);
       const st = d.querySelector(".st"); if (st) st.textContent = EAR.inCall ? "📞" : EAR.on ? "👂 " + t("stEar") : "";
     }
     function closeBubble() { if (BB.win) BB.win.close(); BB.win = null; clearInterval(BB.timer); }
@@ -2509,16 +2517,20 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
     // While the screen shows a call, she stops listening until it ends.
     const EAR = { on: false, rec: null, inCall: false, waitUntil: 0 };
     const WAKE = /(^|[\s،,.!؟?])(لُمى|لمى|لومى|لوما|لومي|لُمي|luma|looma|lumah)(?=$|[\s،,.!؟?])/i;
+    function earWanted() { try { return localStorage.getItem("firefly-ear") === "on"; } catch (e) { return false; } }
+    function earRemember(on) { try { localStorage.setItem("firefly-ear", on ? "on" : "off"); } catch (e) {} }
     function idleStatus() { return EAR.inCall ? "stCall" : W.on ? "stWatching" : EAR.on ? "stEar" : "stListening"; }
-    function earStart() {
+    function earStart(byUser) {
       if (!SR) { addMsg("luma", t("micNone")); return; }
+      if (byUser) earRemember(true);
       EAR.on = true;
       $("#ear").classList.add("on"); $("#ear").setAttribute("aria-pressed", "true");
       $("#hint").textContent = t("earHint");
-      status(idleStatus()); sound.cute("boop"); luma.set("chibi:listening");
+      status(idleStatus()); if (byUser) { sound.cute("boop"); luma.set("chibi:listening"); }
       earRun();
     }
-    function earStop() {
+    function earStop(byUser) {
+      if (byUser) earRemember(false);
       EAR.on = false; EAR.waitUntil = 0;
       if (EAR.rec) { EAR.rec.onend = null; EAR.rec.abort(); EAR.rec = null; }
       if (box.isConnected) {
@@ -2533,7 +2545,7 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
       r.lang = lang === "ar" ? "ar-IQ" : "en-US";
       r.continuous = true; r.interimResults = false;
       r.onresult = (e) => { for (let i = e.resultIndex; i < e.results.length; i++) if (e.results[i].isFinal) heardLine(e.results[i][0].transcript); };
-      r.onerror = (e) => { if (e.error === "not-allowed" || e.error === "service-not-allowed") { earStop(); addMsg("luma", t("micDenied")); luma.set("chibi:sad"); } };
+      r.onerror = (e) => { if (e.error === "not-allowed" || e.error === "service-not-allowed") { earStop(true); addMsg("luma", t("micDenied")); luma.set("chibi:sad"); } };
       r.onend = () => { EAR.rec = null; if (EAR.on) setTimeout(earRun, 400); };   // the browser stops now and then; keep going
       EAR.rec = r;
       try { r.start(); } catch (e) { EAR.rec = null; }

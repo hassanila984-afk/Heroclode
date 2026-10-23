@@ -362,6 +362,7 @@
       letter: "A letter from Luma", lumaWriting: "Luma is writing",
       soundsEyebrow: "Sounds", soundsTitle: "Tune the night.", volume: "{name} volume",
       layer_music: "Calm music", layer_rain: "Rain", layer_ocean: "Ocean waves", layer_crickets: "Crickets", layer_wind: "Wind in grass", layer_hum: "Brown noise",
+      lumaSounds: "Luma's sounds", lumaSoundsNote: "Cute little sounds when Luma reacts.",
       tonesTitle: "Brainwave tones",
       tonesNote: "Binaural beats: each ear hears a slightly different tone, and the brain perceives a slow pulse between them. Use headphones. Studies on their effect are mixed, but many people find them calming. Pair with rain or brown noise.",
       tone_off: "Off", tone_alpha: "Unwind · 10 Hz alpha", tone_theta: "Deep calm · 6 Hz theta", tone_delta: "Sleep · 2.5 Hz delta",
@@ -453,6 +454,7 @@
       letter: "رسالة من لُمى", lumaWriting: "لُمى تكتب",
       soundsEyebrow: "الأصوات", soundsTitle: "اضبط أنغام الليل.", volume: "مستوى صوت {name}",
       layer_music: "موسيقى هادئة", layer_rain: "مطر", layer_ocean: "أمواج البحر", layer_crickets: "صراصير الليل", layer_wind: "ريح في العشب", layer_hum: "ضجيج بنّي",
+      lumaSounds: "أصوات لُمى", lumaSoundsNote: "أصوات صغيرة لطيفة حين تتفاعل لُمى.",
       tonesTitle: "نغمات موجات الدماغ",
       tonesNote: "النبضات الثنائية: تسمع كل أذن نغمة مختلفة قليلًا، فيُدرك الدماغ نبضًا بطيئًا بينهما. استخدم سماعات الرأس. نتائج الدراسات حول تأثيرها متباينة، لكن كثيرين يجدونها مهدّئة. جرّبها مع المطر أو الضجيج البنّي.",
       tone_off: "إيقاف", tone_alpha: "استرخاء · ألفا ١٠ هرتز", tone_theta: "هدوء عميق · ثيتا ٦ هرتز", tone_delta: "نوم · دلتا ٢٫٥ هرتز",
@@ -912,6 +914,36 @@ ${last}${langNote()}`;
       onChange(f) { listeners.push(f); },
       auto: () => prefs.auto !== false,
       setAuto(v) { prefs.auto = v; savePrefs(); },
+      cuteOn: () => prefs.cute !== false,
+      setCute(v) { prefs.cute = v; savePrefs(); },
+      // Short game-style sounds for Luma's big moments.
+      cute(name) {
+        if (prefs.cute === false || !ensure()) return;
+        const blip = (f0, f1, dur, type = "sine", vol = 0.12, at = 0, vib = 0) => {
+          const o = ac.createOscillator(), g = ac.createGain(), t0 = ac.currentTime + 0.01 + at;
+          o.type = type;
+          o.frequency.setValueAtTime(f0, t0);
+          o.frequency.exponentialRampToValueAtTime(f1, t0 + dur);
+          if (vib) { const l = ac.createOscillator(), lg = ac.createGain(); l.frequency.value = 18; lg.gain.value = vib; l.connect(lg).connect(o.frequency); l.start(t0); l.stop(t0 + dur + 0.05); }
+          g.gain.setValueAtTime(0, t0);
+          g.gain.linearRampToValueAtTime(vol, t0 + 0.012);
+          g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur + 0.04);
+          o.connect(g).connect(master); o.start(t0); o.stop(t0 + dur + 0.06);
+        };
+        const SFX = {
+          boop: () => { blip(520, 1180, 0.09, "sine", 0.16); blip(1400, 1500, 0.05, "triangle", 0.05, 0.06); },
+          happy: () => { blip(880, 880, 0.12, "triangle", 0.12); blip(1108, 1108, 0.22, "triangle", 0.12, 0.1); },
+          excited: () => [1047, 1319, 1568, 2093, 2637].forEach((f, i) => blip(f, f * 1.01, 0.14, "triangle", 0.08, i * 0.05)),
+          pout: () => blip(420, 190, 0.32, "square", 0.05, 0, 14),
+          ignore: () => { blip(360, 300, 0.08, "square", 0.05); blip(300, 220, 0.16, "square", 0.05, 0.11); },
+          shy: () => blip(1200, 1900, 0.18, "sine", 0.08, 0, 22),
+          sad: () => [659, 587, 494].forEach((f, i) => blip(f, f * 0.97, 0.26, "sine", 0.09, i * 0.22)),
+          sleepy: () => blip(760, 300, 0.85, "sine", 0.07, 0, 6),
+          gift: () => [523, 659, 784, 1047, 1319, 1568].forEach((f, i) => blip(f, f, 0.18, "triangle", 0.07, i * 0.06)),
+          golden: () => { [784, 988, 1175, 1568].forEach((f, i) => blip(f, f, 0.2, "triangle", 0.09, i * 0.11)); blip(2093, 2093, 0.7, "sine", 0.07, 0.48); },
+        };
+        if (SFX[name]) SFX[name]();
+      },
       wave(arr) { if (!analyser || !this.playing()) return false; analyser.getByteTimeDomainData(arr); return true; },
       chime() {
         if (!ensure()) return;
@@ -1138,6 +1170,8 @@ ${last}${langNote()}`;
   };
   // Poses without their own picture borrow one.
   const POSE_IMG = { "chibi:thinking": "chibi_listening" };
+  // Which cute sound goes with which feeling (only the big ones make a sound).
+  const SFX_FOR = { happy: "happy", excited: "excited", pout: "pout", ignore: "ignore", shy: "shy", sad: "sad", sleepy: "sleepy", smirk: "shy", smile: "happy" };
   const poseImg = (look, mood) => "luma/" + (POSE_IMG[look + ":" + mood] || look + "_" + mood) + ".webp";
   const LUMA_LINES = {
     en: {
@@ -1253,7 +1287,13 @@ ${last}${langNote()}`;
       const rtl = document.documentElement.dir === "rtl";
       box.style.left = (rtl ? rect.left + 8 : rect.right - w - 8) + "px";
     }
-    box.addEventListener("click", () => { const [p, text] = pick(LUMA_LINES[lang].tap); speak(text, p); });
+    box.addEventListener("click", () => {
+      const [p, text] = pick(LUMA_LINES[lang].tap);
+      sound.cute("boop");
+      const mood = p.split(":")[1];
+      setTimeout(() => sound.cute(SFX_FOR[mood] || "happy"), 160);
+      speak(text, p);
+    });
     set("chibi:listening");
     return { set, speak, quiet, place, pose: () => pose };
   })();
@@ -1513,7 +1553,12 @@ ${last}${langNote()}`;
         const { text } = await ask(input, { cache: false, signal: ctl.signal, onText: ({ text }) => {
           const r = readMood(text);
           if (r.pending) return;
-          if (r.mood && !shown) luma.set(r.mood);
+          if (r.mood && !shown) {
+            const before = luma.pose();
+            luma.set(r.mood);
+            const mood = r.mood.split(":")[1];
+            if (r.mood !== before && ["pout", "ignore", "excited", "happy", "sad", "shy"].includes(mood)) sound.cute(SFX_FOR[mood]);
+          }
           if (!r.body) return;
           shown = true;
           bubble.classList.remove("wait"); bubble.textContent = r.body; box.scrollTop = box.scrollHeight;
@@ -1624,6 +1669,7 @@ ${last}${langNote()}`;
       state.lastDate = dayKey();
       sky.lightOne(false);
       sound.chime();
+      setTimeout(() => sound.cute("excited"), 700);
     }
     if (session.intention) state.intention = { text: session.intention, date: dayKey(), done: null };
     state.history = state.history.filter((h) => h.date !== dayKey()).concat({ date: dayKey(), weight: session.weight, tags: session.tags, worries: session.worries.length }).slice(-90);
@@ -1672,6 +1718,7 @@ ${last}${langNote()}`;
       sound.chime();
       gift = { kind: t("rareGift"), text: t("rareText") };
       luma.set("chibi:excited");
+      sound.cute("golden");
     } else if (roll < 0.33 && !aiOff) {
       gift = { kind: t("letter"), text: "" };
     } else {
@@ -1681,6 +1728,7 @@ ${last}${langNote()}`;
       state.seenGifts = state.seenGifts.concat(text).slice(-60);
       gift = { kind, text };
     }
+    if (roll >= 0.08) sound.cute("gift");
     slot.innerHTML = `<div class="gift open"><span class="kind">${esc(gift.kind)}</span><span class="body" id="gift-body" dir="auto">${gift.text ? esc(gift.text) : `<span class="dots">${t("lumaWriting")}</span>`}</span></div>`;
     if (!gift.text) {
       try {
@@ -1712,6 +1760,7 @@ ${last}${langNote()}`;
           <input type="range" min="0" max="1" step="0.01" value="${sound.vol(l.id)}" aria-label="${t("volume", { name: t("layer_" + l.id) })}">
         </div>`).join("")}
       </div>
+      <div class="layer ${sound.cuteOn() ? "on" : ""}" id="cute-row"><button aria-pressed="${sound.cuteOn()}">${t("lumaSounds")}<span class="switch"></span></button><span class="tiny">${t("lumaSoundsNote")}</span></div>
       <h3>${t("tonesTitle")}</h3>
       <p class="tiny">${t("tonesNote")}</p>
       <div class="chips" role="group" aria-label="${t("tonesTitle")}">${Object.keys(TONES).map((k) => `<button data-tone="${k}" aria-pressed="${sound.tone() === k}">${t("tone_" + k)}</button>`).join("")}</div>
@@ -1743,6 +1792,13 @@ ${last}${langNote()}`;
       $("#timer-note").textContent = left ? t("fading", { n: num(left) }) : "";
     };
     soundsRefresh = refresh; refresh();
+    $("#cute-row button").onclick = () => {
+      const on = !sound.cuteOn();
+      sound.setCute(on);
+      $("#cute-row").classList.toggle("on", on);
+      $("#cute-row button").setAttribute("aria-pressed", on);
+      if (on) sound.cute("boop");
+    };
     const cv = $("#wave"), cx = cv.getContext("2d"), buf = new Uint8Array(1024);
     let raf = 0;
     const draw = () => {

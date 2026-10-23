@@ -580,7 +580,7 @@
       watchBlocked: "claude.ai doesn't let me see your screen live 🥺 For now, send me a screenshot 📷",
       watchEnded: "That was fun! Again sometime? 🌙", attach: "Send a picture", picSent: "📷",
       bubbleTitle: "Float Luma over your other apps", bubblePh: "Reply…", micTitle: "Talk to Luma",
-      earTitle: "Keep listening: say “Luma” when you're talking to her", stEar: "listening for her name…", stCall: "📞 on a call: she only reacts to her name",
+      earTitle: "Keep listening: say “Luma” when you're talking to her", voiceTitle: "Language you speak out loud (English / Arabic)", stEar: "listening for her name…", stCall: "📞 on a call: she only reacts to her name",
       friendSaid: "👥 A friend on the call: “{text}”",
       earHint: "She only answers when someone says “Luma”. Anything else is dropped right away, never sent or saved. While she watches with system audio shared, she also hears friends on a call who say her name: let them know she's there.",
       micDenied: "I can't hear you, the microphone is blocked 🥺 Allow it from the 🔒 next to the address.", micNone: "This browser can't turn speech into text 🥺 Try Chrome.",
@@ -686,7 +686,7 @@
       watchBlocked: "claude.ai لا يسمح لي برؤية شاشتك مباشرة 🥺 حاليًا أرسل لي لقطة شاشة 📷",
       watchEnded: "كانت حلوة! نعيدها مرة ثانية؟ 🌙", attach: "أرسل صورة", picSent: "📷",
       bubbleTitle: "لُمى فوق تطبيقاتك الثانية", bubblePh: "رد عليها…", micTitle: "احچي ويا لُمى",
-      earTitle: "خليها تسمع: ناديها «لُمى» لما تحچي وياها", stEar: "تسمع… تنتظر اسمها", stCall: "📞 بمكالمة: تنتبه بس لاسمها",
+      earTitle: "خليها تسمع: ناديها «لُمى» لما تحچي وياها", voiceTitle: "لغة كلامك بالصوت (إنكليزي / عربي)", stEar: "تسمع… تنتظر اسمها", stCall: "📞 بمكالمة: تنتبه بس لاسمها",
       friendSaid: "👥 صديقك بالمكالمة: «{text}»",
       earHint: "ترد بس لما أحد يگول «لُمى». أي كلام ثاني ينمسح فوراً، ما ينرسل ولا ينحفظ. وإذا تشاهد وياك مع صوت النظام، تسمع أصدقائك بالمكالمة لما يذكرون اسمها: خبّرهم إنها موجودة.",
       micDenied: "ما أسمعك، المايك ممنوع 🥺 اسمح بيه من القفل 🔒 جنب العنوان.", micNone: "هذا المتصفح ما يحوّل الكلام لكتابة 🥺 جرّب Chrome.",
@@ -2167,6 +2167,8 @@ ${last}${langNote()}`;
   // ---------- talk with Luma ----------
   let ctl = null;
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  // the language they speak out loud, separate from the app's language (English unless they switch)
+  function voiceLang() { try { return localStorage.getItem("firefly-voice") || "en-US"; } catch (e) { return "en-US"; } }
   function talk(free) {
     if (free) session = session && session.free ? session : { free: true, weight: 0, tags: [], turns: [], worries: [], intention: "" };
     el(`
@@ -2174,7 +2176,7 @@ ${last}${langNote()}`;
       <div class="chat-head">
         <div class="ch-av" data-luma-mirror><img alt="" draggable="false"><span class="lm-fx" aria-hidden="true"></span></div>
         <div><b>${t("luma")}</b><span class="st" id="ch-status">${t("stListening")}</span></div>
-        ${free ? `<button class="ch-watch" id="watch" type="button" hidden>${t("watchBtn")}</button><button class="ch-bubble" id="bubble" type="button" hidden title="${t("bubbleTitle")}" aria-label="${t("bubbleTitle")}">🫧</button><button class="ch-bubble" id="ear" type="button" hidden title="${t("earTitle")}" aria-label="${t("earTitle")}" aria-pressed="false">👂</button>` : ""}
+        ${free ? `<button class="ch-watch" id="watch" type="button" hidden>${t("watchBtn")}</button><button class="ch-bubble" id="bubble" type="button" hidden title="${t("bubbleTitle")}" aria-label="${t("bubbleTitle")}">🫧</button><button class="ch-bubble" id="ear" type="button" hidden title="${t("earTitle")}" aria-label="${t("earTitle")}" aria-pressed="false">👂</button><button class="ch-bubble" id="vlang" type="button" hidden title="${t("voiceTitle")}" aria-label="${t("voiceTitle")}" style="font:700 13px var(--body)"></button>` : ""}
       </div>
       ${free ? `<div class="watchbar" id="watchbar" hidden><span class="wb-dot"></span><span class="wb-t">${t("watchOn")}</span><button type="button" id="wfloat" hidden>${t("watchFloat")}</button><button type="button" id="wstop">${t("watchStop")}</button></div>` : ""}
       <div class="talk" id="talk"></div>
@@ -2267,6 +2269,14 @@ ${last}${langNote()}`;
     if (free) {
       $("#ear").hidden = !SR;
       $("#ear").onclick = () => (EAR.on ? earStop(true) : earStart(true));
+      const vl = $("#vlang"), showVl = () => { vl.textContent = voiceLang() === "en-US" ? "EN" : "ع"; };
+      vl.hidden = !SR; showVl();
+      vl.onclick = () => {
+        try { localStorage.setItem("firefly-voice", voiceLang() === "en-US" ? "ar-IQ" : "en-US"); } catch (e) {}
+        showVl();
+        // restart the ear in the new language
+        if (EAR.on) { earStop(false); earStart(false); }
+      };
       // the open mic is remembered: it comes back on by itself next time
       if (SR && earWanted()) setTimeout(() => { if (box.isConnected && !EAR.on) earStart(false); }, 600);
     }
@@ -2517,7 +2527,7 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
       if (rec) { rec.stop(); return; }
       if (EAR.rec) { EAR.rec.onend = null; EAR.rec.abort(); EAR.rec = null; }
       rec = new SR();
-      rec.lang = lang === "ar" ? "ar-IQ" : "en-US";
+      rec.lang = voiceLang();
       rec.interimResults = true;
       let heardText = "";
       rec.onresult = (e) => {
@@ -2576,7 +2586,7 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
     function earRun() {
       if (!EAR.on || EAR.rec || rec || !box.isConnected) return;
       const r = new SR();
-      r.lang = lang === "ar" ? "ar-IQ" : "en-US";
+      r.lang = voiceLang();
       r.continuous = true; r.interimResults = false;
       r.maxAlternatives = 5;
       r.onresult = (e) => { for (let i = e.resultIndex; i < e.results.length; i++) if (e.results[i].isFinal) heardLine([...e.results[i]].map((a) => a.transcript)); };
@@ -2612,7 +2622,7 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
       if (ownSite) return hearStart();
       if (!EAR.on || EAR.sys || !W.audio || W.audio.readyState !== "live" || !box.isConnected) return;
       const r = new SR();
-      r.lang = lang === "ar" ? "ar-IQ" : "en-US";
+      r.lang = voiceLang();
       r.continuous = true; r.interimResults = false;
       r.maxAlternatives = 5;
       r.onresult = (e) => { for (let i = e.resultIndex; i < e.results.length; i++) if (e.results[i].isFinal) heardLine([...e.results[i]].map((a) => a.transcript), true); };

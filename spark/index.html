@@ -1,0 +1,579 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cut">
+<meta name="theme-color" content="#f6f3ee">
+<title>Spark</title>
+<style>
+  :root {
+    --bg: #f6f3ee;
+    --card: #ffffff;
+    --text: #2a2622;
+    --muted: #7a7168;
+    --line: #e7e1d8;
+    --accent: #d9692b;
+    --accent-soft: #fbe7da;
+    --good: #3f8f5b;
+    --e1: #c9483b; --e2: #e08a3c; --e3: #d8b43c; --e4: #7fb04f; --e5: #3f8f5b;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1a1816;
+      --card: #24211e;
+      --text: #f0ebe4;
+      --muted: #a39a90;
+      --line: #36322d;
+      --accent: #ef8550;
+      --accent-soft: #3a2a20;
+      --good: #6cc08a;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    padding-bottom: calc(76px + env(safe-area-inset-bottom));
+  }
+  main { max-width: 560px; margin: 0 auto; padding: 20px 16px; }
+  h1 { font-size: 26px; margin: 4px 0 2px; }
+  h2 { font-size: 18px; margin: 0 0 10px; }
+  p { margin: 0 0 10px; }
+  .muted { color: var(--muted); }
+  .small { font-size: 14px; }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 16px;
+    margin: 14px 0;
+  }
+  .hero { border-color: var(--accent); background: var(--accent-soft); }
+  .hero .step { font-size: 22px; font-weight: 600; margin: 6px 0 4px; }
+  button {
+    font: inherit;
+    border: 1px solid var(--line);
+    background: var(--card);
+    color: var(--text);
+    border-radius: 12px;
+    padding: 10px 14px;
+    cursor: pointer;
+  }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+  button.link { border: 0; background: none; padding: 4px 6px; color: var(--muted); }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .energy { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+  .energy button { padding: 10px 2px; font-size: 13px; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  .energy button b { font-size: 20px; }
+  .energy button.on { border-color: var(--accent); background: var(--accent-soft); font-weight: 600; }
+  input[type=text], textarea {
+    font: inherit; width: 100%;
+    border: 1px solid var(--line); border-radius: 12px;
+    padding: 10px 12px; background: var(--bg); color: var(--text);
+  }
+  textarea { min-height: 70px; resize: vertical; }
+  form.add { display: flex; gap: 8px; }
+  form.add input { flex: 1; min-width: 0; }
+  ul.list { list-style: none; padding: 0; margin: 0; }
+  ul.list > li { border-top: 1px solid var(--line); padding: 10px 0; }
+  ul.list > li:first-child { border-top: 0; }
+  .task-title { display: flex; gap: 8px; align-items: flex-start; }
+  .task-title span { flex: 1; overflow-wrap: anywhere; }
+  .steps { list-style: none; padding: 4px 0 0 28px; margin: 0; font-size: 15px; }
+  .steps li { padding: 2px 0; }
+  .done-text { text-decoration: line-through; color: var(--muted); }
+  input[type=checkbox] { width: 20px; height: 20px; accent-color: var(--accent); margin-top: 2px; flex: none; }
+  .timer { font-size: 44px; font-weight: 700; text-align: center; font-variant-numeric: tabular-nums; margin: 6px 0; }
+  .bars { display: flex; align-items: flex-end; gap: 4px; height: 110px; margin-top: 8px; }
+  .bars div { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; height: 100%; }
+  .bars i { display: block; width: 100%; border-radius: 6px 6px 2px 2px; min-height: 3px; background: var(--line); }
+  .bars span { font-size: 11px; color: var(--muted); margin-top: 4px; }
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; text-align: center; }
+  .stats b { display: block; font-size: 24px; }
+  .note { border-color: var(--e2); }
+  .win { overflow-wrap: anywhere; }
+  .win small { display: block; color: var(--muted); }
+  nav {
+    position: fixed; left: 0; right: 0; bottom: 0;
+    background: var(--card); border-top: 1px solid var(--line);
+    display: flex; justify-content: center;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  nav button {
+    flex: 1; max-width: 140px; border: 0; border-radius: 0; background: none;
+    padding: 12px 4px; color: var(--muted); font-size: 14px;
+  }
+  nav button.on { color: var(--accent); font-weight: 700; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<main>
+
+  <!-- TODAY -->
+  <section id="view-today">
+    <p class="muted small" id="today-date"></p>
+    <h1 id="greeting">Hi.</h1>
+
+    <div class="card">
+      <h2>How much energy do you have right now?</h2>
+      <div class="energy" id="energy-buttons"></div>
+      <p class="muted small" id="energy-advice" style="margin-top:10px"></p>
+    </div>
+
+    <div class="card hero" id="one-thing"></div>
+
+    <div class="card" id="timer-card" hidden>
+      <h2>Just 2 minutes</h2>
+      <p class="muted small" id="timer-step"></p>
+      <div class="timer" id="timer">2:00</div>
+      <p class="muted small" id="timer-msg">You only have to start. Stopping after 2 minutes still counts.</p>
+      <div class="row">
+        <button class="primary" id="timer-done">I did it</button>
+        <button id="timer-stop">Stop</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>One good thing</h2>
+      <p class="muted small" id="win-prompt"></p>
+      <form class="add" id="win-form-today">
+        <input type="text" id="win-input-today" placeholder="Even something small" maxlength="200">
+        <button class="primary">Save</button>
+      </form>
+    </div>
+  </section>
+
+  <!-- TASKS -->
+  <section id="view-tasks" hidden>
+    <h1>Tasks</h1>
+    <p class="muted small">Write it down so your head doesn't have to hold it. Break anything that feels heavy into tiny steps.</p>
+    <div class="card">
+      <form class="add" id="task-form">
+        <input type="text" id="task-input" placeholder="Add a task" maxlength="140">
+        <button class="primary">Add</button>
+      </form>
+    </div>
+    <div class="card"><ul class="list" id="task-list"></ul></div>
+  </section>
+
+  <!-- WINS -->
+  <section id="view-wins">
+    <h1>Good moments</h1>
+    <p class="muted small">Things that went well or felt good. Over time this shows you what still gives you energy at work.</p>
+    <div class="card">
+      <form class="add" id="win-form">
+        <input type="text" id="win-input" placeholder="What went well?" maxlength="200">
+        <button class="primary">Save</button>
+      </form>
+    </div>
+    <div class="card"><ul class="list" id="win-list"></ul></div>
+  </section>
+
+  <!-- WEEK -->
+  <section id="view-week" hidden>
+    <h1>Your pattern</h1>
+    <div class="card note" id="care-note" hidden>
+      <h2>Your energy has been low for a while</h2>
+      <p class="small">Many of your check-ins in the last two weeks were Empty or Low. That's worth taking seriously. Sleep, food, movement and a few real days off help, and a doctor can check common causes like low iron, vitamin D, thyroid or depression. Talking to someone you trust helps too.</p>
+    </div>
+    <div class="card">
+      <h2>Energy, last 14 days</h2>
+      <div class="bars" id="bars"></div>
+    </div>
+    <div class="card">
+      <h2>Last 7 days</h2>
+      <div class="stats" id="stats"></div>
+    </div>
+    <div class="card">
+      <h2>What I notice</h2>
+      <ul class="list small" id="insights"></ul>
+    </div>
+    <div class="card">
+      <h2>Your data</h2>
+      <p class="muted small">Everything stays on this device. Nothing is sent anywhere.</p>
+      <div class="row">
+        <button id="export">Download backup</button>
+        <button id="import">Restore backup</button>
+        <input type="file" id="import-file" accept="application/json" hidden>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<nav>
+  <button data-view="today" class="on">Today</button>
+  <button data-view="tasks">Tasks</button>
+  <button data-view="wins">Good moments</button>
+  <button data-view="week">Pattern</button>
+</nav>
+
+<script>
+(() => {
+  const KEY = 'spark-v1';
+  const ENERGY = [
+    { v: 1, label: 'Empty', face: '😩' },
+    { v: 2, label: 'Low', face: '😔' },
+    { v: 3, label: 'Okay', face: '😐' },
+    { v: 4, label: 'Good', face: '🙂' },
+    { v: 5, label: 'Great', face: '😄' },
+  ];
+  const ADVICE = {
+    1: 'Running on empty. Aim for one tiny step today, or none. Rest is allowed.',
+    2: 'Low energy. Pick one small thing. That is a full day’s win.',
+    3: 'Okay. Aim for 2–3 small steps, with breaks between them.',
+    4: 'Good energy. A nice moment to do the step you’ve been avoiding.',
+    5: 'Great energy! Use it for something that matters to you.',
+  };
+  const WIN_PROMPTS = [
+    'What is one thing you did today, even a small one?',
+    'Was there a moment at work that felt okay, or even good?',
+    'Who did you help today?',
+    'What did you finish, start, or decide today?',
+    'What made you smile today?',
+    'What part of your work would you miss if it disappeared?',
+  ];
+  const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+  // ---------- storage ----------
+  function blank() { return { checkins: {}, tasks: [], wins: [], doneLog: [] }; }
+  function load() {
+    try {
+      const d = JSON.parse(localStorage.getItem(KEY));
+      if (d && typeof d === 'object') return Object.assign(blank(), d);
+    } catch (e) {}
+    return blank();
+  }
+  let data = load();
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(data)); } catch (e) {}
+  }
+
+  // ---------- helpers ----------
+  const $ = (id) => document.getElementById(id);
+  const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+  const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  function dayKey(d = new Date()) {
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+  function daysAgo(n) { const d = new Date(); d.setDate(d.getDate() - n); return d; }
+  function energyColor(v) { return v ? `var(--e${v})` : 'var(--line)'; }
+
+  // The next thing to do: first unfinished step of the first unfinished task
+  // (skipped tasks are moved to the end of the list).
+  function nextThing() {
+    for (const t of data.tasks) {
+      if (t.done) continue;
+      const step = t.steps.find((s) => !s.done);
+      return { task: t, step };
+    }
+    return null;
+  }
+  function markDone(task, step) {
+    if (step) step.done = true;
+    if (!step || task.steps.every((s) => s.done)) {
+      task.done = true;
+      task.doneAt = Date.now();
+    }
+    data.doneLog.push(dayKey());
+  }
+
+  // ---------- today ----------
+  function renderToday() {
+    const now = new Date();
+    $('today-date').textContent = now.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
+    const h = now.getHours();
+    $('greeting').textContent = h < 12 ? 'Good morning.' : h < 18 ? 'Good afternoon.' : 'Good evening.';
+
+    const today = data.checkins[dayKey()];
+    $('energy-buttons').innerHTML = ENERGY.map((e) =>
+      `<button data-energy="${e.v}" class="${today && today.energy === e.v ? 'on' : ''}"><b>${e.face}</b>${e.label}</button>`
+    ).join('');
+    $('energy-advice').textContent = today ? ADVICE[today.energy] : 'Tap one. There is no wrong answer.';
+
+    $('win-prompt').textContent = WIN_PROMPTS[now.getDate() % WIN_PROMPTS.length];
+    const next = nextThing();
+    const doneToday = data.doneLog.filter((d) => d === dayKey()).length;
+    const box = $('one-thing');
+    if (!next) {
+      box.innerHTML = `<p class="muted small">YOUR ONE THING</p>
+        <p class="step">Nothing waiting.</p>
+        <p class="small">${doneToday ? `You finished ${doneToday} step${doneToday > 1 ? 's' : ''} today. That's enough.` : 'Add a task in the Tasks tab when you are ready.'}</p>`;
+      return;
+    }
+    const { task, step } = next;
+    const left = task.steps.filter((s) => !s.done).length;
+    box.innerHTML = `<p class="muted small">YOUR ONE THING</p>
+      <p class="step">${esc(step ? step.text : task.title)}</p>
+      ${step ? `<p class="small muted">Part of: ${esc(task.title)} (${left} step${left > 1 ? 's' : ''} left)</p>` : ''}
+      ${doneToday ? `<p class="small">Done today: ${doneToday} ✓</p>` : ''}
+      <div class="row" style="margin-top:10px">
+        <button class="primary" data-act="start">Start for 2 min</button>
+        <button data-act="done">Done</button>
+        <button data-act="split">Too big? Split it</button>
+        <button class="link" data-act="skip">Not now</button>
+      </div>`;
+  }
+
+  $('energy-buttons').addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-energy]');
+    if (!b) return;
+    data.checkins[dayKey()] = { energy: Number(b.dataset.energy), at: Date.now() };
+    save();
+    renderToday();
+  });
+
+  $('one-thing').addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-act]');
+    const next = nextThing();
+    if (!b || !next) return;
+    const { task, step } = next;
+    switch (b.dataset.act) {
+      case 'start': startTimer(step ? step.text : task.title); return;
+      case 'done': markDone(task, step); break;
+      case 'split': splitTask(task); break;
+      case 'skip':
+        data.tasks.splice(data.tasks.indexOf(task), 1);
+        data.tasks.push(task);
+        break;
+    }
+    save();
+    renderAll();
+  });
+
+  function splitTask(task) {
+    const text = prompt(`Break "${task.title}" into tiny steps.\nOne step per line, or separate them with commas.\nTip: make the first step so small it feels silly.`);
+    if (!text) return;
+    const parts = text.split(/\n|,/).map((s) => s.trim()).filter(Boolean);
+    if (!parts.length) return;
+    task.steps = task.steps.filter((s) => s.done).concat(parts.map((p) => ({ id: uid(), text: p, done: false })));
+  }
+
+  // ---------- 2-minute timer ----------
+  let timerId = null;
+  function startTimer(text) {
+    stopTimer();
+    let left = 120;
+    $('timer-card').hidden = false;
+    $('timer-step').textContent = text;
+    $('timer-msg').textContent = 'You only have to start. Stopping after 2 minutes still counts.';
+    const tick = () => {
+      $('timer').textContent = Math.floor(left / 60) + ':' + String(left % 60).padStart(2, '0');
+      if (left <= 0) {
+        clearInterval(timerId);
+        timerId = null;
+        $('timer-msg').textContent = 'Two minutes done. Keep going if it feels okay, or stop. Both are fine.';
+        if (navigator.vibrate) navigator.vibrate(200);
+      }
+      left--;
+    };
+    tick();
+    timerId = setInterval(tick, 1000);
+    $('timer-card').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+  function stopTimer() {
+    if (timerId) clearInterval(timerId);
+    timerId = null;
+    $('timer-card').hidden = true;
+  }
+  $('timer-stop').addEventListener('click', stopTimer);
+  $('timer-done').addEventListener('click', () => {
+    const next = nextThing();
+    if (next) markDone(next.task, next.step);
+    save();
+    stopTimer();
+    renderAll();
+  });
+
+  // ---------- tasks ----------
+  function renderTasks() {
+    const open = data.tasks.filter((t) => !t.done);
+    const done = data.tasks.filter((t) => t.done).sort((a, b) => b.doneAt - a.doneAt).slice(0, 10);
+    const item = (t) => `<li data-id="${t.id}">
+        <div class="task-title">
+          <input type="checkbox" data-act="toggle" ${t.done ? 'checked' : ''} aria-label="Done">
+          <span class="${t.done ? 'done-text' : ''}">${esc(t.title)}</span>
+          ${t.done ? '' : '<button class="link" data-act="split">Split</button>'}
+          <button class="link" data-act="del" aria-label="Delete">✕</button>
+        </div>
+        ${t.steps.length ? `<ul class="steps">${t.steps.map((s) =>
+          `<li><label class="row" style="gap:6px"><input type="checkbox" data-step="${s.id}" ${s.done ? 'checked' : ''}>
+           <span class="${s.done ? 'done-text' : ''}">${esc(s.text)}</span></label></li>`).join('')}</ul>` : ''}
+      </li>`;
+    $('task-list').innerHTML =
+      (open.length ? open.map(item).join('') : '<li class="muted small">No open tasks. Nice.</li>') +
+      (done.length ? `<li class="muted small" style="padding-top:16px">Recently finished</li>` + done.map(item).join('') : '');
+  }
+
+  $('task-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const title = $('task-input').value.trim();
+    if (!title) return;
+    data.tasks.push({ id: uid(), title, steps: [], done: false, created: Date.now() });
+    $('task-input').value = '';
+    save();
+    renderAll();
+  });
+
+  $('task-list').addEventListener('change', (e) => {
+    const li = e.target.closest('li[data-id]');
+    if (!li) return;
+    const task = data.tasks.find((t) => t.id === li.dataset.id);
+    if (e.target.dataset.step) {
+      const step = task.steps.find((s) => s.id === e.target.dataset.step);
+      if (e.target.checked) markDone(task, step);
+      else { step.done = false; task.done = false; }
+    } else if (e.target.dataset.act === 'toggle') {
+      if (e.target.checked) { task.steps.forEach((s) => (s.done = true)); markDone(task, null); }
+      else task.done = false;
+    }
+    save();
+    renderAll();
+  });
+
+  $('task-list').addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-act]');
+    const li = e.target.closest('li[data-id]');
+    if (!b || !li) return;
+    const task = data.tasks.find((t) => t.id === li.dataset.id);
+    if (b.dataset.act === 'del') {
+      if (!confirm(`Delete "${task.title}"?`)) return;
+      data.tasks = data.tasks.filter((t) => t !== task);
+    } else if (b.dataset.act === 'split') {
+      splitTask(task);
+    }
+    save();
+    renderAll();
+  });
+
+  // ---------- wins ----------
+  function addWin(text) {
+    text = text.trim();
+    if (!text) return false;
+    data.wins.unshift({ id: uid(), text, date: dayKey(), at: Date.now() });
+    save();
+    renderAll();
+    return true;
+  }
+  function renderWins() {
+    $('win-list').innerHTML = data.wins.length
+      ? data.wins.map((w) => `<li class="win" data-id="${w.id}"><div class="task-title"><span>${esc(w.text)}
+          <small>${new Date(w.at).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}</small></span>
+          <button class="link" data-act="del" aria-label="Delete">✕</button></div></li>`).join('')
+      : '<li class="muted small">Nothing yet. Start with one small thing that went okay.</li>';
+  }
+  $('win-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    if (addWin($('win-input').value)) $('win-input').value = '';
+  });
+  $('win-form-today').addEventListener('submit', (e) => {
+    e.preventDefault();
+    if (addWin($('win-input-today').value)) {
+      $('win-input-today').value = '';
+      $('win-input-today').placeholder = 'Saved ✓ Add another?';
+    }
+  });
+  $('win-list').addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-act=del]');
+    if (!b) return;
+    const id = b.closest('li').dataset.id;
+    data.wins = data.wins.filter((w) => w.id !== id);
+    save();
+    renderAll();
+  });
+
+  // ---------- week / pattern ----------
+  function renderWeek() {
+    const bars = [];
+    let lowCount = 0, checkCount = 0;
+    for (let i = 13; i >= 0; i--) {
+      const d = daysAgo(i);
+      const c = data.checkins[dayKey(d)];
+      if (c) { checkCount++; if (c.energy <= 2) lowCount++; }
+      const pct = c ? c.energy * 20 : 0;
+      bars.push(`<div title="${dayKey(d)}${c ? ': ' + ENERGY[c.energy - 1].label : ''}">
+        <i style="height:${pct}%;background:${energyColor(c && c.energy)}"></i>
+        <span>${DAYS[d.getDay()][0]}</span></div>`);
+    }
+    $('bars').innerHTML = bars.join('');
+    $('care-note').hidden = !(checkCount >= 5 && lowCount / checkCount >= 0.6);
+
+    const last7 = new Set([...Array(7)].map((_, i) => dayKey(daysAgo(i))));
+    const energies = [...last7].map((k) => data.checkins[k]).filter(Boolean).map((c) => c.energy);
+    const avg = energies.length ? (energies.reduce((a, b) => a + b, 0) / energies.length) : 0;
+    const steps = data.doneLog.filter((d) => last7.has(d)).length;
+    const wins = data.wins.filter((w) => last7.has(w.date)).length;
+    $('stats').innerHTML = `
+      <div><b>${avg ? ENERGY[Math.round(avg) - 1].face : '–'}</b><span class="small muted">avg energy</span></div>
+      <div><b>${steps}</b><span class="small muted">steps done</span></div>
+      <div><b>${wins}</b><span class="small muted">good moments</span></div>`;
+
+    // Insights from all check-ins: best / worst weekday.
+    const byDay = {};
+    for (const [k, c] of Object.entries(data.checkins)) {
+      const [y, m, d] = k.split('-').map(Number);
+      const wd = new Date(y, m - 1, d).getDay();
+      (byDay[wd] = byDay[wd] || []).push(c.energy);
+    }
+    const dayAvgs = Object.entries(byDay).filter(([, v]) => v.length >= 2)
+      .map(([wd, v]) => [Number(wd), v.reduce((a, b) => a + b, 0) / v.length]).sort((a, b) => a[1] - b[1]);
+    const notes = [];
+    if (dayAvgs.length >= 2) {
+      const low = dayAvgs[0], high = dayAvgs[dayAvgs.length - 1];
+      if (high[1] - low[1] >= 0.8) {
+        notes.push(`Your energy is usually lowest on <b>${DAYS[low[0]]}</b> and highest on <b>${DAYS[high[0]]}</b>. Try putting hard tasks on ${DAYS[high[0]]} and keeping ${DAYS[low[0]]} light.`);
+      }
+    }
+    if (steps === 0 && energies.length) notes.push('No steps done this week. That’s okay. Try splitting one task into a step that takes under 2 minutes.');
+    if (steps > 0) notes.push(`You finished ${steps} step${steps > 1 ? 's' : ''} this week while tired. That counts.`);
+    if (data.wins.length >= 3) notes.push('Read back through your Good moments. Look for what repeats: a kind of task, a person, a time of day. That’s where your energy still is.');
+    if (!notes.length) notes.push('Check in for a few days and patterns will show up here.');
+    $('insights').innerHTML = notes.map((n) => `<li>${n}</li>`).join('');
+  }
+
+  $('export').addEventListener('click', () => {
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `spark-backup-${dayKey()}.json`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  });
+  $('import').addEventListener('click', () => $('import-file').click());
+  $('import-file').addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      const d = JSON.parse(await file.text());
+      if (!d || !Array.isArray(d.tasks)) throw new Error('bad');
+      if (!confirm('Replace everything in Spark with this backup?')) return;
+      data = Object.assign(blank(), d);
+      save();
+      renderAll();
+    } catch (err) {
+      alert('That file is not a Spark backup.');
+    }
+    e.target.value = '';
+  });
+
+  // ---------- navigation ----------
+  function show(view) {
+    for (const v of ['today', 'tasks', 'wins', 'week']) $('view-' + v).hidden = v !== view;
+    document.querySelectorAll('nav button').forEach((b) => b.classList.toggle('on', b.dataset.view === view));
+    window.scrollTo(0, 0);
+  }
+  document.querySelector('nav').addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-view]');
+    if (b) show(b.dataset.view);
+  });
+
+  function renderAll() { renderToday(); renderTasks(); renderWins(); renderWeek(); }
+  renderAll();
+  show('today');
+})();
+</script>
+</body>
+</html>

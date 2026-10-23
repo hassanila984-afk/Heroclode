@@ -85,6 +85,13 @@
   .steps li { padding: 2px 0; }
   .done-text { text-decoration: line-through; color: var(--muted); }
   input[type=checkbox] { width: 20px; height: 20px; accent-color: var(--accent); margin-top: 2px; flex: none; }
+  .joke {
+    font-size: 15px; font-style: italic;
+    background: var(--card); border-radius: 12px;
+    padding: 10px 12px; margin: 10px 0 0;
+  }
+  .joke.done { font-style: normal; font-weight: 600; color: var(--good); }
+  .joke button.link { font-style: normal; font-size: 13px; text-decoration: underline; }
   .timer { font-size: 44px; font-weight: 700; text-align: center; font-variant-numeric: tabular-nums; margin: 6px 0; }
   .bars { display: flex; align-items: flex-end; gap: 4px; height: 110px; margin-top: 8px; }
   .bars div { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; height: 100%; }
@@ -237,6 +244,52 @@
     'What part of your work would you miss if it disappeared?',
   ];
   const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const JOKES = [
+    'This task might need a coffee to handle. Maybe two. Espresso yourself.',
+    'I told my to-do list a joke. It didn’t laugh. It just got longer.',
+    'This task is like a broken pencil. Pointless until you start.',
+    'Why did the task cross the road? To get done on the other side. Help it.',
+    'I’m reading a book about procrastination. I’ll finish it later.',
+    'This step is so small, an ant would call it a warm-up.',
+    'Don’t worry about this task. Worrying is a tea-dious job. Have a coffee instead.',
+    'I used to hate tasks, but they grew on me. Like a to-do moss.',
+    'This task called. It said it’s not as scary as it looks. It’s mostly bark.',
+    'Do it now, and future you will buy you a coffee. Future you is very generous.',
+    'Why don’t tasks ever get tired? Because you do it for them. Sorry. Coffee?',
+    'I asked my energy where it went. It said it was on a coffee break. Go join it.',
+    'Step one: start. Step two: act like you meant to start all along.',
+    'My boss said I need to stop procrastinating. I said: we’ll see about that tomorrow.',
+    'This task is two minutes long. Shorter than finding the TV remote.',
+    'Why did the coffee file a police report? It got mugged. Unlike you, it got stuff done.',
+    'Rome wasn’t built in a day. But they did lay one brick. This is your brick.',
+    'I would tell you a joke about this task, but you’d have to do it first.',
+    'This task is not a mountain. It’s a speed bump wearing a mountain costume.',
+    'What do you call a finished task? A done-ut. Treat yourself to one.',
+    'Time flies like an arrow. Tasks fly like a banana. Nobody knows why. Just start.',
+    'Your to-do list called. It misses you. It’s kind of clingy.',
+    'I’m great at multitasking. I can waste time, be unproductive and procrastinate all at once.',
+    'Coffee: because adulting is hard and this task won’t do itself. I checked.',
+    'This task walked into a bar. Nobody did it there either. Be the hero.',
+    'Why was the calendar so popular? It had a lot of dates. You have just one step.',
+    'Low battery? Same. Let’s do one tiny thing in low-power mode.',
+    'I’m not lazy. I’m in energy-saving mode. This step uses very little energy.',
+  ];
+  const DONE_JOKES = [
+    'Done! I’d give you a high five, but I’m a web page.',
+    'Done! That task never saw you coming.',
+    'Done! You deserve a coffee. Or a nap. Or both, in that order.',
+    'Done! Somewhere, a to-do list is crying. Good.',
+    'Done! I’m so proud I’d put you on the fridge.',
+    'Done! That’s what I call a tea-riffic job.',
+  ];
+  const pick = (arr, not) => {
+    let j;
+    do { j = arr[Math.floor(Math.random() * arr.length)]; } while (arr.length > 1 && j === not);
+    return j;
+  };
+  let joke = pick(JOKES);
+  let jokeFor = null;
+  let celebrate = null;
 
   // ---------- storage ----------
   function blank() { return { checkins: {}, tasks: [], wins: [], doneLog: [] }; }
@@ -301,15 +354,20 @@
     if (!next) {
       box.innerHTML = `<p class="muted small">YOUR ONE THING</p>
         <p class="step">Nothing waiting.</p>
+        ${celebrate ? `<p class="joke done">🎉 ${esc(celebrate)}</p>` : ''}
         <p class="small">${doneToday ? `You finished ${doneToday} step${doneToday > 1 ? 's' : ''} today. That's enough.` : 'Add a task in the Tasks tab when you are ready.'}</p>`;
       return;
     }
     const { task, step } = next;
     const left = task.steps.filter((s) => !s.done).length;
+    const key = step ? step.id : task.id;
+    if (key !== jokeFor) { joke = pick(JOKES, joke); jokeFor = key; }
     box.innerHTML = `<p class="muted small">YOUR ONE THING</p>
       <p class="step">${esc(step ? step.text : task.title)}</p>
       ${step ? `<p class="small muted">Part of: ${esc(task.title)} (${left} step${left > 1 ? 's' : ''} left)</p>` : ''}
       ${doneToday ? `<p class="small">Done today: ${doneToday} ✓</p>` : ''}
+      ${celebrate ? `<p class="joke done">🎉 ${esc(celebrate)}</p>` : ''}
+      <p class="joke">☕ ${esc(joke)} <button class="link" data-act="joke">Another joke</button></p>
       <div class="row" style="margin-top:10px">
         <button class="primary" data-act="start">Start for 2 min</button>
         <button data-act="done">Done</button>
@@ -331,9 +389,11 @@
     const next = nextThing();
     if (!b || !next) return;
     const { task, step } = next;
+    celebrate = null;
     switch (b.dataset.act) {
       case 'start': startTimer(step ? step.text : task.title); return;
-      case 'done': markDone(task, step); break;
+      case 'joke': joke = pick(JOKES, joke); renderToday(); return;
+      case 'done': markDone(task, step); celebrate = pick(DONE_JOKES); break;
       case 'split': splitTask(task); break;
       case 'skip':
         data.tasks.splice(data.tasks.indexOf(task), 1);
@@ -383,6 +443,7 @@
   $('timer-done').addEventListener('click', () => {
     const next = nextThing();
     if (next) markDone(next.task, next.step);
+    celebrate = pick(DONE_JOKES);
     save();
     stopTimer();
     renderAll();

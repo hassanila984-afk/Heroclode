@@ -1245,6 +1245,23 @@ ${last}${langNote()}`;
           },
         };
       },
+      // Fallback when a track can't be fetched and decoded: stream it with an <audio> element.
+      clip(url, vol = 0.9, from = 0) {
+        const el = new Audio(url);
+        el.preload = "auto"; el.volume = vol;
+        const go = () => { try { el.currentTime = from; } catch (e) {} el.play().catch(() => {}); };
+        if (el.readyState >= 1) go(); else el.addEventListener("loadedmetadata", go, { once: true });
+        el.play().catch(() => {});
+        return {
+          time: () => (el.paused || el.currentTime < from - 0.05 ? null : el.currentTime),
+          fadeOut(ms = 900) {
+            const v0 = el.volume, t0 = performance.now();
+            const step = () => { const k = Math.min(1, (performance.now() - t0) / ms); el.volume = v0 * (1 - k); if (k < 1) requestAnimationFrame(step); else { el.pause(); el.removeAttribute("src"); el.load(); } };
+            step();
+          },
+        };
+      },
+      running: () => !!ac && ac.state === "running",
       bgTime() { const l = live[BG]; const n = l && l.nodes.find((x) => x.time); return n ? n.time() : null; },
       bgSeek(sec) { const l = live[BG]; const n = l && l.nodes.find((x) => x.seek); if (n) n.seek(sec); },
       // a temporary level for the background (the intro plays it louder); null goes back to the saved level
@@ -2864,7 +2881,7 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
     const SNARES = new Set([23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 40, 41, 42, 43, 44]);
     const SFX = ["punch", "metal", "bell", "shutter", "shatter", "glitch", "stamp0", "stamp1", "stamp2", "stamp3"];
     let track = null, root = null, shaker = null, stage = null, raf = 0, cues = [], next = 0, clock0 = 0, onDone = null, ended = false, timers = [];
-    let ready = null, isReady = false, begun = false, keep = [];
+    let ready = null, isReady = false, begun = false, keep = [], synced = true, begunAt = 0;
 
     const add = (node) => { stage.appendChild(node); return node; };
     // a share of the framed stage's width, in pixels (for animated moves)
@@ -3024,7 +3041,12 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
     }
 
     function audioTime() {
-      return track ? track.time() : (performance.now() - clock0) / 1000;
+      const wall = (performance.now() - clock0) / 1000;
+      if (!track || !synced) return wall;
+      const tt = track.time();
+      const late = performance.now() - begunAt > 1200;
+      if (tt == null || tt < wall - 0.6) { if (late) synced = false; return wall; }   // music stalled or blocked: don't freeze
+      return tt;
     }
     function tick() {
       if (ended) return;
@@ -3072,7 +3094,8 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
       st.animate([{ transform: "scale(1)", opacity: 1, filter: "brightness(1)" }, { transform: "scale(1.25)", opacity: 0, filter: "brightness(2.5)" }], { duration: 260, easing: "ease-in", fill: "forwards" }).onfinish = () => st.remove();
       if (sound.isOn(BG)) sound.stop(BG);
       const from = B(START_BEAT) - 0.25;
-      track = sound.track("intro", 0.9, from);
+      track = sound.track("intro", 0.9, from) || sound.clip("music/intro.mp3", 0.9, from);
+      synced = true; begunAt = performance.now();
       sound.preloadVoices();
       clock0 = performance.now() - from * 1000;
       if (matchMedia("(prefers-reduced-motion: reduce)").matches) {

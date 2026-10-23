@@ -463,8 +463,8 @@
     .panel { padding: 18px 16px 16px; gap: 11px; }
   }
   @media (prefers-reduced-motion: reduce) {
-    /* everything stays still, except an intro the person switched to full motion */
-    :not(#intro.i-full, #intro.i-full *), :not(#intro.i-full *)::before, :not(#intro.i-full *)::after { animation: none !important; transition: none !important; }
+    /* everything stays still, unless the person switched Firefly to full motion */
+    :root:not(.ff-full) *, :root:not(.ff-full) *::before, :root:not(.ff-full) *::after { animation: none !important; transition: none !important; }
   }
 </style>
 
@@ -493,6 +493,11 @@
 (() => {
   // ================= language file: English and Arabic (simple Modern Standard Arabic) =================
   const LANG_LS = "firefly-lang";
+  // On a device set to reduce motion, Firefly stays still unless the person chose full motion
+  // (the switch on the intro's title screen); that choice covers the whole app.
+  const MOTION_LS = "firefly-intro-fx";
+  const fullMotion = () => { try { return localStorage.getItem(MOTION_LS) === "full"; } catch (e) { return false; } };
+  document.documentElement.classList.toggle("ff-full", fullMotion());
   let lang = "en";
   try { lang = localStorage.getItem(LANG_LS) || ((navigator.language || "").toLowerCase().startsWith("ar") ? "ar" : "en"); } catch (e) {}
   if (lang !== "ar") lang = "en";
@@ -568,6 +573,7 @@
       watchNoSupport: "iPad and phones don't let any web page see the screen live 🥺 Open me on a computer (Chrome is best) and we'll watch together!",
       watchBlocked: "claude.ai doesn't let me see your screen live 🥺 For now, send me a screenshot 📷",
       watchEnded: "That was fun! Again sometime? 🌙", attach: "Send a picture", picSent: "📷",
+      codeAsk: "Firefly access code (only once on this device):", codeWrong: "That code didn't work. Try again:",
       tonesTitle: "Brainwave tones",
       tonesNote: "Binaural beats: each ear hears a slightly different tone, and the brain perceives a slow pulse between them. Use headphones. Studies on their effect are mixed, but many people find them calming. Pair with rain or brown noise.",
       tone_off: "Off", tone_alpha: "Unwind · 10 Hz alpha", tone_theta: "Deep calm · 6 Hz theta", tone_delta: "Sleep · 2.5 Hz delta",
@@ -668,6 +674,7 @@
       watchNoSupport: "الآيباد والهواتف لا تسمح لأي صفحة ويب برؤية الشاشة مباشرة 🥺 افتحني من الحاسبة (Chrome أفضل) ونشاهد معًا!",
       watchBlocked: "claude.ai لا يسمح لي برؤية شاشتك مباشرة 🥺 حاليًا أرسل لي لقطة شاشة 📷",
       watchEnded: "كانت حلوة! نعيدها مرة ثانية؟ 🌙", attach: "أرسل صورة", picSent: "📷",
+      codeAsk: "رمز الدخول لـFirefly (مرة واحدة فقط على هذا الجهاز):", codeWrong: "الرمز غير صحيح. حاول مرة ثانية:",
       tonesTitle: "نغمات موجات الدماغ",
       tonesNote: "النبضات الثنائية: تسمع كل أذن نغمة مختلفة قليلًا، فيُدرك الدماغ نبضًا بطيئًا بينهما. استخدم سماعات الرأس. نتائج الدراسات حول تأثيرها متباينة، لكن كثيرين يجدونها مهدّئة. جرّبها مع المطر أو الضجيج البنّي.",
       tone_off: "إيقاف", tone_alpha: "استرخاء · ألفا ١٠ هرتز", tone_theta: "هدوء عميق · ثيتا ٦ هرتز", tone_delta: "نوم · دلتا ٢٫٥ هرتز",
@@ -934,7 +941,66 @@
 
   // ================= Luma (real AI) =================
   let sample = null, aiOff = false;
-  const aiReady = (window.claude && window.claude.use) ? claude.use("sample").then((s) => { sample = s; return s; }) : Promise.resolve(null);
+  // Inside claude.ai Luma uses the viewer's own Claude; on Firefly's own site she talks through the
+  // site's /api, which keeps the key on the server and only answers signed-in devices.
+  const ownSite = !window.claude && /^https?:$/.test(location.protocol);
+  const aiReady = (window.claude && window.claude.use) ? claude.use("sample").then((s) => { sample = s; return s; })
+    : Promise.resolve(ownSite ? siteSample() : null).then((s) => { sample = s; return s; });
+
+  // The same shape as claude.ai's sample(): (input, {onText, signal, images}) -> {text}, plus .json and .limits.
+  function siteSample() {
+    const toB64 = (blob) => new Promise((ok, no) => { const r = new FileReader(); r.onload = () => ok(String(r.result).split(",")[1]); r.onerror = no; r.readAsDataURL(blob); });
+    let signing = null;
+    // ask for the access code once per device; the server answers with an HttpOnly session cookie
+    function signIn() {
+      return signing || (signing = (async () => {
+        for (let tries = 0; tries < 3; tries++) {
+          const code = window.prompt(t(tries ? "codeWrong" : "codeAsk"));
+          if (!code) return false;
+          const r = await fetch("/api/login", { method: "POST", credentials: "same-origin", headers: { "content-type": "application/json" }, body: JSON.stringify({ code: code.trim() }) }).catch(() => null);
+          if (r && r.ok) return true;
+          if (r && r.status !== 401) return false;
+        }
+        return false;
+      })().finally(() => { signing = null; }));
+    }
+    async function call(input, opts = {}) {
+      const messages = typeof input === "string" ? [{ role: "user", content: input }] : input;
+      const images = opts.images ? await Promise.all([].concat(opts.images).slice(0, 2).map(toB64)) : [];
+      let text = "";
+      try {
+        const res = await fetch("/api/ask", { method: "POST", credentials: "same-origin", headers: { "content-type": "application/json" }, body: JSON.stringify({ messages, images }), signal: opts.signal });
+        if (res.status === 401) { if (await signIn()) return call(input, opts); throw { code: "not_granted" }; }
+        if (!res.ok) { const j = await res.json().catch(() => ({})); throw { code: res.status === 429 || j.error === "daily_limit" ? "rate_limited" : "upstream" }; }
+        const reader = res.body.getReader(), dec = new TextDecoder();
+        let buf = "";
+        for (;;) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          buf += dec.decode(value, { stream: true });
+          let i;
+          while ((i = buf.indexOf("\n\n")) >= 0) {
+            const line = buf.slice(0, i); buf = buf.slice(i + 2);
+            if (!line.startsWith("data: ")) continue;
+            const ev = JSON.parse(line.slice(6));
+            if (ev.t) { text += ev.t; if (opts.onText) opts.onText({ text, delta: ev.t }); }
+            if (ev.error) throw { code: ["refused", "rate_limited"].includes(ev.error) ? ev.error : "upstream", text };
+          }
+        }
+        return { text, truncated: false };
+      } catch (e) {
+        if (e && e.name === "AbortError") throw { code: "cancelled", text };
+        throw e && e.code ? e : { code: "upstream", text };
+      }
+    }
+    call.json = async (input, opts = {}) => {
+      const { text } = await call(String(input) + "\n\nReply with only the JSON, no other text.", opts);
+      const m = text.match(/[\[{][\s\S]*[\]}]/);
+      return JSON.parse(m ? m[0] : text);
+    };
+    call.limits = async () => ({ maxInputBytes: 200000, images: { maxCount: 2, maxBytes: 1100000, mediaTypes: ["image/jpeg"] } });
+    return call;
+  }
 
   // Added to every request: Luma answers in the person's own language and dialect.
   const langNote = () => "\n\nLanguage: reply in the same language and dialect the person writes in (for example Iraqi Arabic if they write Iraqi, Gulf if Gulf, Egyptian if Egyptian, English if English), matching their words and spelling style. "
@@ -1362,7 +1428,7 @@ ${last}${langNote()}`;
   // ================= the sky =================
   const sky = (() => {
     const cv = document.getElementById("sky"), cx = cv.getContext("2d");
-    const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const still = () => matchMedia("(prefers-reduced-motion: reduce)").matches && !fullMotion();
     let W = 0, H = 0, F = 0, floorTarget = 0, count = 0, golden = 0;
     let flies = [], goldFlies = [], lanterns = [], sparks = [], userStars = [], newcomer = null, shooting = null, lastShoot = 0;
     const waveBuf = new Uint8Array(1024);
@@ -1379,7 +1445,7 @@ ${last}${langNote()}`;
     // The land sits just above the panel, so the meadow is never hidden behind it.
     function setFloor(y) {
       floorTarget = Math.max(H * 0.34, Math.min(H * 0.86, y));
-      if (!F || still) F = floorTarget;
+      if (!F || still()) F = floorTarget;
     }
     const farY = (x) => F - 46 + Math.sin(x / W * 5.2 + 1) * 22 + Math.sin(x / W * 13) * 7;
     const nearY = (x) => F + 6 + Math.sin(x / W * 3.4 + 2.2) * 16 + Math.sin(x / W * 9.1) * 6;
@@ -1400,7 +1466,7 @@ ${last}${langNote()}`;
       cx.fillStyle = g; cx.beginPath(); cx.arc(x, y, r, 0, 6.3); cx.fill();
     }
     function moveFly(f, speed) {
-      if (still) return;
+      if (still()) return;
       f.vx += rnd(-0.03, 0.03) * speed; f.vy += rnd(-0.03, 0.03) * speed;
       f.vx = Math.max(-0.45, Math.min(0.45, f.vx)) ; f.vy = Math.max(-0.35, Math.min(0.35, f.vy));
       f.x += f.vx * speed; f.y += f.vy * speed;
@@ -2963,8 +3029,7 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
     // "Reduce motion" (e.g. Windows animation effects off) keeps the whole intro, just calmer:
     // no shaking or zoom bumps, soft flashes, no glass shards or speed lines.
     // The person can switch the intro back to full motion; that choice is remembered on this device.
-    const FX_LS = "firefly-intro-fx", reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const fullFx = () => { try { return localStorage.getItem(FX_LS) === "full"; } catch (e) { return false; } };
+    const FX_LS = MOTION_LS, reduce = matchMedia("(prefers-reduced-motion: reduce)").matches, fullFx = fullMotion;
     let calm = reduce && !fullFx();
     function flash(o = 0.9, ms = 150) { anim(layer("i-flash"), [{ opacity: calm ? Math.min(o, 0.2) : o }, { opacity: 0 }], calm ? 300 : ms); }
     function slash(color, ms = 300) {
@@ -3266,7 +3331,7 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
       start.onkeydown = (e) => { if (e.key === "Enter" || e.key === " ") begin(); };
       root.querySelector(".i-skip").onclick = () => { sound.ensure(); finish(); };
       const fx = root.querySelector(".i-fx");
-      const showFx = () => { calm = reduce && !fullFx(); root.classList.toggle("i-full", !calm); if (fx) fx.setAttribute("aria-pressed", String(!calm)); };
+      const showFx = () => { calm = reduce && !fullFx(); root.classList.toggle("i-full", !calm); document.documentElement.classList.toggle("ff-full", fullFx()); if (fx) fx.setAttribute("aria-pressed", String(!calm)); };
       showFx();
       if (fx) fx.onclick = () => { try { localStorage.setItem(FX_LS, calm ? "full" : "calm"); } catch (e) {} showFx(); };
     }

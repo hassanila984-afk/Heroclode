@@ -1,0 +1,8 @@
+name = "firefly"
+pages_build_output_dir = "../firefly"
+compatibility_date = "2026-10-01"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+MODEL = "claude-opus-5-5"
+DAILY_LIMIT = "1500"

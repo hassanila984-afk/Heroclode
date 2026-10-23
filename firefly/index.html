@@ -568,6 +568,9 @@
       watchNoSupport: "iPad and phones don't let any web page see the screen live 🥺 Open me on a computer (Chrome is best) and we'll watch together!",
       watchBlocked: "Screen sharing isn't allowed here 🥺 Send me a screenshot instead 📷",
       watchEnded: "That was fun! Again sometime? 🌙", attach: "Send a picture", picSent: "📷",
+      watchEye: "This page can't see your screen directly, so I opened a little window 👀 Press “Share screen” there!",
+      watchPopup: "Your browser blocked my little window 🥺 Allow pop-ups for this page and try again.",
+      eyeAsk: "Luma wants to watch with you 👀", eyeBtn: "Share screen", eyeOn: "Luma is watching 👀 Keep this little window open (you can put it behind others).", eyeFail: "Couldn't share the screen here",
       tonesTitle: "Brainwave tones",
       tonesNote: "Binaural beats: each ear hears a slightly different tone, and the brain perceives a slow pulse between them. Use headphones. Studies on their effect are mixed, but many people find them calming. Pair with rain or brown noise.",
       tone_off: "Off", tone_alpha: "Unwind · 10 Hz alpha", tone_theta: "Deep calm · 6 Hz theta", tone_delta: "Sleep · 2.5 Hz delta",
@@ -668,6 +671,9 @@
       watchNoSupport: "الآيباد والهواتف لا تسمح لأي صفحة ويب برؤية الشاشة مباشرة 🥺 افتحني من الحاسبة (Chrome أفضل) ونشاهد معًا!",
       watchBlocked: "مشاركة الشاشة غير مسموحة هنا 🥺 أرسل لي لقطة شاشة بدلًا منها 📷",
       watchEnded: "كانت حلوة! نعيدها مرة ثانية؟ 🌙", attach: "أرسل صورة", picSent: "📷",
+      watchEye: "هذه الصفحة لا تستطيع رؤية شاشتك مباشرة، ففتحت نافذة صغيرة 👀 اضغط «شارك الشاشة» فيها!",
+      watchPopup: "المتصفح منع نافذتي الصغيرة 🥺 اسمح بالنوافذ المنبثقة لهذه الصفحة وحاول مرة ثانية.",
+      eyeAsk: "لُمى تريد أن تشاهد معك 👀", eyeBtn: "شارك الشاشة", eyeOn: "لُمى تشاهد 👀 أبقِ هذه النافذة الصغيرة مفتوحة (تقدر تخليها خلف النوافذ).", eyeFail: "تعذّرت مشاركة الشاشة هنا",
       tonesTitle: "نغمات موجات الدماغ",
       tonesNote: "النبضات الثنائية: تسمع كل أذن نغمة مختلفة قليلًا، فيُدرك الدماغ نبضًا بطيئًا بينهما. استخدم سماعات الرأس. نتائج الدراسات حول تأثيرها متباينة، لكن كثيرين يجدونها مهدّئة. جرّبها مع المطر أو الضجيج البنّي.",
       tone_off: "إيقاف", tone_alpha: "استرخاء · ألفا ١٠ هرتز", tone_theta: "هدوء عميق · ثيتا ٦ هرتز", tone_delta: "نوم · دلتا ٢٫٥ هرتز",
@@ -2137,7 +2143,7 @@ ${last}${langNote()}`;
     }
     showQuick(session.replies || []);
     if (!free) $("#next").onclick = () => show("release");
-    cleanup = () => { if (ctl) ctl.abort(); stopWatch(false); dropFloat(); if (free) remember(session); };
+    cleanup = () => { if (ctl) ctl.abort(); stopWatch(false); dropEye(); dropFloat(); if (free) remember(session); };
     if (!session.turns.length) lumaOpen();
 
 
@@ -2186,21 +2192,86 @@ ${last}${langNote()}`;
     async function startWatch() {
       if (W.on || ctl) return;
       if (!canShare) { addMsg("luma", t("watchNoSupport")); luma.set("chibi:sad"); return; }
+      W.starting = true;
       openFloat();   // in the same tap, so the browser allows it
       let st;
       try { st = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 2 }, audio: false }); }
       catch (e) {
-        closeFloat();
+        W.starting = false; closeFloat();
         if (!box.isConnected) return;
-        // a plain "cancel" stays silent; a blocked page explains itself
-        if (e && (/polic|disallow/i.test(e.message || "") || !["NotAllowedError", "AbortError"].includes(e.name))) { addMsg("luma", t("watchBlocked")); luma.set("chibi:sad"); }
+        // the page is not allowed to capture (claude.ai's frame): watch through a small window of our own
+        if (e && /polic|disallow/i.test(e.message || "")) return openEye();
+        // a plain "cancel" stays silent
+        if (e && !["NotAllowedError", "AbortError"].includes(e.name)) { addMsg("luma", t("watchBlocked")); luma.set("chibi:sad"); }
         return;
       }
+      W.starting = false;
       if (!box.isConnected) { st.getTracks().forEach((x) => x.stop()); return; }
-      W.on = true; W.stream = st; W.track = st.getVideoTracks()[0];
+      W.stream = st; W.track = st.getVideoTracks()[0];
       W.track.onended = () => stopWatch(true);
       W.video = document.createElement("video"); W.video.muted = true; W.video.playsInline = true; W.video.srcObject = st; W.video.play().catch(() => {});
       try { W.grabber = window.ImageCapture ? new ImageCapture(W.track) : null; } catch (e) { W.grabber = null; }
+      watching();
+    }
+    // Luma's eye: a small window of its own (not inside claude.ai's frame, so it may capture the screen).
+    // It shares the screen there and hands frames back to this page on request.
+    function openEye() {
+      const page = `<!doctype html><html><head><meta charset="utf-8"><title>Luma 👀</title></head>
+<body style="margin:0;height:100vh;display:grid;place-items:center;text-align:center;background:#0e0b26;color:#fbf7ff;font:15px system-ui,sans-serif" dir="${document.documentElement.dir}">
+<div style="padding:16px"><img src="${new URL(poseImg("chibi", "excited"), location.href).href}" alt="" style="height:96px"><p id="t">${t("eyeAsk")}</p>
+<button id="b" style="font:600 16px system-ui,sans-serif;padding:12px 20px;border:0;border-radius:999px;background:#ffd27a;color:#07051a;cursor:pointer">${t("eyeBtn")}</button></div>
+<script>
+const b = document.getElementById("b"), tx = document.getElementById("t"), home = window.opener;
+let cap = null;
+const say = (m) => { try { home.postMessage(Object.assign({ luma: "eye" }, m), "*"); } catch (e) {} };
+b.onclick = async () => {
+  try {
+    const st = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 2 }, audio: false });
+    cap = document.createElement("video"); cap.muted = true; cap.srcObject = st; await cap.play();
+    st.getVideoTracks()[0].onended = () => { say({ on: false }); window.close(); };
+    tx.textContent = ${JSON.stringify(t("eyeOn"))}; b.hidden = true; say({ on: true });
+  } catch (e) { tx.textContent = ${JSON.stringify(t("eyeFail"))} + " (" + e.name + ")"; say({ failed: e.name + ": " + e.message }); }
+};
+addEventListener("message", async (e) => {
+  if (!e.data || e.data.luma !== "grab" || !cap || !cap.videoWidth) return;
+  const k = Math.min(1, 1280 / Math.max(cap.videoWidth, cap.videoHeight)), c = document.createElement("canvas");
+  c.width = Math.round(cap.videoWidth * k); c.height = Math.round(cap.videoHeight * k);
+  c.getContext("2d").drawImage(cap, 0, 0, c.width, c.height);
+  const bm = await createImageBitmap(c);
+  e.source.postMessage({ luma: "frame", id: e.data.id, bm }, "*", [bm]);
+});
+addEventListener("pagehide", () => say({ on: false }));
+<\/script></body></html>`;
+      let win = null;
+      try { win = window.open(URL.createObjectURL(new Blob([page], { type: "text/html" })), "luma-eye", "popup,width=420,height=300"); } catch (e) {}
+      if (!win) { addMsg("luma", t("watchPopup")); luma.set("chibi:sad"); return; }
+      W.eye = win;
+      addEventListener("message", onEye);
+      addMsg("luma", t("watchEye")); luma.set("chibi:excited");
+    }
+    function onEye(e) {
+      if (!W.eye || e.source !== W.eye || !e.data) return;
+      const d = e.data;
+      if (d.luma === "frame" && W.pending && W.pending.id === d.id) { W.pending.done(d.bm); W.pending = null; }
+      if (d.luma !== "eye") return;
+      if (d.on === true && !W.on && box.isConnected) watching();
+      else if (d.on === false) { if (W.on) stopWatch(true); dropEye(); }
+    }
+    function dropEye() {
+      removeEventListener("message", onEye);
+      if (W.eye) { try { W.eye.close(); } catch (e) {} W.eye = null; }
+    }
+    // a frame from the eye window, as an ImageBitmap (or null after 2 s)
+    function eyeFrame() {
+      return new Promise((done) => {
+        const id = Math.random().toString(36).slice(2);
+        W.pending = { id, done };
+        try { W.eye.postMessage({ luma: "grab", id }, "*"); } catch (e) { W.pending = null; return done(null); }
+        setTimeout(() => { if (W.pending && W.pending.id === id) { W.pending = null; done(null); } }, 2000);
+      });
+    }
+    function watching() {
+      W.on = true;
       W.last = null; W.lastLook = 0; W.lastSpoke = 0; W.awaiting = false;
       $("#watchbar").hidden = false; $("#watch").hidden = true; $("#wfloat").hidden = !F.video;
       $("#hint").textContent = t("watchNote");
@@ -2212,9 +2283,10 @@ ${last}${langNote()}`;
     function stopWatch(said) {
       if (!W.on) return;
       W.on = false; ticker(false);
-      W.stream.getTracks().forEach((x) => x.stop());
-      W.video.srcObject = null;
+      if (W.stream) W.stream.getTracks().forEach((x) => x.stop());
+      if (W.video) W.video.srcObject = null;
       W.stream = W.track = W.video = W.grabber = null;
+      dropEye();
       closeFloat();
       if (box.isConnected) {
         $("#watchbar").hidden = true; $("#watch").hidden = false; $("#hint").textContent = t("aiHint");
@@ -2235,6 +2307,7 @@ ${last}${langNote()}`;
       } catch (e) { W.worker = null; W.tick = setInterval(check, 3000); }
     }
     async function grab() {
+      if (W.eye) { const bm = await eyeFrame(); return bm ? { src: bm, w: bm.width, h: bm.height } : null; }
       try { if (W.grabber) { const b = await W.grabber.grabFrame(); return { src: b, w: b.width, h: b.height }; } } catch (e) {}
       const v = W.video;
       return v && v.videoWidth ? { src: v, w: v.videoWidth, h: v.videoHeight } : null;
@@ -2326,6 +2399,7 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
       v.style.cssText = "position:fixed;left:0;bottom:0;width:2px;height:2px;opacity:0;pointer-events:none";
       document.body.appendChild(v);
       F.canvas = c; F.video = v;
+      v.addEventListener("enterpictureinpicture", () => { if (!W.on && !W.starting) closeFloat(); });
       drawFloat("👀");
       v.play().catch(() => {});
     }

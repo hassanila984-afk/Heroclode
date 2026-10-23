@@ -232,6 +232,9 @@
   .i-tap { margin-top: 26px; font-size: 18px; letter-spacing: .32em; color: var(--ik); background: var(--ig); padding: 8px 16px 6px; transform: skewX(-12deg); box-shadow: 5px 5px 0 var(--iv); animation: iFadeUp .6s ease .6s both, iPulse 1.1s ease-in-out 1.2s infinite; }
   .i-hint { font-family: var(--body); font-size: 13px; color: rgba(251, 247, 255, .6); margin-top: 6px; animation: iFadeUp .6s ease .8s both; }
   .i-peek { position: absolute; bottom: -4vh; left: 50%; height: 30vh; transform: translateX(-50%); z-index: 1; animation: iPeek .9s cubic-bezier(.3, 1.5, .5, 1) .5s both, iBob 2.6s ease-in-out 1.5s infinite; }
+  .i-fx { position: absolute; z-index: 9; top: calc(env(safe-area-inset-top, 0px) + 14px); left: max(14px, env(safe-area-inset-left, 0px));
+    font: 600 14px var(--body); color: var(--iw); background: rgba(255, 255, 255, .1); border: 1px solid rgba(255, 255, 255, .25); border-radius: 999px; padding: 8px 14px; cursor: pointer; }
+  .i-fx[aria-pressed="true"] { background: var(--ig); color: var(--ik); border-color: var(--ig); }
   .i-skip { position: absolute; z-index: 9; top: calc(env(safe-area-inset-top, 0px) + 14px); right: max(14px, env(safe-area-inset-right, 0px));
     font: 600 14px var(--body); color: var(--iw); background: rgba(255, 255, 255, .1); border: 1px solid rgba(255, 255, 255, .25); border-radius: 999px; padding: 8px 14px; }
   /* the picture is framed portrait (phone-shaped) and centered; colour layers still fill the whole screen on iPad and desktop */
@@ -438,7 +441,8 @@
     .panel { padding: 18px 16px 16px; gap: 11px; }
   }
   @media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after { animation: none !important; transition: none !important; }
+    /* everything stays still, except an intro the person switched to full motion */
+    :not(#intro.i-full, #intro.i-full *), :not(#intro.i-full *)::before, :not(#intro.i-full *)::after { animation: none !important; transition: none !important; }
   }
 </style>
 
@@ -2910,7 +2914,10 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
     }
     // "Reduce motion" (e.g. Windows animation effects off) keeps the whole intro, just calmer:
     // no shaking or zoom bumps, soft flashes, no glass shards or speed lines.
-    const calm = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    // The person can switch the intro back to full motion; that choice is remembered on this device.
+    const FX_LS = "firefly-intro-fx", reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const fullFx = () => { try { return localStorage.getItem(FX_LS) === "full"; } catch (e) { return false; } };
+    let calm = reduce && !fullFx();
     function flash(o = 0.9, ms = 150) { anim(layer("i-flash"), [{ opacity: calm ? Math.min(o, 0.2) : o }, { opacity: 0 }], calm ? 300 : ms); }
     function slash(color, ms = 300) {
       const d = layer("i-slash", `background:${color};inset:-10% auto -10% 0;width:55%`);
@@ -3092,6 +3099,7 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
       sound.unlock();
       const st = root.querySelector(".i-start");
       st.style.pointerEvents = "none";
+      const fxBtn = root.querySelector(".i-fx"); if (fxBtn) fxBtn.remove();
       // everything is normally decoded while the title shows; on a slow line, wait (up to 6 s)
       if (!isReady) { const tap = st.querySelector(".i-tap"); if (tap) tap.textContent = "LOADING…"; }
       await Promise.race([ready, new Promise((r) => setTimeout(r, 6000))]);
@@ -3126,7 +3134,8 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
           <div class="i-hint">🎧 ${lang === "ar" ? "شغّل الصوت" : "Sound on"}</div>
           <img class="i-peek" src="${poseImg("chibi", "excited")}" alt="">
         </div>
-        <button class="i-skip" type="button">${lang === "ar" ? "تخطَّ ›" : "Skip ›"}</button>`;
+        <button class="i-skip" type="button">${lang === "ar" ? "تخطَّ ›" : "Skip ›"}</button>
+        ${reduce ? `<button class="i-fx" type="button" aria-pressed="false">✨ ${lang === "ar" ? "حركة كاملة" : "Full motion"}</button>` : ""}`;
       document.body.appendChild(root);
       shaker = root.querySelector(".i-shake");
       stage = root.querySelector(".i-stage");
@@ -3137,6 +3146,10 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
       start.onclick = begin;
       start.onkeydown = (e) => { if (e.key === "Enter" || e.key === " ") begin(); };
       root.querySelector(".i-skip").onclick = () => { sound.ensure(); finish(); };
+      const fx = root.querySelector(".i-fx");
+      const showFx = () => { calm = reduce && !fullFx(); root.classList.toggle("i-full", !calm); if (fx) fx.setAttribute("aria-pressed", String(!calm)); };
+      showFx();
+      if (fx) fx.onclick = () => { try { localStorage.setItem(FX_LS, calm ? "full" : "calm"); } catch (e) {} showFx(); };
     }
     return { play };
   })();

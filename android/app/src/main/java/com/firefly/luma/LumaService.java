@@ -59,7 +59,7 @@ public class LumaService extends Service {
     private ImageView face;
     private TextView words;
     private WindowManager.LayoutParams lp;
-    private final Runnable hideWords = () -> { if (words != null) words.setVisibility(View.GONE); stopWiggle(); tuck(); };
+    private final Runnable hideWords = this::wordsDone;
 
     // ----- her life on the screen: she peeks from an edge, comes out to talk, dozes when it's quiet -----
     private TextView zz;
@@ -167,19 +167,26 @@ public class LumaService extends Service {
     // ----- the bubble -----
     private int dp(float v) { return (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, v, getResources().getDisplayMetrics()); }
 
+    // the bubble: [face] beside [her words / the reply box]; on the right edge the panel sits on her left
+    private android.widget.FrameLayout faceBox;
+    private LinearLayout panel;
+    private LinearLayout inputRow;
+    private android.widget.EditText input;
+    private long lastTap;
+
     private void addBubble() {
         if (bubble != null) return;
         bubble = new LinearLayout(this);
-        bubble.setOrientation(LinearLayout.VERTICAL);
-        bubble.setGravity(Gravity.CENTER_HORIZONTAL);
+        bubble.setOrientation(LinearLayout.HORIZONTAL);
+        bubble.setGravity(Gravity.CENTER_VERTICAL);
+        bubble.setClipChildren(false);
+        bubble.setClipToPadding(false);
 
-        zz = new TextView(this);
-        zz.setText("z z");
-        zz.setTextColor(0xFFFFD27A);
-        zz.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);
-        zz.setVisibility(View.GONE);
-        bubble.addView(zz, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT));
-
+        // her face, with room around it for little effects (hearts, sparkles, z's)
+        faceBox = new android.widget.FrameLayout(this);
+        faceBox.setClipChildren(false);
+        int room = dp(16);
+        faceBox.setPadding(room, room, room, room / 2);
         face = new ImageView(this);
         face.setScaleType(ImageView.ScaleType.CENTER_CROP);
         GradientDrawable ring = new GradientDrawable();
@@ -194,12 +201,23 @@ public class LumaService extends Service {
             @Override public void getOutline(View v, Outline o) { o.setOval(0, 0, v.getWidth(), v.getHeight()); }
         });
         face.setElevation(dp(6));
-        bubble.addView(face, new LinearLayout.LayoutParams(dp(68), dp(68)));
+        faceBox.addView(face, new android.widget.FrameLayout.LayoutParams(dp(68), dp(68)));
+        zz = new TextView(this);
+        zz.setText("z z");
+        zz.setTextColor(0xFFFFD27A);
+        zz.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);
+        zz.setVisibility(View.GONE);
+        android.widget.FrameLayout.LayoutParams zp = new android.widget.FrameLayout.LayoutParams(-2, -2, Gravity.TOP | Gravity.END);
+        zp.topMargin = -dp(12);
+        faceBox.addView(zz, zp);
 
+        // her words and the reply box, beside her
+        panel = new LinearLayout(this);
+        panel.setOrientation(LinearLayout.VERTICAL);
         words = new TextView(this);
         words.setTextColor(0xFF1A1440);
         words.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
-        words.setMaxWidth(dp(220));
+        words.setMaxWidth(dp(210));
         words.setPadding(dp(12), dp(8), dp(12), dp(8));
         GradientDrawable card = new GradientDrawable();
         card.setColor(0xFFFFFFFF);
@@ -207,9 +225,43 @@ public class LumaService extends Service {
         words.setBackground(card);
         words.setElevation(dp(6));
         words.setVisibility(View.GONE);
-        LinearLayout.LayoutParams wp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        wp.topMargin = dp(6);
-        bubble.addView(words, wp);
+        panel.addView(words, new LinearLayout.LayoutParams(-2, -2));
+
+        inputRow = new LinearLayout(this);
+        inputRow.setOrientation(LinearLayout.HORIZONTAL);
+        inputRow.setGravity(Gravity.CENTER_VERTICAL);
+        GradientDrawable pill = new GradientDrawable();
+        pill.setColor(0xF01A1342);
+        pill.setCornerRadius(dp(22));
+        pill.setStroke(dp(1), 0x55FFD27A);
+        inputRow.setBackground(pill);
+        inputRow.setPadding(dp(10), dp(2), dp(4), dp(2));
+        input = new android.widget.EditText(this);
+        input.setHint("Say something…");
+        input.setHintTextColor(0x99C9C2EA);
+        input.setTextColor(0xFFFBF7FF);
+        input.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+        input.setBackground(null);
+        input.setSingleLine(true);
+        input.setImeOptions(android.view.inputmethod.EditorInfo.IME_ACTION_SEND);
+        input.setOnEditorActionListener((v, id, ev) -> { sendTyped(); return true; });
+        inputRow.addView(input, new LinearLayout.LayoutParams(dp(170), -2));
+        TextView go = new TextView(this);
+        go.setText("➤");
+        go.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+        go.setTextColor(0xFF07051A);
+        go.setGravity(Gravity.CENTER);
+        GradientDrawable gold = new GradientDrawable();
+        gold.setShape(GradientDrawable.OVAL);
+        gold.setColor(0xFFFFD27A);
+        go.setBackground(gold);
+        go.setOnClickListener(v -> sendTyped());
+        inputRow.addView(go, new LinearLayout.LayoutParams(dp(34), dp(34)));
+        inputRow.setVisibility(View.GONE);
+        LinearLayout.LayoutParams ip = new LinearLayout.LayoutParams(-2, -2);
+        ip.topMargin = dp(6);
+        panel.addView(inputRow, ip);
+        panel.setVisibility(View.GONE);
 
         lp = new WindowManager.LayoutParams(
                 WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.WRAP_CONTENT,
@@ -221,14 +273,97 @@ public class LumaService extends Service {
         lp.x = screen.widthPixels;
         lp.y = screen.heightPixels / 3;
         side = 1;
+        arrange();
         setFace("happy");
-        dragAndTap(bubble);
+        dragAndTap(faceBox);
         wm.addView(bubble, lp);
         if (appOpen) bubble.setVisibility(View.GONE);
         lastActivity = System.currentTimeMillis();
         main.postDelayed(this::tuck, 150);
         main.removeCallbacks(life);
         main.postDelayed(life, 45_000);
+    }
+
+    private void wordsDone() {
+        if (words != null) words.setVisibility(View.GONE);
+        if (panel != null && inputRow.getVisibility() != View.VISIBLE) panel.setVisibility(View.GONE);
+        stopWiggle();
+        tuck();
+    }
+
+    /** Face and panel in the right order for the edge she's on (the panel always faces the screen). */
+    private void arrange() {
+        if (bubble == null) return;
+        bubble.removeAllViews();
+        LinearLayout.LayoutParams pp = new LinearLayout.LayoutParams(-2, -2);
+        if (side == 0) { bubble.addView(faceBox); pp.leftMargin = -dp(8); bubble.addView(panel, pp); }
+        else { pp.rightMargin = -dp(8); bubble.addView(panel, pp); bubble.addView(faceBox); }
+        panel.setGravity(side == 0 ? Gravity.START : Gravity.END);
+    }
+
+    /** Double-tap: a small reply box opens beside her, with the keyboard. */
+    private void openInput() {
+        if (bubble == null) return;
+        wake();
+        main.removeCallbacks(hideWords);
+        panel.setVisibility(View.VISIBLE);
+        inputRow.setVisibility(View.VISIBLE);
+        lp.flags &= ~WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;   // the box needs the keyboard
+        try { wm.updateViewLayout(bubble, lp); } catch (Exception ignored) { }
+        comeOut(false);
+        input.requestFocus();
+        main.postDelayed(() -> {
+            android.view.inputmethod.InputMethodManager im = (android.view.inputmethod.InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+            if (im != null && input != null) im.showSoftInput(input, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT);
+        }, 150);
+    }
+
+    private void closeInput() {
+        if (bubble == null) return;
+        android.view.inputmethod.InputMethodManager im = (android.view.inputmethod.InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+        if (im != null) im.hideSoftInputFromWindow(input.getWindowToken(), 0);
+        inputRow.setVisibility(View.GONE);
+        if (words.getVisibility() != View.VISIBLE) panel.setVisibility(View.GONE);
+        lp.flags |= WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
+        try { wm.updateViewLayout(bubble, lp); } catch (Exception ignored) { }
+    }
+
+    private void sendTyped() {
+        String t = input.getText().toString().trim();
+        input.setText("");
+        closeInput();
+        if (t.isEmpty()) { tuck(); return; }
+        show("…", "listening");
+        if (MainActivity.current != null) MainActivity.current.js("window.__nativeBubbleSend && __nativeBubbleSend(" + org.json.JSONObject.quote(t) + ")");
+    }
+
+    /** Little effects around her face, by feeling. */
+    private void sparkle(String mood) {
+        if (faceBox == null) return;
+        String fx;
+        switch (mood == null ? "" : mood) {
+            case "happy": fx = "💕"; break;
+            case "shy": fx = "💗"; break;
+            case "excited": fx = "✨"; break;
+            case "pout": case "ignore": fx = "💢"; break;
+            case "sad": fx = "💧"; break;
+            case "thinking": fx = "💭"; break;
+            default: return;
+        }
+        for (int k = 0; k < 3; k++) {
+            final int n = k;
+            main.postDelayed(() -> {
+                if (faceBox == null) return;
+                TextView p = new TextView(this);
+                p.setText(fx);
+                p.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14 + n * 2);
+                android.widget.FrameLayout.LayoutParams fp = new android.widget.FrameLayout.LayoutParams(-2, -2, Gravity.TOP | (n % 2 == 0 ? Gravity.START : Gravity.END));
+                fp.topMargin = dp(10 + n * 6);
+                faceBox.addView(p, fp);
+                p.animate().translationY(-dp(34)).translationX((n % 2 == 0 ? -1 : 1) * dp(8)).alpha(0).setDuration(1100)
+                        .withEndAction(() -> { if (faceBox != null) faceBox.removeView(p); }).start();
+            }, k * 180L);
+        }
     }
 
     private void removeBubble() {
@@ -239,7 +374,7 @@ public class LumaService extends Service {
         asleep = false;
         showCloseTarget(false);
         if (bubble != null) { try { wm.removeView(bubble); } catch (Exception ignored) { } }
-        bubble = null; face = null; words = null;
+        bubble = null; face = null; words = null; faceBox = null; panel = null; inputRow = null; input = null;
         if (MainActivity.current != null) MainActivity.current.js("window.__nativeBubble && __nativeBubble(false)");
     }
 
@@ -305,13 +440,22 @@ public class LumaService extends Service {
                     if (drop) { removeBubble(); stopIfIdle(); }
                     else if (moved[0]) snapToEdge();
                     else if (!moved[0] && bubble != null && e.getActionMasked() == MotionEvent.ACTION_UP) {
-                        startActivity(new Intent(this, MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_REORDER_TO_FRONT));
+                        long now = System.currentTimeMillis();
+                        if (now - lastTap < 350) {   // double-tap: type to her right here
+                            main.removeCallbacks(openApp);
+                            if (inputRow.getVisibility() == View.VISIBLE) closeInput(); else openInput();
+                        } else main.postDelayed(openApp, 360);   // single tap: open Firefly
+                        lastTap = now;
                     }
                     return true;
             }
             return false;
         });
     }
+
+    private final Runnable openApp = () -> {
+        if (bubble != null) startActivity(new Intent(this, MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_REORDER_TO_FRONT));
+    };
 
     private void stopIfIdle() {
         if (bubble == null && projection == null) { stopForeground(STOP_FOREGROUND_REMOVE); stopSelf(); }
@@ -343,10 +487,12 @@ public class LumaService extends Service {
         if (mood != null && !mood.isEmpty()) {
             setFace(mood);
             hop();
+            sparkle(mood);
         }
         if (talking) {
             String t = text.trim();
             words.setText(t.length() > 160 ? t.substring(0, 157) + "…" : t);
+            panel.setVisibility(View.VISIBLE);
             words.setVisibility(View.VISIBLE);
             words.setAlpha(0); words.setScaleX(0.85f); words.setScaleY(0.85f);
             words.animate().alpha(1).scaleX(1).scaleY(1).setDuration(220).start();
@@ -383,8 +529,8 @@ public class LumaService extends Service {
     /** Half hidden past the edge, peeking out, as if she were behind the app. */
     private void tuck() {
         if (bubble == null || face == null) return;
-        int fw = dp(68), x = side == 0 ? -(int) (fw * 0.45f) : screenW() - (int) (fw * 0.55f);
-        moveTo(x - (side == 0 ? 0 : (bubble.getWidth() - fw) / 2), clampY(lp.y), 520);
+        int box = dp(68) + dp(32), x = side == 0 ? -(int) (box * 0.5f) : screenW() - (int) (box * 0.5f);
+        moveTo(x, clampY(lp.y), 520);
         face.animate().rotation(side == 0 ? 16 : -16).setDuration(400).start();
     }
 
@@ -399,14 +545,16 @@ public class LumaService extends Service {
     }
 
     private void snapToEdge() {
-        side = lp.x + dp(34) < screenW() / 2 ? 0 : 1;
+        int was = side;
+        side = lp.x + dp(50) < screenW() / 2 ? 0 : 1;
+        if (side != was) arrange();
         if (words.getVisibility() == View.VISIBLE) comeOut(false); else tuck();
     }
 
     /** Every few minutes of quiet she slides out a little, looks around, and hides again. */
     private void curiousPeek() {
         if (bubble == null) return;
-        int fw = dp(68), x = side == 0 ? dp(4) : screenW() - fw - dp(4);
+        int box = dp(68) + dp(32), x = side == 0 ? -dp(10) : screenW() - box + dp(10);
         moveTo(x, clampY(lp.y + (int) ((Math.random() - 0.5) * dp(160))), 600);
         face.animate().rotation(0).setDuration(300).start();
         main.postDelayed(this::tuck, 2200);

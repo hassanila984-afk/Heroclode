@@ -239,6 +239,12 @@ public class MainActivity extends Activity {
                 voice.speak(text, TextToSpeech.QUEUE_FLUSH, null, "luma");
             });
         }
+        // ----- things she can do on the phone when asked (each opens the right app; nothing is sent or bought) -----
+        @JavascriptInterface public String doAction(String name, String arg) {
+            try { return Actions.run(MainActivity.this, name, arg == null ? "" : arg.trim()); }
+            catch (Exception e) { return "failed"; }
+        }
+
         @JavascriptInterface public void stopSpeaking() { runOnUiThread(() -> { if (voice != null) voice.stop(); }); }
     }
 }

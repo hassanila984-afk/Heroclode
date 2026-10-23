@@ -42,6 +42,8 @@ export async function onRequestPost({ request, env }) {
   const model = MODELS.includes(env.MODEL) ? env.MODEL : "claude-haiku-5-5";
   const client = new Anthropic({ apiKey: key, defaultHeaders: { "x-api-key": key } });
   const params = { model, max_tokens: 1500, output_config: { effort: "low" }, messages };
+  // she may look things up on the web for a chat reply (not while glancing at the screen)
+  if (!images.length) params.tools = [{ type: "web_search_20250305", name: "web_search", max_uses: 3 }];
   // Opus and Sonnet can hand a refused reply to another model instead of failing
   const stream = model === "claude-haiku-5-5"
     ? client.messages.stream(params)

@@ -22,7 +22,7 @@ const TONE = {
 };
 // when she sings (s=1): a little song, voice only
 const SINGING = "singing softly, a sweet lullaby melody, held notes";
-const MAX_TEXT = 600;
+const MAX_TEXT = 900;
 
 // GET /api/voice?t=<text>&v=<voice>: streamed, for <audio src>. POST {text, voice}: the same, for fetch().
 export async function onRequestGet({ request, env }) {

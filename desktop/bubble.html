@@ -116,7 +116,7 @@
   function frame(t) {
     requestAnimationFrame(frame);
     // 30 frames a second is plenty for her (12 asleep): light on the computer
-    if (document.hidden || t - lastFrame < (asleep ? 80 : 32)) return;
+    if (document.hidden || t - lastFrame < (asleep || gaming ? 80 : 32)) return;
     lastFrame = t;
     // settle everything a little each frame
     const going = me.mode === "fly" || me.mode === "walk";
@@ -225,16 +225,31 @@
     if (!down) return;
     const dx = e.screenX - down.sx, dy = e.screenY - down.sy;
     if (!down.moved && Math.abs(dx) + Math.abs(dy) < 6) return;
+    if (!down.moved) grabbed();
     down.moved = true; lastDrag = Date.now();
     if (down.b && Number.isFinite(dx) && Number.isFinite(dy)) { host.move(down.b.x + dx, down.b.y + dy); body.at(down.b.x + dx, down.b.y + dy); }
   });
   window.addEventListener("mouseup", () => {
     if (!down) return;
     const wasMove = down.moved; down = null;
-    if (wasMove) { arrange(); return; }
+    if (wasMove) { dropped(); arrange(); return; }
     if (clickTimer) { clearTimeout(clickTimer); clickTimer = 0; openInput(); return; }
     clickTimer = setTimeout(() => { clickTimer = 0; host.open(); }, 320);
   });
+  // picked up with the mouse: she reacts (sparkles trailing, swinging with the drag), and again when put down
+  const PICKED = [["excited", "wheee~ ✨"], ["pout", "hey! put me down 😤"], ["shy", "w-where are we going?"], ["excited", "faster faster!"], ["pout", "hmph, I was comfy there"], ["shy", "eek! careful~"], ["excited", "I'm flying!! 🕊️"]];
+  const DROPPED = [["happy", "okay, I like it here~"], ["pout", "next time ask first 😤"], ["happy", "new spot, nice ✨"], ["shy", "that was kinda fun…"], ["happy", "hehe again?"], ["pout", "my hair is a mess now"]];
+  let lastPick = -1;
+  const pick = (list) => { let i; do i = Math.floor(Math.random() * list.length); while (list.length > 1 && i === lastPick); lastPick = i; return list[i]; };
+  function grabbed() {
+    wake(); body.go("fly");
+    if ($("ask").style.display === "flex") return;   // she's asking them something: no jokes over it
+    const [m, w] = pick(PICKED); setMood(m); sparkle(m); showWords(w);
+  }
+  function dropped() {
+    body.go(null);
+    if (Math.random() < 0.6) { const [m, w] = pick(DROPPED); setMood(m); hop(); showWords(w); }
+  }
   function openInput() { wake(); arrange(); $("input").style.display = "flex"; host.mouse(true); host.typing(true); setTimeout(() => $("say").focus(), 50); }
   function closeInput() { $("input").style.display = "none"; $("say").value = ""; host.mouse(false); }
   $("input").onsubmit = (e) => { e.preventDefault(); const t = $("say").value.trim(); closeInput(); if (t) { host.send(t); showWords("…", true); } };
@@ -248,7 +263,10 @@
     const b = host.where(), x0 = b.x, y0 = b.y, t0 = performance.now();
     const lift = fly ? Math.min(220, Math.hypot(x - x0, y - y0) * 0.35) : 0;   // how high the arc goes
     body.go(fly ? "fly" : "walk");
+    let lastMove = 0;
     const step = (now) => {
+      if (now - lastMove < 33 && now - t0 < ms) { walking = requestAnimationFrame(step); return; }
+      lastMove = now;
       const k = Math.min(1, (now - t0) / ms), e = k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
       const nx = x0 + (x - x0) * e, ny = y0 + (y - y0) * e - lift * Math.sin(Math.PI * e);
       if (Number.isFinite(nx) && Number.isFinite(ny)) { host.move(nx, ny); body.at(nx, ny); }
@@ -262,8 +280,11 @@
     if (r < 0.4) return [a.x + Math.random() * (a.width - W), bottom];
     return [r < 0.7 ? a.x - 8 : a.x + a.width - W + 8, a.y + 40 + Math.random() * (a.height - H - 80)];
   }
+  // while they play a game she sits still (no window moving over the game, nothing to slow it down)
+  let gaming = false;
+  host.on("game", (on) => { gaming = !!on; if (gaming) stopWalk(); });
   function wander() {
-    if (!busy() && !asleep && Date.now() - lastDrag > 60000) {
+    if (!busy() && !asleep && !gaming && Date.now() - lastDrag > 60000) {
       const a = host.area(), r = Math.random();
       if (r < 0.55) {
         // up into the screen for a little flight, a float in the air, then back to an edge
@@ -273,7 +294,7 @@
       else walkTo(a.x + Math.random() * (a.width - W), a.y + a.height - H, 2600);   // a little walk on the taskbar
     }
     if (!asleep && Date.now() - lastActive > 8 * 60000) { asleep = true; setMood("sleepy"); face.classList.add("sleep"); }
-    setTimeout(wander, 15000 + Math.random() * 20000);
+    setTimeout(wander, 45000 + Math.random() * 45000);   // now and then, not all the time
   }
   setTimeout(() => { arrange(); wander(); }, 4000);
 </script>

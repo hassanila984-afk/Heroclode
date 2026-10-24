@@ -3,7 +3,6 @@ import { configured, sessionFrom, sameOrigin, json, apiKey } from "../../lib/aut
 
 // Luma's brain on Firefly's own site. Only signed-in devices may call it, the model is fixed on the
 // server, and every request is size-capped, so a stolen page or cookie can't run up a big bill.
-const MODELS = ["claude-haiku-5-5", "claude-sonnet-5-5", "claude-opus-5-5"];
 const MAX_BODY = 3_500_000, MAX_TURNS = 40, MAX_TEXT = 60_000, MAX_IMAGES = 2, MAX_IMAGE_B64 = 1_500_000;
 
 export async function onRequestPost({ request, env, waitUntil }) {
@@ -39,28 +38,44 @@ export async function onRequestPost({ request, env, waitUntil }) {
   const lastTurn = messages[messages.length - 1].content;
   images.forEach((data) => lastTurn.unshift({ type: "image", source: { type: "base64", media_type: "image/jpeg", data } }));
 
-  const model = MODELS.includes(env.MODEL) ? env.MODEL : "claude-haiku-5-5";
+  // Sonnet, so she follows the conversation and doesn't go round in circles. Chat: no thinking first (it
+  // only delays her first word). A real task (a puzzle, math, code, homework…; the page marks it): she
+  // thinks it through first.
+  const hard = body.hard === true;
+  const model = "claude-sonnet-5-5";
   const client = new Anthropic({ apiKey: key, defaultHeaders: { "x-api-key": key } });
-  // chat replies: no thinking (it only delays her first word), and the long, steady start of the
-  // conversation (her personality) is cached so it isn't re-read from scratch every turn
-  const params = { model, max_tokens: 1500, output_config: { effort: "low" }, thinking: { type: "disabled" }, cache_control: { type: "ephemeral" }, messages };
+  // the long, steady start of the conversation (her personality) is cached so it isn't re-read every turn
+  const params = hard
+    ? { model, max_tokens: 16000, output_config: { effort: "medium" }, thinking: { type: "adaptive" }, cache_control: { type: "ephemeral" }, messages }
+    : { model, max_tokens: 2000, output_config: { effort: "low" }, thinking: model === "claude-sonnet-5-5" ? { type: "between_tools" } : { type: "disabled" }, cache_control: { type: "ephemeral" }, messages };
   // she may look things up on the web for a chat reply (not while glancing at the screen)
-  if (!images.length) params.tools = [{ type: "web_search_20250305", name: "web_search", max_uses: 3 }];
+  if (!images.length) params.tools = [model === "claude-haiku-5-5" ? { type: "web_search_20250305", name: "web_search", max_uses: 3 } : { type: "web_search_20250305", name: "web_search", max_uses: 3 }];
   // Opus and Sonnet can hand a refused reply to another model instead of failing
-  const stream = model === "claude-haiku-5-5"
-    ? client.messages.stream(params)
-    : client.beta.messages.stream(Object.assign(params, { betas: ["server-side-fallback-2026-07-01"], fallbacks: "default" }));
+  const open = (p) => p.model === "claude-haiku-5-5"
+    ? client.messages.stream(p)
+    : client.beta.messages.stream(Object.assign({}, p, { betas: ["server-side-fallback-2026-07-01"], fallbacks: "default" }));
+  // if the thinking model can't answer at all, the usual one does (she never just goes quiet)
+  const quick = { model: "claude-haiku-5-5", max_tokens: 1500, output_config: { effort: "low" }, thinking: { type: "disabled" }, cache_control: { type: "ephemeral" }, messages,
+    tools: images.length ? undefined : [{ type: "web_search_20250305", name: "web_search", max_uses: 3 }] };
+  if (!quick.tools) delete quick.tools;
 
   // stream the text back as server-sent events: {t} pieces, then {done} or {error}
   const out = new TransformStream(), w = out.writable.getWriter(), te = new TextEncoder();
   const send = (o) => w.write(te.encode(`data: ${JSON.stringify(o)}\n\n`));
   (async () => {
-    try {
+    let sent = false;
+    const run = async (p) => {
+      const stream = open(p);
       for await (const ev of stream) {
-        if (ev.type === "content_block_delta" && ev.delta.type === "text_delta") await send({ t: ev.delta.text });
+        if (ev.type === "content_block_delta" && ev.delta.type === "text_delta") { sent = true; await send({ t: ev.delta.text }); }
       }
-      const msg = await stream.finalMessage();
-      await send(msg.stop_reason === "refusal" ? { error: "refused" } : { done: true });
+      return stream.finalMessage();
+    };
+    try {
+      let msg;
+      try { msg = await run(params); }
+      catch (e) { if (sent || params.model === "claude-haiku-5-5") throw e; msg = await run(quick); }
+      await send(msg.stop_reason === "refusal" ? { error: "refused" } : { done: true, by: msg.model });
     } catch (e) {
       const code = e instanceof Anthropic.RateLimitError ? "rate_limited"
         : e instanceof Anthropic.AuthenticationError ? "not_configured"

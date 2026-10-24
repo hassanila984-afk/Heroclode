@@ -22,6 +22,9 @@ let scroll = null;                 // { timer, every, app }
 // buttons), so nothing she does could ever look like a cheat to anti-cheat software. She herself stays.
 const GAMES = /valorant|FortniteClient|\bcs2\b|csgo|League of Legends|LeagueClient|r5apex|GTA5|RainbowSix|Overwatch|ModernWarfare|BlackOps|\bcod\b|Warzone|EscapeFromTarkov|TslGame|PUBG|RocketLeague|Destiny2|dota2|FiveM|RobloxPlayer|Minecraft|eldenring|Diablo|\bWow\b|Battlefield|bf2042|deadlock|Marvel|TheFinals|Palworld|Genshin|ZenlessZoneZero|StarRail|osu|eFootball|FC2[0-9]|fifa/i;
 let gaming = false;
+// full screen but not a game they're playing: browsers, video players, and someone else's stream (Discord, Twitch…)
+const WATCHING = /chrome|msedge|firefox|opera|brave|vivaldi|vlc|mpc|potplayer|netflix|Video\.UI|Photos|discord|twitch|obs64|obs32|streamlabs|kick|youtube|spotify|steamwebhelper|teams|zoom|skype|whatsapp|telegram/i;
+let gamingKnown = false;   // the game is a known one (not just something full screen)
 
 function init(o) { opts = o || {}; }
 
@@ -67,9 +70,10 @@ async function pollForeground() {
   const r = await ask("fg");
   // a known game, or anything full screen that isn't a browser or video player (a full-screen YouTube isn't a game)
   const nowGaming = !!(r && r.hwnd && !/Firefly|electron|explorer/i.test(r.app || "") &&
-    (GAMES.test(r.app || "") || GAMES.test(r.title || "") || (r.fullscreen && !/chrome|msedge|firefox|opera|brave|vivaldi|vlc|mpc|potplayer|netflix|Video\.UI|Photos/i.test(r.app || ""))));
+    (GAMES.test(r.app || "") || GAMES.test(r.title || "") || (r.fullscreen && !WATCHING.test(r.app || "") && !WATCHING.test(r.title || ""))));
   if (nowGaming !== gaming) {
     gaming = nowGaming;
+    gamingKnown = nowGaming && (GAMES.test(r.app || "") || GAMES.test(r.title || ""));
     if (gaming) stopAutoScroll();
     if (opts.onGame) opts.onGame(gaming);
   }
@@ -101,7 +105,7 @@ async function refreshApps() {
 // ---------- what she sees in their window (button and field names) ----------
 function screenNow() {
   if (!target) return "";
-  if (gaming) return JSON.stringify({ app: (target && target.app) || "a game", game: true });
+  if (gaming) return JSON.stringify({ app: (target && target.app) || "a game", game: true, known: gamingKnown });
   if (Date.now() - snap.at > 3000) refreshScreen();
   return snap.json;
 }

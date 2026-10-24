@@ -196,6 +196,14 @@ function askCode(text) {
 }
 
 app.whenReady().then(() => {
+  // Firefly asking for the computer's sound (to hear friends who call her by name, e.g. on Discord): the
+  // whole screen's sound, with no picker. Only her own site's page can ask.
+  session.defaultSession.setDisplayMediaRequestHandler((req, cb) => {
+    let ok = false;
+    try { ok = new URL(req.frame ? req.frame.url : req.securityOrigin || "").host === HOST; } catch (e) {}
+    if (!ok) return cb({});
+    desktopCapturer.getSources({ types: ["screen"] }).then(([src]) => cb(src ? Object.assign({ video: src }, process.platform === "win32" ? { audio: "loopback" } : {}) : {})).catch(() => cb({}));
+  });
   // the mic for calls; nothing else is allowed to the page
   session.defaultSession.setPermissionRequestHandler((wc, perm, cb) => cb(perm === "media" || perm === "notifications"));
   session.defaultSession.setPermissionCheckHandler((wc, perm) => perm === "media" || perm === "notifications");
@@ -206,7 +214,7 @@ app.whenReady().then(() => {
   globalShortcut.register("CommandOrControl+Shift+L", startCall);
   hands.init({
     onAutoScrollStop: () => toBubble("say", { text: "Okay, stopped scrolling~", mood: "happy" }),
-    onGame: (on) => { if (on) toBubble("say", { text: "Game time! 🎮 My hands are off while you play, so no ban worries~", mood: "excited" }); },
+    onGame: (on) => { toBubble("game", on); if (on) toBubble("say", { text: "Game time! 🎮 My hands are off while you play, so no ban worries~", mood: "excited" }); },
   });
   hands.watch();   // which window is in front, so games are left alone
   if (settings.control) hands.start();

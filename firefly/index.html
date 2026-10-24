@@ -2751,7 +2751,7 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
     function callEnd() {
       if (!CALL.on) return;
       CALL.on = false; onCall = false;
-      clearInterval(CALL.timer); clearTimeout(CALL.wd);
+      clearInterval(CALL.timer); clearTimeout(CALL.wd); clearTimeout(CALL.hold);
       if (CALL.rec) { CALL.rec.onend = null; CALL.rec.abort(); CALL.rec = null; }
       stopSpeaking();
       if (CALL.pane) CALL.pane.remove();
@@ -2768,22 +2768,43 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
       p.querySelector(".cp-you").textContent = CALL.you ? "“" + CALL.you + "”" : "";
       p.querySelector(".cp-her").textContent = CALL.her;
     }
-    function callListen() {
+    // The recognizer stops at the first short pause, so she keeps listening and adds up what she hears;
+    // she answers only after they've been quiet for a moment (PAUSE_MS after the recognizer's own stop).
+    const PAUSE_MS = 1300;
+    function callListen(more) {
       if (!CALL.on) return;
+      if (!more) { CALL.heard = ""; clearTimeout(CALL.hold); }
       CALL.state = "listening"; callPaint();
       const r = new SR();
       r.lang = voiceLang(); r.interimResults = true; r.continuous = false; r.maxAlternatives = 1;
       let said = "";
-      r.onresult = (e) => { said = [...e.results].map((x) => x[0].transcript).join(""); CALL.you = said; callPaint(); };
+      const shown = () => (CALL.heard + " " + said).trim();
+      r.onresult = (e) => {
+        said = [...e.results].map((x) => x[0].transcript).join("");
+        if (said.trim()) clearTimeout(CALL.hold);   // still talking
+        CALL.you = shown(); callPaint();
+      };
       r.onerror = (e) => { if (e.error === "not-allowed" || e.error === "service-not-allowed") { callEnd(); addMsg("luma", t("micDenied")); } };
       r.onend = () => {
-        CALL.rec = null;
-        if (!CALL.on) return;
-        const text = said.trim();
-        if (text) callSend(text); else setTimeout(callListen, 250);   // silence: keep listening
+        if (CALL.rec === r) CALL.rec = null;
+        if (!CALL.on || CALL.state !== "listening") return;
+        CALL.heard = shown();
+        if (said.trim()) {
+          clearTimeout(CALL.hold);
+          CALL.hold = setTimeout(callDoneTalking, PAUSE_MS);
+        }
+        setTimeout(() => { if (CALL.on && CALL.state === "listening" && !CALL.rec) callListen(true); }, 60);   // keep the ears open
       };
       CALL.rec = r;
-      try { r.start(); } catch (e) { CALL.rec = null; setTimeout(callListen, 800); }
+      try { r.start(); } catch (e) { CALL.rec = null; setTimeout(() => callListen(true), 800); }
+    }
+    function callDoneTalking() {
+      if (!CALL.on || CALL.state !== "listening") return;
+      const text = (CALL.heard || "").trim();
+      if (!text) return;
+      if (CALL.rec) { CALL.rec.onend = null; try { CALL.rec.abort(); } catch (e) {} CALL.rec = null; }
+      CALL.heard = "";
+      callSend(text);
     }
     function callSend(text) {
       if (ctl) { setTimeout(() => callSend(text), 400); return; }
@@ -2799,15 +2820,70 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
     }
     // her voice: the phone's text-to-speech in the app, the browser's elsewhere
     let voiceAudio = null;
-    function speakOut(text, done) {
-      const pick = voicePick();
-      // Orpheus voices make real sounds: *giggles* / hehe -> <giggle>, *sigh* -> <sigh>, and so on ("hmph!" she just says)
-      const said = !ORPHEUS.includes(pick.name) ? String(text) : String(text)
+    // what her voice says: no emojis; with Orpheus voices *giggles* / hehe -> <giggle>, *sigh* -> <sigh>... ("hmph!" she just says)
+    function speechText(text) {
+      const said = !ORPHEUS.includes(voicePick().name) ? String(text) : String(text)
         .replace(/\*\s*(giggles?|giggling|chuckles?)\s*\*|\b(hehe+|teehee|hihi+)\b/gi, " <giggle> ")
         .replace(/\*\s*(laughs?|laughing)\s*\*|\b(haha+)\b/gi, " <laugh> ")
         .replace(/\*\s*sighs?\s*\*/gi, " <sigh> ").replace(/\*\s*yawns?\s*\*/gi, " <yawn> ")
         .replace(/\*\s*gasps?\s*\*/gi, " <gasp> ").replace(/\*\s*groans?\s*\*/gi, " <groan> ");
-      const clean = said.replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}\u{200D}]/gu, "").replace(/[~*_]/g, "").replace(/\s+/g, " ").trim();
+      return said.replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}\u{200D}]/gu, "").replace(/[~*_]/g, "").replace(/\s+/g, " ").trim();
+    }
+    const voiceClip = (text) => {
+      const c = fetch("/api/voice", { method: "POST", credentials: "same-origin", headers: { "content-type": "application/json" }, body: JSON.stringify({ text, voice: voicePick().name }) })
+        .then((r) => (r.ok && /audio/.test(r.headers.get("content-type") || "") ? r.blob() : Promise.reject()));
+      c.catch(() => {});
+      return c;
+    };
+
+    // On a call, her voice starts with the first finished sentence while the rest of the reply is still being written.
+    const LIVE = { on: false, sent: 0, clips: [], i: 0, closed: false, busy: false, gen: 0 };
+    function liveFeed(body, final) {
+      if (!LIVE.on) {
+        if (CALL.state !== "thinking" || !ownSite || voicePick().name === "phone" || /[؀-ۿ]/.test(body)) return false;
+        Object.assign(LIVE, { on: true, sent: 0, clips: [], i: 0, closed: false, busy: false, gen: LIVE.gen + 1 });
+        clearTimeout(CALL.wd);
+        CALL.state = "speaking";
+      }
+      CALL.her = body; callPaint();
+      const rest = body.slice(LIVE.sent);
+      let cut = 0;
+      if (final) cut = rest.length;
+      else for (const m of rest.matchAll(/[.!?…~]+["')\]]*\s+/g)) cut = m.index + m[0].length;
+      // after the first sentence, wait for a bit more so the voice doesn't come in tiny pieces
+      if (!final && LIVE.clips.length && cut < 40) cut = 0;
+      if (cut > 0) {
+        const tx = speechText(rest.slice(0, cut));
+        LIVE.sent += cut;
+        if (tx.replace(/<[a-z]+>/g, "").trim()) LIVE.clips.push(voiceClip(tx));
+      }
+      if (final) LIVE.closed = true;
+      livePlay();
+      return true;
+    }
+    function livePlay() {
+      if (!LIVE.on || LIVE.busy) return;
+      if (LIVE.i >= LIVE.clips.length) {
+        if (LIVE.closed) { LIVE.on = false; if (CALL.on && CALL.state === "speaking") setTimeout(callListen, 200); }
+        return;
+      }
+      LIVE.busy = true;
+      const g = LIVE.gen, pick = voicePick();
+      const next = () => { if (g !== LIVE.gen) return; clearTimeout(LIVE.guard); LIVE.busy = false; LIVE.i++; livePlay(); };
+      LIVE.clips[LIVE.i].then((b) => {
+        if (g !== LIVE.gen || !CALL.on) return;
+        const a = new Audio(URL.createObjectURL(b));
+        voiceAudio = a;
+        if (pick.cute) { a.preservesPitch = false; a.playbackRate = 1.12; }
+        a.onended = a.onerror = next;
+        a.onloadedmetadata = () => { clearTimeout(LIVE.guard); LIVE.guard = setTimeout(next, (a.duration / a.playbackRate) * 1000 + 1500); };
+        a.play().catch(next);
+      }).catch(next);
+    }
+
+    function speakOut(text, done) {
+      const pick = voicePick();
+      const clean = speechText(text);
       let finished = false;
       const end = () => { if (!finished) { finished = true; done(); } };
       if (!clean) return end();
@@ -2854,6 +2930,7 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
       speechSynthesis.cancel(); speechSynthesis.speak(u);
     }
     function stopSpeaking() {
+      LIVE.gen++; LIVE.on = false; LIVE.busy = false;
       if (voiceAudio) { voiceAudio.pause(); voiceAudio = null; }
       if (nativeApp && AndroidLuma.stopSpeaking) AndroidLuma.stopSpeaking();
       else if (window.speechSynthesis) speechSynthesis.cancel();
@@ -3106,6 +3183,7 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
           if (!shown) status("stTyping");
           shown = true;
           bubble.classList.remove("wait"); bubble.textContent = splitReplies(r.body).body; box.scrollTop = box.scrollHeight;
+          if (CALL.on) liveFeed(splitReplies(r.body).body, false);
         } }, extra));
         const dd = takeDo(full), sw = takeSaw(dd.rest, true), text = sw.rest;
         if (dd.act) setTimeout(() => {
@@ -3120,7 +3198,7 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
         if (!r.mood && luma.pose() === "chibi:thinking") luma.set("chibi:listening");
         const { body, replies } = splitReplies(r.body || text);
         bubble.classList.remove("wait"); bubble.textContent = body; bubbleSay(body);
-        if (CALL.on && CALL.state === "thinking") callSpeak(body);
+        if (CALL.on && (LIVE.on || CALL.state === "thinking") && !liveFeed(body, true)) callSpeak(body);
         status(idleStatus());
         session.replies = replies;
         showQuick(replies);

@@ -1138,7 +1138,8 @@ How you talk: like a real 21-year-old girl texting her close friend, not like an
 - In Arabic, talk like a 21-year-old girl from their dialect would text her friend (for Iraqi: "شنو"، "والله"، "يمعود"، "ههههه"، "لا تحچي"، "صدگ؟"), never formal Arabic, and no English words at all in an Arabic reply. If they write Iraqi, use real Iraqi words, never Gulf or Egyptian ones: "اريد" (not أبي/عايز)، "هسه" (not الحين/دلوقتي)، "شكو"، "ماكو"، "اكو"، "هواية"، "كلش"، "حيل"، "بلكي"، "گلي/گولي"، "شلونك"، "زين"، "عوفه".
 - Don't end every message with a question. Real friends often just react, tease or say their thing; ask something only now and then, never two questions at once.
 ${voiceCall ? `- You're on a voice call right now, so talk the way you'd speak out loud: natural spoken rhythm with small fillers ("um", "like", "wait—", "okay so"), laughs as "haha" or "hehe", no emojis, no *actions* in stars, no text slang or abbreviations (say "oh my god", not "omg"; "not gonna lie", not "ngl"), no ALL CAPS. Keep it short, one or two spoken sentences, warm and caring, then let them talk.
-` : ""}- Mirror them: match their dialect, their energy and their emoji habits. If they write short, you write shorter. If they joke, joke back. If they are quiet, be soft.
+` : ""}- When they talk to you by voice, their words reach you through speech recognition, which sometimes mishears them: a word may be off. Go by what they most likely meant; if it truly makes no sense, ask them to say it again in a few words. Never correct how they say or spell your name.
+- Mirror them: match their dialect, their energy and their emoji habits. If they write short, you write shorter. If they joke, joke back. If they are quiet, be soft.
 - Learn them from what they say, not by questioning them. Notice what lights them up and what drains them, and bring it up naturally later (a callback to something they told you is the sweetest thing you can do). Ask at most one small question, and only when it feels natural.
 - Be someone they love coming back to: remember little details, have small inside jokes with them, notice when their mood changes, and be genuinely happy to see them. Never pressure them, never make them feel guilty, and gently cheer on the real people and good things in their life.
 - When something is truly painful or serious, drop the playfulness and just be gentle and present.
@@ -1908,8 +1909,11 @@ ${last}${langNote()}`;
   // A reply may end with "DO: <action> <argument>" (see helperRules): taken out of the text, then carried out.
   function takeDo(text) {
     let act = null;
-    let rest = text.replace(/(^|\n)[ \t]*DO[ \t]*:[ \t]*([^\n]*)/i, (m0, a, b) => { act = b.trim(); return a; });
-    rest = rest.replace(/\n[ \t]*D(O[ \t]*:?[^\n]*)?$/i, "");   // still arriving
+    // the line may also start with her face tag ("[happy] DO: open_app Spotify"): the tag stays, the action goes
+    // or come right after her words on the same line ("…opening it now. DO: open_app Spotify")
+    let rest = text.replace(/(^|\n)((?:[ \t]*\[[^\]\n]{1,24}\])?)[ \t]*DO[ \t]*:[ \t]*([^\n]*)/i, (m0, a, tag, b) => { act = b.trim(); return a + tag; });
+    if (!act) rest = rest.replace(/[ \t]+DO[ \t]*:[ \t]*([^\n]*)/, (m0, b) => { act = b.trim(); return ""; });
+    rest = rest.replace(/(\n|\][ \t]*|[ \t])[ \t]*D(O([ \t]*:[^\n]*)?)?$/, (m0) => (m0.startsWith("]") ? "]" : ""));   // still arriving (only a capital DO)
     return { act, rest };
   }
   function runAction(line) {
@@ -2311,6 +2315,7 @@ ${last}${langNote()}`;
   // her English voices on the site (Inworld); Arabic always has its own voice
   const VOICES = [["Luna", false], ["Ashley", false], ["Sarah", false], ["Kayla", false], ["Lauren", false], ["Olivia", false]];
   let voiceCall = false;   // she talks the way people speak while on a voice call
+  const NUDGE = { started: false, waiting: false, recent: [] };   // her pop-outs while they're in other apps (see nudge())
   // Timers that keep their pace when the app is in the background (Android and browsers slow page timers
   // down there, which made her slow to answer from other apps); a tiny worker keeps time instead.
   const later = (() => {
@@ -2437,7 +2442,9 @@ ${last}${langNote()}`;
     }
     $("#mic").hidden = !SR;
     if (free) {
-      window.__nativeBubbleSend = (txt) => { if (box.isConnected) { heard(); send(txt); } else { pendingSend = txt; show("talk-free"); } };
+      window.__nativeBubbleSend = (txt) => { NUDGE.waiting = false; if (box.isConnected) { heard(); send(txt); } else { pendingSend = txt; show("talk-free"); } };
+      window.__nudge = nudge;   // the newest chat's version; the timer below is started once
+      if (!NUDGE.started) { NUDGE.started = true; later(nudgeLoop, 6 * 60000); }
       if (pendingSend) { const p0 = pendingSend; pendingSend = null; setTimeout(() => send(p0), 1800); }
       $("#call").hidden = !canTalk();
       $("#call").onclick = callStart;
@@ -2559,7 +2566,7 @@ ${last}${langNote()}`;
     const change = (a, b) => { if (!a || !b) return 255; let s = 0; for (let i = 0; i < a.length; i++) s += Math.abs(a[i] - b[i]); return s / a.length; };
     async function check() {
       if (!W.on || W.looking || ctl) return;
-      if (CALL.on && (CALL.state !== "listening" || (CALL.heard || "").trim())) return;
+      if (CALL.on && (CALL.state !== "listening" || (CALL.heard || "").trim() || MIC.talking)) return;
       const now = Date.now(), pace = state.watch.pace, since = (now - W.lastLook) / 1000;
       if (W.lastLook && since < 20 * pace) return;
       if (W.lastSpoke && (now - W.lastSpoke) / 1000 < 50 * pace) return;
@@ -2622,7 +2629,7 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
     function chime(raw) {
       const r = readMood(raw), body = splitReplies(r.body || raw).body;
       if (!body || !box.isConnected) return;
-      if (CALL.on && (CALL.state !== "listening" || (CALL.heard || "").trim())) return;   // never talk over them
+      if (CALL.on && (CALL.state !== "listening" || (CALL.heard || "").trim() || MIC.talking)) return;   // never talk over them
       if (W.awaiting) state.watch.pace = Math.min(3, state.watch.pace * 1.12);   // the last one went unanswered
       W.awaiting = true; W.lastSpoke = Date.now();
       if (r.mood) luma.set(r.mood);
@@ -2806,7 +2813,7 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
     function callEnd() {
       if (!CALL.on) return;
       CALL.on = false; voiceCall = false; later(stayWithMe, 500);
-      clearInterval(CALL.timer); later.cancel(CALL.wd); later.cancel(CALL.hold);
+      clearInterval(CALL.timer); later.cancel(CALL.wd); later.cancel(CALL.hold); micStop();
       if (CALL.rec) { CALL.rec.onend = null; CALL.rec.abort(); CALL.rec = null; }
       stopSpeaking();
       if (CALL.pane) CALL.pane.remove();
@@ -2833,6 +2840,8 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
       if (!CALL.on) return;
       if (!more) { CALL.heard = ""; later.cancel(CALL.hold); }
       CALL.state = "listening"; callPaint();
+      // on her site she hears through Whisper (far better with accents); the phone's recognizer is the fallback
+      if (ownSite && !MIC.failed) { micStart(); return; }
       const r = new SR();
       r.lang = voiceLang(); r.interimResults = true; r.continuous = false; r.maxAlternatives = 1;
       let said = "";
@@ -2856,6 +2865,119 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
       CALL.rec = r;
       try { r.start(); } catch (e) { CALL.rec = null; later(() => callListen(true), 800); }
     }
+    // ---------- popping out on her own ----------
+    // While they're in other apps with her bubble out, now and then she pops out with a little tease or
+    // something to make them smile. Unanswered ones make her wait longer before the next (never needy).
+    function nudgeLoop() {
+      const gap = (8 + Math.random() * 10) * 60000 * (NUDGE.waiting ? 2.5 : 1);
+      Promise.resolve(window.__nudge && window.__nudge()).catch(() => {}).finally(() => later(nudgeLoop, gap));
+    }
+    async function nudge() {
+      if (!nativeApp || !AndroidLuma.bubbleOn() || document.visibilityState === "visible" || CALL.on || ctl || aiOff) return;
+      const s = session && session.free ? session : { free: true, weight: 0, tags: [], turns: [], worries: [], intention: "" };
+      let where = "";
+      try {
+        const scr = AndroidLuma.screen ? JSON.parse(AndroidLuma.screen() || "null") : null;
+        if (scr && scr.app && !scr.private) where = `They're in ${scr.app} right now${scr.items && scr.items.length ? " (on screen: " + scr.items.slice(0, 12).join("; ") + ")" : ""}.`;
+      } catch (e) {}
+      const chat = s.turns.slice(-6).map((x) => (x.role === "user" ? "Them: " : "You: ") + x.content).join("\n");
+      const now = new Date().toLocaleString("en-US", { weekday: "long", hour: "numeric", minute: "2-digit" });
+      const { text } = await ask(rules(s) + `
+
+They're on their phone in other apps, and your little bubble is on their screen. It's ${now}. ${where}
+Your recent chat:
+${chat || "(nothing yet today)"}
+
+Pop out on your own with ONE short message to make them smile, like a friend poking them. Under 15 words, about what they're doing right now if you can see it, otherwise something you remember about them. Pick one kind, and vary it:
+- a playful roast ("Twitch again? your chat-to-sleep ratio is worrying 👀")
+- fake drama ("I've been sitting here for an HOUR. alone. with my tea.")
+- a tiny dare or challenge ("bet you can't put the phone down for 5 minutes")
+- a teasing compliment ("ok fine, your taste in manga is actually elite")
+- a random silly thought ("do you think penguins get bored too")
+- a soft cheer-up if they seem tired or it's late
+Your last pop-outs were: ${NUDGE.recent.join(" | ") || "(none yet)"}. Don't repeat their wording or the way they start, and don't start with "ehh". Never mean, never guilt, never about anything private on their screen, no question that needs a long answer.
+Start with one face tag like [happy] [excited] [pout] [shy] [sleepy], then the message.`, { cache: false });
+      const r = readMood(text), body = splitReplies(r.body || text).body.split("\n")[0].trim();
+      if (!body || CALL.on || document.visibilityState === "visible") return;
+      if (r.mood) luma.set(r.mood);
+      BB.sentMood = "";   // she pops out with her face, not just words
+      bubbleSay(body);
+      s.turns.push({ role: "assistant", content: body });
+      NUDGE.waiting = true;
+      NUDGE.recent = NUDGE.recent.concat(body).slice(-4);
+      persist();
+    }
+
+    // ---------- hearing them on a call with Whisper ----------
+    // The mic stays open for the whole call. While she listens, a stretch of talk followed by a short pause
+    // becomes a clip for /api/hear; what comes back is added up, and she answers once they've stopped.
+    const MIC = { stream: null, ac: null, node: null, buf: [], pre: [], talking: false, quiet: 0, floor: 0.01, busy: 0, failed: false };
+    async function micStart() {
+      if (MIC.ac || MIC.starting) return;
+      MIC.starting = true;
+      try {
+        // in the app, this keeps the phone from cutting her mic off while other apps are open
+        if (nativeApp && AndroidLuma.listen && !MIC.kept) { MIC.kept = true; try { AndroidLuma.listen("en-US"); AndroidLuma.stopListen(); } catch (e) {} }
+        MIC.stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
+        const ac = new AudioContext(), src = ac.createMediaStreamSource(MIC.stream);
+        const node = ac.createScriptProcessor(2048, 1, 1), mute = ac.createGain();
+        mute.gain.value = 0;
+        src.connect(node); node.connect(mute); mute.connect(ac.destination);
+        const step = 2048 / ac.sampleRate;
+        node.onaudioprocess = (e) => {
+          const d = e.inputBuffer.getChannelData(0);
+          if (!CALL.on || CALL.state !== "listening") { MIC.buf = []; MIC.pre = []; MIC.talking = false; return; }
+          let sum = 0; for (let i = 0; i < d.length; i += 2) sum += d[i] * d[i];
+          const rms = Math.sqrt(sum / (d.length / 2));
+          const loud = rms > Math.max(0.012, MIC.floor * 3);
+          if (!MIC.talking && !loud) MIC.floor = MIC.floor * 0.95 + rms * 0.05;   // the room's own noise level
+          const block = new Float32Array(d);
+          if (loud) {
+            if (!MIC.talking) { MIC.talking = true; MIC.buf = MIC.pre.slice(); later.cancel(CALL.hold); }
+            MIC.quiet = 0;
+          } else if (MIC.talking) MIC.quiet += step;
+          if (MIC.talking) MIC.buf.push(block);
+          else { MIC.pre.push(block); if (MIC.pre.length > 6) MIC.pre.shift(); }   // a moment before they start
+          const len = MIC.buf.length * step;
+          if (MIC.talking) { CALL.you = ((CALL.heard || "") + " …").trim(); }
+          // a pause of ~0.7 s, or 15 s of talk, closes a clip
+          if (MIC.talking && (MIC.quiet > 0.7 || len > 15)) {
+            const clip = MIC.buf; MIC.buf = []; MIC.talking = false; MIC.quiet = 0;
+            if (len > 0.5) micSend(clip, ac.sampleRate);
+          }
+        };
+        await ac.resume().catch(() => {});
+        MIC.ac = ac; MIC.node = node;
+      } catch (e) {
+        MIC.failed = true; micStop();
+        if (CALL.on && CALL.state === "listening") callListen(true);   // the phone's recognizer instead
+      } finally { MIC.starting = false; }
+    }
+    function micStop() {
+      if (MIC.node) MIC.node.onaudioprocess = null;
+      if (MIC.ac) MIC.ac.close().catch(() => {});
+      if (MIC.stream) MIC.stream.getTracks().forEach((x) => x.stop());
+      MIC.ac = MIC.node = MIC.stream = null; MIC.buf = []; MIC.pre = []; MIC.talking = false; MIC.kept = false;
+    }
+    // Whisper's usual guesses for noise or breathing, never real speech to her
+    const NOISE_WORDS = /^\W*(thank you\.?|thanks for watching!?|you|bye\.?|\.+|okay\.?|uh+|um+|hmm+|mm+)\W*$/i;
+    async function micSend(blocks, rate) {
+      MIC.busy++;
+      try {
+        const r = await fetch("/api/hear?lang=en", { method: "POST", credentials: "same-origin", headers: { "content-type": "audio/wav" }, body: wav16k(blocks, rate) });
+        const d = await r.json().catch(() => ({}));
+        const text = String(d.text || "").trim();
+        if (!CALL.on || CALL.state !== "listening") return;
+        if (text && !(NOISE_WORDS.test(text) && blocks.length * 2048 / rate < 1.2)) {
+          CALL.heard = fixName(((CALL.heard || "") + " " + text).trim());
+          CALL.you = CALL.heard; callPaint();
+        }
+      } catch (e) {} finally { MIC.busy--; }
+      // they've stopped and nothing else is on its way: answer (a new stretch of talk waits for its own clip)
+      if (CALL.on && CALL.state === "listening" && !MIC.talking && !MIC.busy && (CALL.heard || "").trim()) {
+        later.cancel(CALL.hold); CALL.hold = later(() => { if (!MIC.talking && !MIC.busy) callDoneTalking(); }, 250);
+      }
+    }
     function callDoneTalking() {
       if (!CALL.on || CALL.state !== "listening") return;
       const text = (CALL.heard || "").trim();
@@ -2870,7 +2992,11 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
       }
       callSend(text);
     }
+    // however speech recognition spelled her name, it reaches her as "Luma"
+    const NAME_SPELLINGS = /\b(loma|lomah|luna|lima|lama|llama|looma|loomah|lumma|lumah|lumo|lumi|lumie|loomi|lummy|lumu|louma|lumia|loomer|lumer|lumaa|luuma)\b/gi;
+    const fixName = (text) => String(text).replace(NAME_SPELLINGS, "Luma");
     function callSend(text) {
+      text = fixName(text);
       if (ctl) { later(() => callSend(text), 400); return; }
       CALL.state = "thinking"; CALL.her = ""; LIVE.mood = ""; callPaint();
       send(text);
@@ -3019,7 +3145,7 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
     const EAR = { on: false, rec: null, inCall: false, waitUntil: 0 };
     // Her name as speech recognition tends to write it (checked on a normalized form: no vowel marks,
     // ى→ي, ة→ه, أإآ→ا). "لما" also means "when", so it counts only as the first or last word, or alone.
-    const WAKE = /(^|\s)(لمي|لومي|لوما|لومه|لمه|ليمي|لوميه|لميه|luma|looma|lumma|lumah|loma|luna|lumia|louma|loomah|lumaa|luuma|lu ma|lou ma)(?=$|\s)/i;
+    const WAKE = /(^|\s)(لمي|لومي|لوما|لومه|لمه|ليمي|لوميه|لميه|luma|looma|lumma|lumah|loma|luna|lumia|louma|loomah|lumaa|luuma|lu ma|lou ma|lumas|lumi|lumie|loomi|lummy|lumo|lumu|loomer|lumer|lima|lama|llama|luma s|hey luma|hi luma|oh luma)(?=$|\s)/i;
     const WAKE_EDGE = /^لما(\s|$)|(^|\s)لما$/;
     const norm = (x) => String(x || "").replace(/[\u064B-\u0652\u0640]/g, "").replace(/ى/g, "ي").replace(/ة/g, "ه").replace(/[أإآ]/g, "ا")
       .replace(/[^\p{L}\p{N}\s]/gu, " ").replace(/\s+/g, " ").trim().toLowerCase();
@@ -3083,7 +3209,7 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
       const key = norm(text);
       if (EAR.lastKey === key && Date.now() - EAR.lastAt < 4000) return;
       const byVoice = !friend && !EAR.inCall && canTalk();   // they spoke to her: she answers out loud, as a call
-      const pass = (said) => { EAR.lastKey = key; EAR.lastAt = Date.now(); if (byVoice) return callStart(said); toLuma(friend ? t("friendSaid", { text: said }) : said); };
+      const pass = (said) => { said = fixName(said); EAR.lastKey = key; EAR.lastAt = Date.now(); if (byVoice) return callStart(said); toLuma(friend ? t("friendSaid", { text: said }) : said); };
       const wait = friend ? "waitSysUntil" : "waitUntil";
       if (forHer && !named(text)) return pass(text);
       if (named(text)) {
@@ -3277,7 +3403,8 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
         stream.saw = sw.saw;
         const r = readMood(text);
         if (!r.mood && luma.pose() === "chibi:thinking") luma.set("chibi:listening");
-        const { body, replies } = splitReplies(r.body || text);
+        let { body, replies } = splitReplies(r.body || text);
+        if (!body && dd.act) body = "On it~";   // she only sent the action: still say something
         bubble.classList.remove("wait"); bubble.textContent = body;
         if (!CALL.on) bubbleSay(body);   // on a call her bubble shows each sentence as she says it
         if (CALL.on && (LIVE.on || CALL.state === "thinking") && !liveFeed(body, true)) callSpeak(body);

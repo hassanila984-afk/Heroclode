@@ -2294,12 +2294,12 @@ ${last}${langNote()}`;
   }
   // her voice (picked on the You page): an Aura voice name, optionally pitched up a little
   // her English voices on the site (Inworld); Arabic always has its own voice
-  const VOICES = [["Ashley", false], ["Sarah", false], ["Luna", false], ["Kayla", false], ["Lauren", false], ["Olivia", false]];
+  const VOICES = [["Luna", false], ["Ashley", false], ["Sarah", false], ["Kayla", false], ["Lauren", false], ["Olivia", false]];
   let voiceCall = false;   // she talks the way people speak while on a voice call
   function voicePick() {
     let p = null;
-    try { p = JSON.parse(localStorage.getItem("firefly-voice-pick")); } catch (e) {}
-    return p && (p.name === "phone" || VOICES.some(([n]) => n === p.name)) ? p : { name: "Ashley", cute: false };   // older picks move to the default
+    try { p = JSON.parse(localStorage.getItem("firefly-voice-pick2")); } catch (e) {}
+    return p && (p.name === "phone" || VOICES.some(([n]) => n === p.name)) ? p : { name: "Luna", cute: false };   // Luna is her voice (older picks move to it)
   }
   // a message typed in the bubble while Firefly isn't on the chat: open it and send
   let pendingSend = null;
@@ -3634,7 +3634,7 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
       vp.value = cur.name === "phone" ? "phone" : String(Math.max(0, VOICES.findIndex(([n, c]) => n === cur.name && c === !!cur.cute)));
       vp.onchange = () => {
         const pick = vp.value === "phone" ? { name: "phone", cute: false } : { name: VOICES[+vp.value][0], cute: VOICES[+vp.value][1] };
-        try { localStorage.setItem("firefly-voice-pick", JSON.stringify(pick)); } catch (e) {}
+        try { localStorage.setItem("firefly-voice-pick2", JSON.stringify(pick)); } catch (e) {}
         tryVoice();
       };
     }

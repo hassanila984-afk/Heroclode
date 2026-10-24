@@ -6,7 +6,7 @@ import { configured, sessionFrom, sameOrigin, json, voiceKey } from "../../lib/a
 // TTS 2, told how to sound from her mood (warm and caring, bubbly, pouty…), so she never sounds flat;
 // Arabic uses its own native voice. Without the key, or if Inworld fails, Cloudflare's Aura voice is used.
 const MODEL = "inworld-ai/realtime-tts-2", ARABIC_MODEL = "inworld-ai/inworld-tts-1.5-max";
-const VOICES = ["Ashley", "Sarah", "Luna", "Kayla", "Lauren", "Olivia"];   // natural young women's voices, picked on the You page
+const VOICES = ["Luna", "Ashley", "Sarah", "Kayla", "Lauren", "Olivia"];   // natural young women's voices (Luna is hers); picked on the You page
 const ARABIC_VOICE = "Nour";
 // how she sounds, by the feeling she's showing as she says it: always a real person, never acted or cartoonish
 const NATURAL = "natural, like a real person chatting with a friend";

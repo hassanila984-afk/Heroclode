@@ -2380,7 +2380,7 @@ ${last}${langNote()}`;
   const APP_LATEST = 2.2;
   const appVersion = () => !nativeApp ? 0 : AndroidLuma.version ? parseFloat(AndroidLuma.version()) || 0
     : AndroidLuma.answerAsk ? 1.9 : AndroidLuma.accessOn ? 1.6 : AndroidLuma.doAction ? 1.5 : 1.4;
-  const DESKTOP_LATEST = 1.1;   // Firefly for Windows
+  const DESKTOP_LATEST = 1.2;   // Firefly for Windows
   const appOld = () => nativeApp && appVersion() < (desktopApp ? DESKTOP_LATEST : APP_LATEST);
   // opened through the phone's browser (the trailing dot makes it another address for the app), which downloads it
   const APK_URL = "https://firefly-3t9.pages.dev./firefly.apk";

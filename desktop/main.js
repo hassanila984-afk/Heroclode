@@ -13,6 +13,11 @@ const asset = (f) => path.join(__dirname, "assets", f);
 
 if (!app.requestSingleInstanceLock()) { app.quit(); return; }
 
+// Never an error window (it would pop up over a game): anything unexpected goes quietly to errors.log.
+const logError = (e) => { try { fs.appendFileSync(path.join(app.getPath("userData"), "errors.log"), new Date().toISOString() + " " + ((e && e.stack) || e) + "\n"); } catch (x) {} };
+process.on("uncaughtException", logError);
+process.on("unhandledRejection", logError);
+
 // ---------- settings (kept in the app's own folder) ----------
 const SETTINGS = path.join(app.getPath("userData"), "settings.json");
 let settings = { control: false, bubble: true, autostart: true, toldTray: false };
@@ -99,7 +104,11 @@ function syncBubble() {
 }
 const toBubble = (ch, data) => { if (bubble && !bubble.isDestroyed()) bubble.webContents.send(ch, data); };
 ipcMain.on("bubble:mouse", (e, over) => bubble && bubble.setIgnoreMouseEvents(!over, { forward: true }));
-ipcMain.on("bubble:move", (e, x, y) => bubble && bubble.setPosition(Math.round(x), Math.round(y)));
+ipcMain.on("bubble:move", (e, x, y) => {
+  x = Number(x); y = Number(y);
+  if (!bubble || bubble.isDestroyed() || !Number.isFinite(x) || !Number.isFinite(y)) return;   // a bad position is ignored, never a crash
+  bubble.setPosition(Math.max(-30000, Math.min(30000, Math.round(x))), Math.max(-30000, Math.min(30000, Math.round(y))));
+});
 ipcMain.on("bubble:where", (e) => { e.returnValue = bubble ? bubble.getBounds() : null; });
 ipcMain.on("bubble:area", (e) => { e.returnValue = screen.getDisplayMatching(bubble.getBounds()).workArea; });
 ipcMain.on("bubble:open", () => { if (hands.autoScrolling()) return hands.stopAutoScroll(); showWindow(); });

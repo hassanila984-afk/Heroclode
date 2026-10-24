@@ -99,7 +99,7 @@
     const dx = e.screenX - down.sx, dy = e.screenY - down.sy;
     if (!down.moved && Math.abs(dx) + Math.abs(dy) < 6) return;
     down.moved = true; lastDrag = Date.now();
-    host.move(down.b.x + dx, down.b.y + dy);
+    if (down.b && Number.isFinite(dx) && Number.isFinite(dy)) host.move(down.b.x + dx, down.b.y + dy);
   });
   window.addEventListener("mouseup", () => {
     if (!down) return;
@@ -123,7 +123,8 @@
     face.classList.add(fly ? "fly" : "walk");
     const step = (now) => {
       const k = Math.min(1, (now - t0) / ms), e = k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
-      host.move(x0 + (x - x0) * e, y0 + (y - y0) * e - lift * Math.sin(Math.PI * e));
+      const nx = x0 + (x - x0) * e, ny = y0 + (y - y0) * e - lift * Math.sin(Math.PI * e);
+      if (Number.isFinite(nx) && Number.isFinite(ny)) host.move(nx, ny);
       if (k < 1) walking = requestAnimationFrame(step); else { walking = null; face.classList.remove("walk", "fly"); arrange(); if (done) done(); }
     };
     walking = requestAnimationFrame(step);

@@ -2730,7 +2730,8 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
     // One tap: she listens, you talk (no name, no buttons), she answers out loud, then listens again,
     // until you end it. Tap her to cut in while she's talking.
     const CALL = { on: false, state: "", rec: null, you: "", her: "", pane: null, timer: 0, wd: 0, earWas: false };
-    function canTalk() { return !!SR && (nativeApp ? !!AndroidLuma.speak : "speechSynthesis" in window); }
+    // a call needs ears (speech recognition) and a voice: hers from the site, or the device's own
+    function canTalk() { return !!SR && (ownSite || (nativeApp ? !!AndroidLuma.speak : "speechSynthesis" in window)); }
     function callStart() {
       if (CALL.on || !canTalk()) return;
       CALL.on = true; CALL.you = ""; CALL.her = ""; onCall = true;
@@ -2844,6 +2845,7 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
     function deviceVoice(clean, lang, end) {
       setTimeout(end, Math.max(5000, clean.length * 110));   // in case the voice never says it's done
       if (nativeApp && AndroidLuma.speak) { window.__nativeSpoken = end; AndroidLuma.speak(clean, lang); return; }
+      if (!("speechSynthesis" in window)) return;   // no voice here: the timer above moves the call on
       const u = new SpeechSynthesisUtterance(clean);
       u.lang = lang; u.pitch = 1.35; u.rate = 1.03;
       const vs = speechSynthesis.getVoices(), two = lang.slice(0, 2);

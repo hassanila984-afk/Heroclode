@@ -6,19 +6,20 @@ import { configured, sessionFrom, sameOrigin, json, voiceKey } from "../../lib/a
 // TTS 2, told how to sound from her mood (warm and caring, bubbly, pouty…), so she never sounds flat;
 // Arabic uses its own native voice. Without the key, or if Inworld fails, Cloudflare's Aura voice is used.
 const MODEL = "inworld-ai/realtime-tts-2", ARABIC_MODEL = "inworld-ai/inworld-tts-1.5-max";
-const VOICES = ["Hana", "Julia", "Mia", "Ashley", "Pixie", "Jessica"];   // English, picked on the You page
+const VOICES = ["Ashley", "Sarah", "Luna", "Kayla", "Lauren", "Olivia"];   // natural young women's voices, picked on the You page
 const ARABIC_VOICE = "Nour";
-// how she sounds, by the feeling she's showing as she says it
+// how she sounds, by the feeling she's showing as she says it: always a real person, never acted or cartoonish
+const NATURAL = "natural, like a real person chatting with a friend";
 const TONE = {
-  happy: "warm and happy, smiling while she talks, sweet and caring",
-  excited: "excited and happy, bright and bubbly, smiling big",
-  shy: "shy and sweet, a little giggly, soft and affectionate",
-  pout: "playfully sulky and pouty, teasing, then softening",
-  ignore: "playfully sulky and pouty, teasing, then softening",
-  sad: "gentle and caring, warm, a little worried for them",
-  sleepy: "sleepy and cozy, slow, soft and warm",
-  thinking: "curious and warm, interested, a little playful",
-  listening: "warm and caring, really interested in them, smiling",
+  happy: `warm and happy, lightly smiling, ${NATURAL}`,
+  excited: `genuinely happy and a little excited, not over the top, ${NATURAL}`,
+  shy: `a little shy and sweet, ${NATURAL}`,
+  pout: `playfully annoyed and teasing, ${NATURAL}`,
+  ignore: `playfully annoyed and teasing, ${NATURAL}`,
+  sad: "gentle and caring, soft-spoken, a real person",
+  sleepy: `a bit sleepy and relaxed, ${NATURAL}`,
+  thinking: `relaxed and curious, warm, ${NATURAL}`,
+  listening: `relaxed and warm, lightly smiling, ${NATURAL}`,
 };
 const MAX_TEXT = 600;
 

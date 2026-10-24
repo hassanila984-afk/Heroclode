@@ -2294,12 +2294,12 @@ ${last}${langNote()}`;
   }
   // her voice (picked on the You page): an Aura voice name, optionally pitched up a little
   // her English voices on the site (Inworld); Arabic always has its own voice
-  const VOICES = [["Hana", false], ["Julia", false], ["Mia", false], ["Ashley", false], ["Pixie", false], ["Jessica", false]];
+  const VOICES = [["Ashley", false], ["Sarah", false], ["Luna", false], ["Kayla", false], ["Lauren", false], ["Olivia", false]];
   let voiceCall = false;   // she talks the way people speak while on a voice call
   function voicePick() {
     let p = null;
     try { p = JSON.parse(localStorage.getItem("firefly-voice-pick")); } catch (e) {}
-    return p && (p.name === "phone" || VOICES.some(([n]) => n === p.name)) ? p : { name: "Hana", cute: false };   // older picks (tara, luna…) move to Hana
+    return p && (p.name === "phone" || VOICES.some(([n]) => n === p.name)) ? p : { name: "Ashley", cute: false };   // older picks move to the default
   }
   // a message typed in the bubble while Firefly isn't on the chat: open it and send
   let pendingSend = null;

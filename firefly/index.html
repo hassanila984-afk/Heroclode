@@ -2806,18 +2806,29 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
       const bare = clean.replace(/<[a-z]+>/g, "").replace(/\s+/g, " ").trim();
       // her own voice from the site (English); the device's voice for Arabic or if it fails
       if (ownSite && lang !== "ar" && pick.name !== "phone") {
-        fetch("/api/voice", { method: "POST", credentials: "same-origin", headers: { "content-type": "application/json" }, body: JSON.stringify({ text: clean, voice: pick.name }) })
-          .then((r) => (r.ok && /audio/.test(r.headers.get("content-type") || "") ? r.blob() : Promise.reject()))
-          .then((b) => {
+        // sentence by sentence, all asked for at once, so she starts talking after the first one is ready
+        const parts = (clean.match(/[^.!?…~]+[.!?…~]*\s*(<[a-z]+>\s*)*/g) || [clean]).reduce((acc, x) => {
+          if (acc.length > 1 && (acc[acc.length - 1] + x).length < 90) acc[acc.length - 1] += x; else acc.push(x);   // the first one short, to start sooner
+          return acc;
+        }, []).map((x) => x.trim()).filter(Boolean);
+        const clips = parts.map((x) => fetch("/api/voice", { method: "POST", credentials: "same-origin", headers: { "content-type": "application/json" }, body: JSON.stringify({ text: x, voice: pick.name }) })
+          .then((r) => (r.ok && /audio/.test(r.headers.get("content-type") || "") ? r.blob() : Promise.reject())));
+        clips.forEach((c) => c.catch(() => {}));
+        let guard = 0;
+        const play = (i) => {
+          if (finished || !CALL.on || i >= clips.length) return end();
+          clips[i].then((b) => {
             if (finished || !CALL.on) return end();
             const a = new Audio(URL.createObjectURL(b));
             voiceAudio = a;
             if (pick.cute) { a.preservesPitch = false; a.playbackRate = 1.12; }   // a little higher, chibi-sized
-            a.onended = a.onerror = end;
-            a.onloadedmetadata = () => setTimeout(end, (a.duration / a.playbackRate) * 1000 + 1500);
-            a.play().catch(() => deviceVoice(bare, lang, end));
-          })
-          .catch(() => deviceVoice(bare, lang, end));
+            const next = () => { clearTimeout(guard); if (voiceAudio === a) play(i + 1); };
+            a.onended = a.onerror = next;
+            a.onloadedmetadata = () => { clearTimeout(guard); guard = setTimeout(next, (a.duration / a.playbackRate) * 1000 + 1500); };
+            a.play().catch(() => deviceVoice(parts.slice(i).join(" ").replace(/<[a-z]+>/g, ""), lang, end));
+          }).catch(() => deviceVoice(parts.slice(i).join(" ").replace(/<[a-z]+>/g, ""), lang, end));
+        };
+        play(0);
         return;
       }
       deviceVoice(bare, lang, end);

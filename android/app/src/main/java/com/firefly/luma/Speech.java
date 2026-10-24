@@ -29,8 +29,18 @@ class Speech implements RecognitionListener {
 
     Speech(MainActivity app) { this.app = app; }
 
+    /** The mic is someone else's right now: a phone or voice call, or another app recording (the screen…). */
+    private boolean micTaken() {
+        AudioManager am = (AudioManager) app.getSystemService(MainActivity.AUDIO_SERVICE);
+        int mode = am.getMode();
+        if (mode == AudioManager.MODE_IN_CALL || mode == AudioManager.MODE_IN_COMMUNICATION || mode == AudioManager.MODE_RINGTONE) return true;
+        try { return !am.getActiveRecordingConfigurations().isEmpty(); } catch (Exception e) { return false; }
+    }
+
     void start(String lang) {
         main.removeCallbacks(unmute);
+        // don't even try while the mic is taken: every failed try flashes the mic icon
+        if (micTaken()) { if (active) sr.cancel(); active = false; send("error", "audio-capture", null, true); send("end", null, null, true); return; }
         if (sr == null) {
             sr = SpeechRecognizer.createSpeechRecognizer(app);
             sr.setRecognitionListener(this);
@@ -96,11 +106,16 @@ class Speech implements RecognitionListener {
     }
 
     @Override public void onError(int e) {
+        // a stuck recognizer (after a call took the mic, for one) is replaced with a fresh one next time
+        if (e == SpeechRecognizer.ERROR_RECOGNIZER_BUSY || e == SpeechRecognizer.ERROR_CLIENT || e == SpeechRecognizer.ERROR_AUDIO) {
+            main.post(() -> { if (sr != null) { sr.destroy(); sr = null; } });
+        }
         String code;
         switch (e) {
             case SpeechRecognizer.ERROR_NO_MATCH:
             case SpeechRecognizer.ERROR_SPEECH_TIMEOUT: code = "no-speech"; break;
             case SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS: code = "not-allowed"; break;
+            case SpeechRecognizer.ERROR_RECOGNIZER_BUSY:
             case SpeechRecognizer.ERROR_AUDIO: code = "audio-capture"; break;
             case SpeechRecognizer.ERROR_NETWORK:
             case SpeechRecognizer.ERROR_NETWORK_TIMEOUT: code = "network"; break;

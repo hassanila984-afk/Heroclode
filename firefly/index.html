@@ -2360,7 +2360,7 @@ ${last}${langNote()}`;
   // with the same shape: start/stop/abort, onresult/onerror/onend.
   const nativeApp = !!(window.AndroidLuma && AndroidLuma.isApp && AndroidLuma.isApp());
   // the newest Android app; older ones lack tapping, scrolling or her moving bubble
-  const APP_LATEST = 2.0;
+  const APP_LATEST = 2.2;
   const appVersion = () => !nativeApp ? 0 : AndroidLuma.version ? parseFloat(AndroidLuma.version()) || 0
     : AndroidLuma.answerAsk ? 1.9 : AndroidLuma.accessOn ? 1.6 : AndroidLuma.doAction ? 1.5 : 1.4;
   const appOld = () => nativeApp && appVersion() < APP_LATEST;
@@ -3316,9 +3316,15 @@ Start with one face tag like [happy] [excited] [pout] [shy] [sleepy], then the m
       };
       r.onerror = (e) => {
         if (e.error === "not-allowed" || e.error === "service-not-allowed") { earStop(true); addMsg("luma", t("micDenied")); luma.set("chibi:sad"); }
-        else if (e.error === "audio-capture" && box.isConnected) $("#hint").textContent = "👂 " + t("micBusy");
+        else if (e.error === "audio-capture" || e.error === "network" || e.error === "aborted") {
+          // the mic is taken (a phone call, a screen recording…) or the recognizer is stuck: wait longer each time,
+          // instead of retrying every moment (each try flashes the mic icon)
+          EAR.backoff = Math.min(60000, (EAR.backoff || 1500) * 2);
+          if (e.error === "audio-capture" && box.isConnected) $("#hint").textContent = "👂 " + t("micBusy");
+        } else if (e.error === "no-speech") EAR.backoff = 0;   // the mic works again, it was just quiet
       };
-      r.onend = () => { EAR.rec = null; if (EAR.on) later(earRun, 400); };   // the browser stops now and then; keep going
+      r.onresult = ((orig) => (e) => { EAR.backoff = 0; orig(e); })(r.onresult);
+      r.onend = () => { EAR.rec = null; if (EAR.on) later(earRun, EAR.backoff || 400); };   // the recognizer stops now and then; keep going
       EAR.rec = r;
       try { r.start(); } catch (e) { EAR.rec = null; }
       syncBubble();

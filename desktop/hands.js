@@ -18,6 +18,10 @@ let target = null;                 // the last window they were in that isn't Fi
 let snap = { at: 0, json: "" };    // what's in that window, for her
 let fgTimer = null, opts = {};
 let scroll = null;                 // { timer, every, app }
+// Games: while one is in front, her hands stay off completely (no clicks, keys, scrolling or reading its
+// buttons), so nothing she does could ever look like a cheat to anti-cheat software. She herself stays.
+const GAMES = /valorant|FortniteClient|\bcs2\b|csgo|League of Legends|LeagueClient|r5apex|GTA5|RainbowSix|Overwatch|ModernWarfare|BlackOps|\bcod\b|Warzone|EscapeFromTarkov|TslGame|PUBG|RocketLeague|Destiny2|dota2|FiveM|RobloxPlayer|Minecraft|eldenring|Diablo|\bWow\b|Battlefield|bf2042|deadlock|Marvel|TheFinals|Palworld|Genshin|ZenlessZoneZero|StarRail|osu|eFootball|FC2[0-9]|fifa/i;
+let gaming = false;
 
 function init(o) { opts = o || {}; }
 
@@ -50,7 +54,7 @@ function ask(cmd, extra = {}, ms = 9000) {
 }
 // away from Windows (testing): a pretend computer with one window open
 function stub(cmd, x) {
-  if (cmd === "fg") return { hwnd: 1, app: "Chrome", title: "Webtoon - Chrome" };
+  if (cmd === "fg") return process.env.FIREFLY_FAKE_GAME ? { hwnd: 2, app: "VALORANT-Win64-Shipping", title: "VALORANT", fullscreen: true } : { hwnd: 1, app: "Chrome", title: "Webtoon - Chrome", fullscreen: false };
   if (cmd === "apps") return { apps: [{ n: "Spotify", id: "Spotify.exe" }, { n: "Manga Slayer", id: "MangaSlayer" }] };
   if (cmd === "screen") return { hwnd: 1, app: "Chrome", title: "Webtoon - Chrome", items: ["button: Next episode", "button: Like", "field: Search"], private: false };
   if (cmd === "find") return /next|like|search/i.test(x.name || "") || x.field ? { found: true, label: x.field ? "Search" : "Next episode" } : { found: false };
@@ -61,6 +65,14 @@ function stub(cmd, x) {
 // ---------- which window she's working in ----------
 async function pollForeground() {
   const r = await ask("fg");
+  // a known game, or anything full screen that isn't a browser or video player (a full-screen YouTube isn't a game)
+  const nowGaming = !!(r && r.hwnd && !/Firefly|electron|explorer/i.test(r.app || "") &&
+    (GAMES.test(r.app || "") || GAMES.test(r.title || "") || (r.fullscreen && !/chrome|msedge|firefox|opera|brave|vivaldi|vlc|mpc|potplayer|netflix|Video\.UI|Photos/i.test(r.app || ""))));
+  if (nowGaming !== gaming) {
+    gaming = nowGaming;
+    if (gaming) stopAutoScroll();
+    if (opts.onGame) opts.onGame(gaming);
+  }
   if (r && r.hwnd && !OFF_LIMITS.test(r.app || "") ) {
     if (!target || target.hwnd !== r.hwnd) { target = r; snap.at = 0; }
   } else if (r && r.hwnd && /Firefly|electron/i.test(r.app || "")) {
@@ -69,9 +81,11 @@ async function pollForeground() {
   // they went somewhere else: the hands-free scrolling stops
   if (scroll && r && r.hwnd && !/Firefly|electron/i.test(r.app || "") && r.hwnd !== scroll.hwnd) stopAutoScroll();
 }
+// watching which window is in front (games included) runs from the start; her hands only with control on
+function watch() { if (!fgTimer) { pollForeground(); fgTimer = setInterval(pollForeground, 2000); } }
 function start() {
   ensureHelper();
-  if (!fgTimer) { pollForeground(); fgTimer = setInterval(pollForeground, 2000); }
+  watch();
   refreshApps();
 }
 function stop() {
@@ -87,6 +101,7 @@ async function refreshApps() {
 // ---------- what she sees in their window (button and field names) ----------
 function screenNow() {
   if (!target) return "";
+  if (gaming) return JSON.stringify({ app: (target && target.app) || "a game", game: true });
   if (Date.now() - snap.at > 3000) refreshScreen();
   return snap.json;
 }
@@ -124,6 +139,7 @@ async function act(name, arg, askFirst) {
     case "music": await shell.openExternal("https://www.youtube.com/results?search_query=" + encodeURIComponent(arg)); return "ok";
   }
   if (!target) await pollForeground();
+  if (gaming) return "game";   // never anything inside a game
   if (!target) return "not_found";
   if (target.private) return "private";
   const hwnd = target.hwnd;
@@ -135,13 +151,14 @@ async function act(name, arg, askFirst) {
       if (/slow/i.test(arg)) every = Math.min(9000, every * 1.5);
       else if (/fast/i.test(arg)) every = Math.max(1000, every / 1.5);
       if (scroll) clearInterval(scroll.timer);
-      scroll = { every, hwnd, timer: setInterval(() => ask("wheel", { hwnd, dir: "down", notches: 2 }), every) };
+      scroll = { every, hwnd, timer: setInterval(() => { if (!gaming) ask("wheel", { hwnd, dir: "down", notches: 2 }); }, every) };
       return "ok";
     }
     case "back": { const r = await ask("keys", { hwnd, keys: "alt+left" }); return r && r.ok ? "ok" : "failed"; }
     case "home": { const r = await ask("keys", { hwnd: 0, keys: "win+d" }); return r && r.ok ? "ok" : "failed"; }
     case "notifications": { const r = await ask("keys", { hwnd: 0, keys: "win+n" }); return r && r.ok ? "ok" : "failed"; }
     case "tap": {
+      if (GAMES.test(target.app || "")) return "game";
       const f = await ask("find", { hwnd, name: arg, field: false });
       if (!f || !f.found) return "not_found";
       if (f.password) return "private";
@@ -162,10 +179,11 @@ async function act(name, arg, askFirst) {
   }
 }
 function autoScrolling() { return !!scroll; }
+function isGaming() { return gaming; }
 function stopAutoScroll() {
   if (!scroll) return;
   clearInterval(scroll.timer); scroll = null;
   if (opts.onAutoScrollStop) opts.onAutoScrollStop();
 }
 
-module.exports = { init, start, stop, act, screenNow, autoScrolling, stopAutoScroll, NEEDS_CONTROL, _stub: stub };
+module.exports = { init, watch, start, stop, act, screenNow, autoScrolling, stopAutoScroll, isGaming, NEEDS_CONTROL, _stub: stub };

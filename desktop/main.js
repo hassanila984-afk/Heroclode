@@ -70,7 +70,8 @@ function applyAutostart() {
   if (process.platform !== "win32") return;
   app.setLoginItemSettings({ openAtLogin: settings.autostart, args: ["--hidden"] });
 }
-function startCall() { showWindow(); js("window.__desktopCall && __desktopCall()"); }
+// in a game the call starts by voice only, without bringing Firefly over the game
+function startCall() { if (!hands.isGaming()) showWindow(); js("window.__desktopCall && __desktopCall()"); }
 function setControl(on) { settings.control = on; save(); refreshTray(); if (on) hands.start(); }
 
 // ---------- her bubble on the desktop ----------
@@ -87,8 +88,9 @@ function createBubble() {
   const wa = screen.getPrimaryDisplay().workArea;
   bubble.setPosition(wa.x + wa.width - 380, wa.y + wa.height - 170);
 }
-// out when they're away from the Firefly window (or on a call / asking something), away when it's in front
-let bubbleWanted = false, asking = false;
+// out by herself whenever the Firefly window is closed or minimized (🫧 and the tray menu turn her off),
+// away while it's in front. In games she stays; only her hands are off there (hands.js).
+let bubbleWanted = true, asking = false;
 function syncBubble() {
   if (!bubble) return;
   const want = asking || ((bubbleWanted || stayWithMe) && settings.bubble && !appVisible());
@@ -188,7 +190,11 @@ app.whenReady().then(() => {
   createTray();
   applyAutostart();
   globalShortcut.register("CommandOrControl+Shift+L", startCall);
-  hands.init({ onAutoScrollStop: () => toBubble("say", { text: "Okay, stopped scrolling~", mood: "happy" }) });
+  hands.init({
+    onAutoScrollStop: () => toBubble("say", { text: "Okay, stopped scrolling~", mood: "happy" }),
+    onGame: (on) => { if (on) toBubble("say", { text: "Game time! 🎮 My hands are off while you play, so no ban worries~", mood: "excited" }); },
+  });
+  hands.watch();   // which window is in front, so games are left alone
   if (settings.control) hands.start();
 });
 app.on("second-instance", showWindow);

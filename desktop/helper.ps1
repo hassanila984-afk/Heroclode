@@ -21,7 +21,21 @@ public static class LumaWin {
   [DllImport("user32.dll")] public static extern bool SetCursorPos(int x, int y);
   [DllImport("user32.dll")] public static extern void mouse_event(uint f, int dx, int dy, int data, UIntPtr extra);
   [DllImport("user32.dll")] public static extern void keybd_event(byte vk, byte scan, uint f, UIntPtr extra);
+  [DllImport("user32.dll")] public static extern IntPtr MonitorFromWindow(IntPtr h, uint flags);
+  [DllImport("user32.dll")] public static extern bool GetMonitorInfo(IntPtr m, ref MONITORINFO mi);
+  [DllImport("user32.dll", CharSet = CharSet.Unicode)] public static extern int GetClassName(IntPtr h, StringBuilder s, int n);
   [StructLayout(LayoutKind.Sequential)] public struct RECT { public int L, T, R, B; }
+  [StructLayout(LayoutKind.Sequential)] public struct MONITORINFO { public int cbSize; public RECT rcMonitor; public RECT rcWork; public uint dwFlags; }
+  // a window covering its whole screen (a game, a full-screen video), not the desktop itself
+  public static bool FullScreen(IntPtr h) {
+    var c = new StringBuilder(64); GetClassName(h, c, 64);
+    var cls = c.ToString();
+    if (cls == "Progman" || cls == "WorkerW" || cls == "Shell_TrayWnd") return false;
+    RECT r; if (!GetWindowRect(h, out r)) return false;
+    var mi = new MONITORINFO(); mi.cbSize = Marshal.SizeOf(typeof(MONITORINFO));
+    if (!GetMonitorInfo(MonitorFromWindow(h, 2), ref mi)) return false;
+    return r.L <= mi.rcMonitor.L && r.T <= mi.rcMonitor.T && r.R >= mi.rcMonitor.R && r.B >= mi.rcMonitor.B;
+  }
   [StructLayout(LayoutKind.Sequential)] public struct POINT { public int X, Y; }
   public static string Title(IntPtr h) { var s = new StringBuilder(512); GetWindowText(h, s, 512); return s.ToString(); }
 }
@@ -37,7 +51,7 @@ function WindowInfo([IntPtr]$h) {
   [void][LumaWin]::GetWindowThreadProcessId($h, [ref]$procId)
   $name = ''
   try { $name = (Get-Process -Id $procId).ProcessName } catch {}
-  @{ hwnd = [int64]$h; app = $name; title = [LumaWin]::Title($h) }
+  @{ hwnd = [int64]$h; app = $name; title = [LumaWin]::Title($h); fullscreen = [LumaWin]::FullScreen($h) }
 }
 
 # Bring their window to the front (Windows lets a background program do that right after an Alt press).

@@ -81,6 +81,7 @@ export function sayEnglish(s) {
     .replace(/https?:\/\/\S+/g, " a link ")
     .replace(/\*\s*(giggles?|giggling|chuckles?|laughs?|laughing)\s*\*/gi, " [laugh] ")
     .replace(/\*\s*sighs?\s*\*/gi, " [sigh] ").replace(/\*\s*yawns?\s*\*/gi, " [yawn] ")
+    .replace(/\*\s*(groans?|groaning|whines?|whining|grumbles?|tired(ly)? (moans?|groans?)|moans? tiredly)\s*\*/gi, " [groan] ")   // a tired groan
     .replace(/\*[^*\n]{1,40}\*/g, " ")                                                  // other *actions*
     .replace(/\b(l+m+f*a+o+|lo+l+|ha(ha)+h?|he(he)+h?|hi(hi)+|tee+hee+|kek)\b/gi, " [laugh] ")
     .replace(/\b[A-Za-z]+\b/g, (w) => {
@@ -93,5 +94,6 @@ export function sayEnglish(s) {
     .replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}\u{200D}]/gu, " ")
     .replace(/[~_#>|]/g, " ").replace(/\.{2,}|…/g, ", ")
     .replace(/(\[laugh\]\s*){2,}/g, "[laugh] ")
-    .replace(/\s+([,.!?])/g, "$1").replace(/\s+/g, " ").trim();
+    .replace(/\s+([,.!?])/g, "$1").replace(/\s+/g, " ").trim()
+    .replace(/\[groan\]/g, "[groan] Uuughhh... mmhh...");   // (after the clean-up, which would shorten it)
 }

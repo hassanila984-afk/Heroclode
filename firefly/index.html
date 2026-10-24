@@ -605,7 +605,7 @@
       bubbleTitle: "Float Luma over your other apps", bubblePh: "Reply…", micTitle: "Talk to Luma",
       actNotFound: "I couldn't find that on your phone 🥺", actNoAccess: "I can't tap yet~ turn on \"Luma can tap for me\" on the You page 👆", actPrivate: "That one's private (money, passwords or settings), so I won't touch it 🔒", actBubble: "Turn on my bubble 🫧 so I can ask you before I tap",
       accessTitle: "👆 Luma can tap for me", accessNote: "She reads the buttons on your screen and taps, types or scrolls when you ask. She asks you on her bubble before every tap, and never touches banking, payments, passwords or settings. If Android says \"restricted setting\": App info → ⋮ → Allow restricted settings, then try again.", accessOn: "On ✓", accessOff: "Turn on", actFailed: "Hmm, I couldn't do that one 🥺",
-      voiceTitle2: "Luma's voice", voicePhone: "Phone's own voice", voiceTry: "Hear this voice",
+      voiceTitle2: "Luma's voice", voicePhone: "Phone's own voice", voiceTry: "Hear this voice", hearSong: "Hear her sing it",
       callBtn: "Talk", callEnd: "End", callShare: "📱 Show her my screen", callSharing: "👀 She's watching · stop", callTap: "Tap her to cut in while she talks", callListening: "listening… just talk", callThinking: "thinking…", callSpeaking: "talking…",
       earTitle: "Keep listening: say “Luma” when you're talking to her", earHeard: "last heard:", sayName: "say “Luma” first when you're in another app", micBusy: "the mic is busy (a call or another app is using it)", voiceTitle: "Language you speak out loud (English / Arabic)", stEar: "listening for her name…", stCall: "📞 on a call: she only reacts to her name",
       friendSaid: "👥 A friend on the call: “{text}”",
@@ -718,7 +718,7 @@
       bubbleTitle: "لُمى فوق تطبيقاتك الثانية", bubblePh: "رد عليها…", micTitle: "احچي ويا لُمى",
       actNotFound: "ما لگيته بموبايلك 🥺", actNoAccess: "بعد ما أگدر أدوس~ شغّل \"Luma can tap for me\" من صفحة You 👆", actPrivate: "هذا خاص (فلوس، كلمات سر، أو إعدادات)، ما راح ألمسه 🔒", actBubble: "شغّل فقاعتي 🫧 حتى أسألك قبل ما أدوس",
       accessTitle: "👆 لُمى تدوس بدالي", accessNote: "تقرأ الأزرار اللي على شاشتك وتدوس أو تكتب أو تنزل لتحت من تطلب منها. تسألك على الفقاعة قبل كل دوسة، وما تلمس البنوك والدفع وكلمات السر والإعدادات. إذا الأندرويد گال \"إعداد مقيّد\": معلومات التطبيق ← ⋮ ← السماح بالإعدادات المقيّدة، وبعدين جرّب مرة ثانية.", accessOn: "شغّالة ✓", accessOff: "شغّلها", actFailed: "همم، ما گدرت أسويها 🥺",
-      voiceTitle2: "صوت لُمى", voicePhone: "صوت الموبايل نفسه", voiceTry: "اسمع هالصوت",
+      voiceTitle2: "صوت لُمى", voicePhone: "صوت الموبايل نفسه", voiceTry: "اسمع هالصوت", hearSong: "اسمعها تغنيها",
       callBtn: "احچي", callEnd: "إنهاء", callShare: "📱 خليها تشوف شاشتي", callSharing: "👀 دتشوف · إيقاف", callTap: "اضغط عليها حتى تقاطعها وهي تحچي", callListening: "تسمعك… بس احچي", callThinking: "تفكّر…", callSpeaking: "تحچي…",
       earTitle: "خليها تسمع: ناديها «لُمى» لما تحچي وياها", earHeard: "آخر شي سمعته:", sayName: "گول «لُمى» أول شي لما تكون بتطبيق ثاني", micBusy: "المايك مشغول (مكالمة أو تطبيق ثاني يستخدمه)", voiceTitle: "لغة كلامك بالصوت (إنكليزي / عربي)", stEar: "تسمع… تنتظر اسمها", stCall: "📞 بمكالمة: تنتبه بس لاسمها",
       friendSaid: "👥 صديقك بالمكالمة: «{text}»",
@@ -965,7 +965,9 @@
   // (browser storage only when the store is unavailable).
   let docRef = null, writing = Promise.resolve();
   function persist() {
+    state.savedAt = Date.now();
     try { localStorage.setItem(LS, JSON.stringify(state)); } catch (e) {}
+    if (SYNC.on) { clearTimeout(SYNC.timer); SYNC.timer = setTimeout(pushSite, 3000); }
     if (!docRef) return;
     const body = JSON.parse(JSON.stringify(state));
     writing = writing.then(() => docRef.set(body)).catch(() => {});
@@ -991,6 +993,71 @@
       } else if (state.fireflies) persist();
     } catch (e) { docRef = null; }
   }
+
+  // ---- what they usually do, by time of day (so she can suggest "our usual" now and then) ----
+  // Kept per 3-hour stretch of the day; only things seen twice or more count as a habit.
+  function noteHabit(what) {
+    what = String(what || "").trim().slice(0, 60);
+    if (!what) return;
+    const b = Math.floor(new Date().getHours() / 3), list = state.habits || (state.habits = []);
+    const h = list.find((x) => x.w === what && x.b === b);
+    if (h) { h.n++; h.t = Date.now(); } else list.push({ w: what, b, n: 1, t: Date.now() });
+    if (list.length > 60) { list.sort((x, y) => y.n - x.n || y.t - x.t); list.length = 60; }
+    persist();
+  }
+  function habitsNow() {
+    const b = Math.floor(new Date().getHours() / 3), near = [b, (b + 1) % 8, (b + 7) % 8];
+    const tally = {};
+    for (const h of state.habits || []) if (near.includes(h.b)) tally[h.w] = (tally[h.w] || 0) + h.n;
+    return Object.entries(tally).filter(([, n]) => n >= 2).sort((x, y) => y[1] - x[1]).slice(0, 4).map(([w]) => w);
+  }
+
+  // ---- on Firefly's own site: the same Firefly on all their devices (phone, computer…) ----
+  // The newest save wins. A device's first sync merges instead, so what each device already had is kept.
+  const SYNC = { on: false, timer: 0, busy: false };
+  const SYNCED = "firefly-synced";
+  function mergeStates(a, b) {
+    const out = Object.assign(blank(), b, a);
+    for (const k of ["memory", "style", "stars", "gifts", "seenGifts", "history", "habits"]) {
+      const seen = new Set(), all = [];
+      for (const x of [].concat(b[k] || [], a[k] || [])) { const key = JSON.stringify(x); if (!seen.has(key)) { seen.add(key); all.push(x); } }
+      out[k] = all;
+    }
+    for (const k of ["fireflies", "golden", "streak", "best"]) out[k] = Math.max(a[k] || 0, b[k] || 0);
+    out.lastDate = [a.lastDate, b.lastDate].filter(Boolean).sort().pop() || null;
+    out.name = a.name || b.name; out.onboarded = a.onboarded || b.onboarded; out.introSeen = a.introSeen || b.introSeen;
+    return out;
+  }
+  function adopt(remote) {
+    state = Object.assign(blank(), remote);
+    try { localStorage.setItem(LS, JSON.stringify(state)); } catch (e) {}
+    syncSky(); renderCount();
+    if (["home", "nights"].includes(screen) || (screen === "onboard" && state.onboarded)) show(screen === "onboard" ? "home" : screen);
+  }
+  async function pullSite() {
+    if (!ownSite || SYNC.busy) return;
+    SYNC.busy = true;
+    try {
+      const r = await fetch("/api/state", { credentials: "same-origin" });
+      if (!r.ok) return;
+      SYNC.on = true;
+      const d = await r.json();
+      let first = false; try { first = localStorage.getItem(SYNCED) !== "1"; } catch (e) {}
+      if (d.state && first) { adopt(mergeStates(state, d.state)); state.savedAt = Date.now(); pushSite(); }
+      else if (d.state && d.savedAt > (state.savedAt || 0)) adopt(Object.assign(d.state, { savedAt: d.savedAt }));
+      else if (!d.state || (state.savedAt || 0) > d.savedAt) pushSite();
+      try { localStorage.setItem(SYNCED, "1"); } catch (e) {}
+    } catch (e) {} finally { SYNC.busy = false; }
+  }
+  async function pushSite() {
+    if (!SYNC.on) return;
+    try {
+      const r = await fetch("/api/state", { method: "PUT", credentials: "same-origin", headers: { "content-type": "application/json" }, body: JSON.stringify({ state, savedAt: state.savedAt || Date.now() }) });
+      if (r.status === 409) { const d = await r.json(); if (d.state) adopt(Object.assign(d.state, { savedAt: d.savedAt })); }
+    } catch (e) {}
+  }
+  // catch up whenever they come back to this device
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") pullSite(); });
 
   // ================= Luma (real AI) =================
   let sample = null, aiOff = false;
@@ -1024,7 +1091,7 @@
           const code = window.prompt(t(tries ? "codeWrong" : "codeAsk"));
           if (!code) return false;
           const r = await fetch("/api/login", { method: "POST", credentials: "same-origin", headers: { "content-type": "application/json" }, body: JSON.stringify({ code: code.trim() }) }).catch(() => null);
-          if (r && r.ok) return true;
+          if (r && r.ok) { pullSite(); return true; }   // signed in: catch up with their other devices
           if (r && r.status !== 401) return false;
         }
         return false;
@@ -1146,7 +1213,7 @@ ${voiceCall ? `- You're on a voice call right now, so talk the way you'd speak o
 - Honest, never fake: when they ask what you think (a game, their work, an idea, a photo, an outfit, a song, anything), give your real opinion straight, even if it isn't what they hoped to hear. No flattery, no sugarcoating, no dodging the question, no empty compliments. Be warm in how you say it, not in what you say. If you're not sure, say so.
 - Don't lecture, moralize or give advice unless they ask. If you suggest something, make it tiny and concrete.
 ${helperRules()}- Never diagnose. If they mention wanting to die or hurt themselves, respond with care, encourage them to contact local emergency services or a crisis line now, and to reach someone they trust.
-${state.name ? `\nTheir name is ${state.name}. Use it now and then, not every message.` : ""}
+${ownSite ? `- You can sing (just your voice, no music). If they ask you to sing, or now and then when they're sad, bored or can't sleep and would like it, sing a short song: 2 to 4 short lines, either your own little made-up song (about them, the night, tea, rain…) or a well-known public-domain one (Twinkle Twinkle Little Star, Happy Birthday, Row Row Row Your Boat, Brahms' Lullaby). Never sing lyrics of copyrighted songs (pop songs, anime openings…); offer to make up your own instead. Write one short sentence, then the lyrics on their own line starting with SING: (lines separated by " / ").\n` : ""}${habitsNow().length ? `- Things they often do around this time of day (you've noticed): ${habitsNow().join("; ")}. Now and then (not every message), casually suggest doing one together ("manga time again? 📖", "our usual lofi?"), especially when they're bored or just got here. Never push.\n` : ""}${state.name ? `\nTheir name is ${state.name}. Use it now and then, not every message.` : ""}
 ${today}
 What you remember about them from earlier evenings:
 ${mem}
@@ -1931,6 +1998,13 @@ ${last}${langNote()}`;
     return "unknown";
   }
 
+  // A reply may hold a little song on its own line: "SING: line one / line two" (sung out loud, voice only).
+  function takeSing(text) {
+    let song = null;
+    let rest = text.replace(/(^|\n|[ \t])[ \t]*SING[ \t]*:[ \t]*([^\n]*)/, (m0, a, b) => { song = b.trim(); return a === "\n" ? "\n" : ""; });
+    rest = rest.replace(/(\n|[ \t])[ \t]*S(I(N(G([ \t]*:[^\n]*)?)?)?)?$/, "");   // still arriving (only a capital SING)
+    return { song: song && song.replace(/^["“']|["”']$/g, "").trim() || null, rest };
+  }
   function takeSaw(text, done) {
     let saw = "";
     let rest = text.replace(/(^|\n)[ \t]*SAW[ \t]*:[ \t]*([^\n]*)/i, (m0, a, b) => { saw = b.trim(); return a; });
@@ -2792,6 +2866,7 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
     function callStart(first) {
       if (CALL.on || !canTalk()) return;
       CALL.on = true; CALL.you = ""; CALL.her = ""; CALL.endAfter = false; CALL.asking = false; voiceCall = true; stayWithMe();
+      noteHabit("voice calls with you");
       CALL.earWas = EAR.on; if (EAR.on) earStop(false);
       const pane = document.createElement("div");
       pane.className = "callpane";
@@ -2878,6 +2953,7 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
       let where = "";
       try {
         const scr = AndroidLuma.screen ? JSON.parse(AndroidLuma.screen() || "null") : null;
+        if (scr && scr.app && !scr.private) noteHabit("using " + scr.app);
         if (scr && scr.app && !scr.private) where = `They're in ${scr.app} right now${scr.items && scr.items.length ? " (on screen: " + scr.items.slice(0, 12).join("; ") + ")" : ""}.`;
       } catch (e) {}
       const chat = s.turns.slice(-6).map((x) => (x.role === "user" ? "Them: " : "You: ") + x.content).join("\n");
@@ -2894,7 +2970,8 @@ Pop out on your own with ONE short message to make them smile, like a friend pok
 - a tiny dare or challenge ("bet you can't put the phone down for 5 minutes")
 - a teasing compliment ("ok fine, your taste in manga is actually elite")
 - a random silly thought ("do you think penguins get bored too")
-- a soft cheer-up if they seem tired or it's late
+- a soft cheer-up if they seem tired or it's late${habitsNow().length ? `
+- suggest your usual together (they often do this around now: ${habitsNow().join("; ")})` : ""}
 Your last pop-outs were: ${NUDGE.recent.join(" | ") || "(none yet)"}. Don't repeat their wording or the way they start, and don't start with "ehh". Never mean, never guilt, never about anything private on their screen, no question that needs a long answer.
 Start with one face tag like [happy] [excited] [pout] [shy] [sleepy], then the message.`, { cache: false });
       const r = readMood(text), body = splitReplies(r.body || text).body.split("\n")[0].trim();
@@ -3016,9 +3093,9 @@ Start with one face tag like [happy] [excited] [pout] [shy] [sleepy], then the m
     const plainSpeech = (text) => String(text).replace(/\*[^*\n]{1,40}\*/g, " ").replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}\u{200D}]/gu, "").replace(/[~*_]/g, "").replace(/\s+/g, " ").trim();
     const siteVoice = () => ownSite && voicePick().name !== "phone";
     // a sentence or two of her voice, streamed: the <audio> starts playing while the rest is still arriving
-    function voiceClip(text) {
+    function voiceClip(text, sing) {
       const mood = LIVE.mood || (luma.pose() || "").split(":")[1] || "listening";   // her tone follows her face
-      const a = new Audio("/api/voice?v=" + encodeURIComponent(voicePick().name) + "&m=" + mood + "&t=" + encodeURIComponent(text));
+      const a = new Audio("/api/voice?v=" + encodeURIComponent(voicePick().name) + "&m=" + mood + (sing ? "&s=1" : "") + "&t=" + encodeURIComponent(text));
       a.preload = "auto";
       return a;
     }
@@ -3026,7 +3103,7 @@ Start with one face tag like [happy] [excited] [pout] [shy] [sleepy], then the m
     // On a call, her voice starts with the first finished sentence while the rest of the reply is still being written.
     const LIVE = { on: false, sent: 0, clips: [], texts: [], i: 0, closed: false, busy: false, gen: 0, guard: 0 };
     function liveStart() {
-      Object.assign(LIVE, { on: true, sent: 0, clips: [], texts: [], i: 0, closed: false, busy: false, gen: LIVE.gen + 1 });
+      Object.assign(LIVE, { on: true, sent: 0, clips: [], texts: [], i: 0, closed: false, busy: false, gen: LIVE.gen + 1, spoken: "" });
       later.cancel(CALL.wd);
       CALL.state = "speaking";
     }
@@ -3035,7 +3112,7 @@ Start with one face tag like [happy] [excited] [pout] [shy] [sleepy], then the m
         if (CALL.state !== "thinking" || !siteVoice()) return false;
         liveStart();
       }
-      CALL.her = body; callPaint();
+      CALL.full = body;   // the call screen shows her words as she says them (see livePlay)
       const rest = body.slice(LIVE.sent);
       let cut = 0;
       if (final) cut = rest.length;
@@ -3050,6 +3127,35 @@ Start with one face tag like [happy] [excited] [pout] [shy] [sleepy], then the m
       if (final) LIVE.closed = true;
       livePlay();
       return true;
+    }
+    // her little songs: the lyrics in the chat with a 🎵 to hear it again; sung on a call, or right away in the chat
+    let songAudio = null;
+    const songText = (song) => song.split(/\s*\/\s*/).join(". ").replace(/\.\s*\./g, ".");
+    function playSong(song, btn) {
+      if (songAudio) { songAudio.pause(); songAudio = null; if (btn) { btn.textContent = "🎵"; return; } }
+      if (!siteVoice()) return;
+      songAudio = voiceClip(songText(song), true);
+      if (btn) { btn.textContent = "■"; songAudio.onended = songAudio.onerror = () => { btn.textContent = "🎵"; songAudio = null; }; }
+      songAudio.play().catch(() => { if (btn) btn.textContent = "🎵"; });
+    }
+    function singSong(song) {
+      if (box.isConnected) {
+        const m = addMsg("luma", "🎵 " + song.split(/\s*\/\s*/).join("\n"));
+        m.style.whiteSpace = "pre-line";
+        if (siteVoice()) {
+          const b = document.createElement("button");
+          b.className = "text-btn"; b.type = "button"; b.textContent = "🎵"; b.setAttribute("aria-label", t("hearSong"));
+          b.style.cssText = "margin-inline-start:8px;font-size:16px";
+          b.onclick = () => playSong(song, b);
+          m.appendChild(b);
+        }
+      }
+      if (CALL.on) {   // after what she says, she sings
+        if (LIVE.on) { LIVE.clips.push(voiceClip(songText(song), true)); LIVE.texts.push(song.replace(/\s*\/\s*/g, " / ")); livePlay(); }
+        else sayOnCall(songText(song));
+        return;
+      }
+      if (document.visibilityState === "visible") playSong(song);
     }
     // say something on the call that isn't a reply (a question before a tap, a comment on the screen)
     function sayOnCall(text) {
@@ -3072,30 +3178,50 @@ Start with one face tag like [happy] [excited] [pout] [shy] [sleepy], then the m
       LIVE.busy = true;
       const g = LIVE.gen, a = LIVE.clips[LIVE.i];
       let started = false;
-      const next = () => { if (g !== LIVE.gen) return; later.cancel(LIVE.guard); LIVE.busy = false; LIVE.i++; livePlay(); };
+      const next = () => {
+        if (g !== LIVE.gen) return;
+        later.cancel(LIVE.guard); ticking = false;
+        LIVE.spoken = (LIVE.spoken + " " + captionLines(LIVE.texts[LIVE.i] || "").join(" ")).trim();   // all of it said now
+        CALL.her = LIVE.spoken; callPaint();
+        LIVE.busy = false; LIVE.i++; livePlay();
+      };
       // her voice didn't come: the phone's own voice says the rest
       const fail = () => {
         if (g !== LIVE.gen) return;
         if (started) return next();
         later.cancel(LIVE.guard);
-        const restText = LIVE.texts.slice(LIVE.i).join(" ") + " " + (LIVE.closed ? "" : CALL.her.slice(LIVE.sent));
+        const restText = LIVE.texts.slice(LIVE.i).join(" ") + " " + (LIVE.closed ? "" : (CALL.full || "").slice(LIVE.sent));
         stopClips();
         LIVE.gen++; LIVE.on = false; LIVE.busy = false;
         if (/[؀-ۿ]/.test(restText)) liveDone(); else deviceVoice(plainSpeech(restText), "en-US", liveDone);
       };
       voiceAudio = a;
-      // captions: the sentence she's saying right now, moving on as the clip plays
+      // captions: each word shows up as she says it (the sentence she's on, in her bubble; all of it on the call screen)
       const lines = captionLines(LIVE.texts[LIVE.i] || "");
-      let shown = -1;
+      const words = [];   // [line, word, where it starts in the clip's text]
+      let pos = 0;
+      lines.forEach((ln, li) => ln.split(" ").forEach((w) => { words.push([li, w, pos]); pos += w.length + 1; }));
+      const total = Math.max(1, pos);
+      const growing = nativeApp && AndroidLuma.bubbleText;   // app 2.1+: words change in place
+      let shownLine = -1, shownWord = -1, ticking = false;
       const caption = () => {
-        const dur = isFinite(a.duration) && a.duration > 0 ? a.duration : Math.max(1, (LIVE.texts[LIVE.i] || "").length * 0.065);
-        const k = Math.min(1, a.currentTime / dur), total = lines.reduce((n, x) => n + x.length, 0) || 1;
-        let idx = 0, acc = 0;
-        for (; idx < lines.length - 1; idx++) { acc += lines[idx].length; if (acc / total > k) break; }
-        if (idx !== shown && lines[idx]) { shown = idx; bubbleSay(lines[idx]); }
+        if (!words.length) return;
+        const dur = isFinite(a.duration) && a.duration > 0 ? a.duration : Math.max(1, total * 0.065);
+        const at = Math.min(1, a.currentTime / dur) * total + 2;   // a hair ahead, like reading along
+        let wi = 0;
+        while (wi < words.length - 1 && words[wi + 1][2] <= at) wi++;
+        if (wi === shownWord) return;
+        shownWord = wi;
+        const li = words[wi][0];
+        const lineSoFar = words.filter((x, j) => x[0] === li && j <= wi).map((x) => x[1]).join(" ");
+        if (li !== shownLine) { shownLine = li; bubbleSay(growing ? lineSoFar : lines[li]); }   // a new sentence: she pops out with it
+        else if (growing && AndroidLuma.bubbleOn()) AndroidLuma.bubbleText(lineSoFar);
+        if (!nativeApp || !AndroidLuma.bubbleOn()) { BB.text = lineSoFar; syncBubble(); }
+        CALL.her = (LIVE.spoken + " " + words.slice(0, wi + 1).map((x) => x[1]).join(" ")).trim(); callPaint();
       };
+      const tick = () => { if (!ticking || g !== LIVE.gen) return; caption(); later(tick, 110); };
       a.ontimeupdate = caption;
-      a.onplaying = () => { caption(); started = true; later.cancel(LIVE.guard); LIVE.guard = later(next, 30000); };
+      a.onplaying = () => { caption(); if (!ticking) { ticking = true; later(tick, 110); } started = true; later.cancel(LIVE.guard); LIVE.guard = later(next, 30000); };
       a.ondurationchange = () => { if (started && isFinite(a.duration)) { later.cancel(LIVE.guard); LIVE.guard = later(next, a.duration * 1000 + 2500); } };
       a.onended = next;
       a.onerror = fail;
@@ -3375,7 +3501,7 @@ Start with one face tag like [happy] [excited] [pout] [shy] [sleepy], then the m
       try {
         let shown = false;
         const { text: full } = await ask(input, Object.assign({ cache: false, signal: ctl.signal, onText: ({ text }) => {
-          const sw = takeSaw(takeDo(text).rest);
+          const sw = takeSaw(takeSing(takeDo(text).rest).rest);
           if (sw.pending) return;
           const r = readMood(sw.rest);
           if (r.pending) return;
@@ -3391,9 +3517,16 @@ Start with one face tag like [happy] [excited] [pout] [shy] [sleepy], then the m
           bubble.classList.remove("wait"); bubble.textContent = splitReplies(r.body).body; box.scrollTop = box.scrollHeight;
           if (CALL.on) { if (r.mood) LIVE.mood = r.mood.split(":")[1]; liveFeed(splitReplies(r.body).body, false); }
         } }, extra));
-        const dd = takeDo(full), sw = takeSaw(dd.rest, true), text = sw.rest;
+        const dd = takeDo(full), sg = takeSing(dd.rest), sw = takeSaw(sg.rest, true), text = sw.rest;
         if (dd.act) later(() => {
           const res = runAction(dd.act);
+          const nm = String(dd.act).split(/\s+/)[0].toLowerCase(), arg0 = String(dd.act).slice(nm.length).trim();
+          if (res && String(res).startsWith("ok")) {
+            if (nm === "open_app") noteHabit("using " + (String(res).split(":")[1] || arg0));
+            else if (nm === "music") noteHabit("listening to " + arg0);
+            else if (nm === "watch" && !/stop/i.test(arg0)) noteHabit("watching their screen together with you");
+            else if (nm === "autoscroll" && /start/i.test(arg0)) noteHabit("reading while you scroll for them");
+          }
           if (!res || String(res).startsWith("ok") || res === "asking") return;
           const why = t({ not_found: "actNotFound", no_access: "actNoAccess", private: "actPrivate", no_bubble: "actBubble" }[res] || "actFailed");
           if (box.isConnected) addMsg("luma", why);
@@ -3408,10 +3541,11 @@ Start with one face tag like [happy] [excited] [pout] [shy] [sleepy], then the m
         bubble.classList.remove("wait"); bubble.textContent = body;
         if (!CALL.on) bubbleSay(body);   // on a call her bubble shows each sentence as she says it
         if (CALL.on && (LIVE.on || CALL.state === "thinking") && !liveFeed(body, true)) callSpeak(body);
+        if (sg.song) singSong(sg.song);
         status(idleStatus());
         session.replies = replies;
         showQuick(replies);
-        return body;
+        return sg.song ? body + "\n(you sang: " + sg.song + ")" : body;
       } catch (e) {
         const r = aiFailure(e);
         if (r === "off") { bubble.remove(); fallback(); }
@@ -4350,5 +4484,6 @@ Start with one face tag like [happy] [excited] [pout] [shy] [sleepy], then the m
   // the intro plays every time the app opens; the app is ready underneath
   intro.play(() => { suggestAt = 0; show(state.onboarded ? "home" : "onboard"); });
   connectStore();
+  pullSite();
 })();
 </script>

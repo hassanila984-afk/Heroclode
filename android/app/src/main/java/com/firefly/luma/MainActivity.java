@@ -218,6 +218,7 @@ public class MainActivity extends Activity {
         }
         @JavascriptInterface public boolean bubbleOn() { return LumaService.bubbleOn(); }
         @JavascriptInterface public void bubbleSay(String text, String mood) { LumaService.say(text, mood); }
+        @JavascriptInterface public void bubbleText(String text) { LumaService.words(text); }
 
         // ----- watching the phone screen -----
         @JavascriptInterface public void startCapture() {

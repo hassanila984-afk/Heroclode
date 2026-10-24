@@ -20,12 +20,14 @@ const TONE = {
   thinking: `relaxed and curious, warm, ${NATURAL}`,
   listening: `relaxed and warm, lightly smiling, ${NATURAL}`,
 };
+// when she sings (s=1): a little song, voice only
+const SINGING = "singing softly, a sweet lullaby melody, held notes";
 const MAX_TEXT = 600;
 
 // GET /api/voice?t=<text>&v=<voice>: streamed, for <audio src>. POST {text, voice}: the same, for fetch().
 export async function onRequestGet({ request, env }) {
   const u = new URL(request.url);
-  return speak(request, env, u.searchParams.get("t"), u.searchParams.get("v"), u.searchParams.get("m"));
+  return speak(request, env, u.searchParams.get("t"), u.searchParams.get("v"), u.searchParams.get("s") === "1" ? "sing" : u.searchParams.get("m"));
 }
 export async function onRequestPost({ request, env }) {
   let body = {};
@@ -48,7 +50,7 @@ async function speak(request, env, rawText, voice, mood) {
       const r = await fetch("https://api.deepinfra.com/v1/inference/" + MODEL, {
         method: "POST",
         headers: { authorization: "Bearer " + key, "content-type": "application/json" },
-        body: JSON.stringify({ text: `[${TONE[mood] || TONE.listening}] ` + text, voice: VOICES.includes(voice) ? voice : VOICES[0], output_format: "mp3", stream: true }),
+        body: JSON.stringify({ text: `[${mood === "sing" ? SINGING : TONE[mood] || TONE.listening}] ` + text, voice: VOICES.includes(voice) ? voice : VOICES[0], output_format: "mp3", stream: true }),
       });
       if (r.ok && r.body) return new Response(r.body, { headers: { "content-type": "audio/mpeg", "cache-control": "no-store" } });
     } catch (e) { }

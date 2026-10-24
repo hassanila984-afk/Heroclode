@@ -96,6 +96,8 @@ public class LumaService extends Service {
     /** Firefly itself is on screen: the bubble steps aside (it would sit on top of the chat). */
     static void appVisible(boolean open) { main.post(() -> { if (me != null) { me.appOpen = open; if (open) me.lastActivity = System.currentTimeMillis(); if (me.bubble != null) { me.bubble.setVisibility(open ? View.GONE : View.VISIBLE); if (!open && me.asleep) me.wake(); } } }); }
     static void say(String text, String mood) { main.post(() -> { if (me != null) me.show(text, mood); }); }
+    /** Her words growing as she says them: the text changes in place, without popping out again. */
+    static void words(String text) { main.post(() -> { if (me != null) me.updateWords(text); }); }
     /** Listening started while the app is open: let the service keep the microphone if it runs. */
     /** Asks "Tap “Send”?" on her bubble; runs yes only if the person taps Yes. False when there's no bubble to ask on. */
     static boolean confirm(String question, Runnable yes) {
@@ -582,6 +584,14 @@ public class LumaService extends Service {
             main.removeCallbacks(hideWords);
             main.postDelayed(hideWords, Math.max(6000, t.length() * 90L));
         }
+    }
+
+    private void updateWords(String text) {
+        if (bubble == null || text == null || text.trim().isEmpty()) return;
+        if (words.getVisibility() != View.VISIBLE) { show(text, null); return; }
+        words.setText(text.trim());
+        main.removeCallbacks(hideWords);
+        main.postDelayed(hideWords, Math.max(4000, text.length() * 90L));
     }
 
     private int screenW() { return getResources().getDisplayMetrics().widthPixels; }

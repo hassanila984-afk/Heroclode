@@ -289,6 +289,8 @@ public class LumaService extends Service {
         main.postDelayed(this::tuck, 150);
         main.removeCallbacks(life);
         main.postDelayed(life, 45_000);
+        main.removeCallbacks(wander);
+        main.postDelayed(wander, 20_000);
     }
 
     // ----- asking before she touches anything -----
@@ -443,7 +445,9 @@ public class LumaService extends Service {
     private void removeBubble() {
         main.removeCallbacks(hideWords);
         main.removeCallbacks(life);
+        main.removeCallbacks(wander);
         if (mover != null) mover.cancel();
+        bounce(false);
         stopWiggle();
         asleep = false;
         showCloseTarget(false);
@@ -500,6 +504,7 @@ public class LumaService extends Service {
                 case MotionEvent.ACTION_MOVE:
                     float dx = e.getRawX() - start[0], dy = e.getRawY() - start[1];
                     if (!moved[0] && Math.abs(dx) + Math.abs(dy) > dp(8)) { moved[0] = true; showCloseTarget(true); if (mover != null) mover.cancel(); face.setRotation(0); }
+                    lastDrag = System.currentTimeMillis();   // they moved her: she stays put for a while
                     lp.x = (int) (start[2] + dx); lp.y = (int) (start[3] + dy);
                     if (bubble != null) wm.updateViewLayout(bubble, lp);
                     if (closeTarget != null) {
@@ -633,6 +638,80 @@ public class LumaService extends Service {
         moveTo(x, clampY(lp.y + (int) ((Math.random() - 0.5) * dp(160))), 600);
         face.animate().rotation(0).setDuration(300).start();
         main.postDelayed(this::tuck, 2200);
+    }
+
+    // ----- moving around the phone on her own -----
+    private long lastDrag;
+    private android.animation.ObjectAnimator steps;
+    private final Runnable wander = new Runnable() {
+        @Override public void run() {
+            if (bubble != null && !appOpen && !asleep && askYes == null && words.getVisibility() != View.VISIBLE
+                    && inputRow.getVisibility() != View.VISIBLE && !LumaAccess.autoScrolling()
+                    && System.currentTimeMillis() - lastDrag > 60_000) {
+                double r = Math.random();
+                if (r < 0.4) walkAcross();
+                else if (r < 0.75) strollAlongEdge();
+                else curiousPeek();
+            }
+            main.postDelayed(this, 18_000 + (long) (Math.random() * 22_000));
+        }
+    };
+
+    /** She walks across the screen to the other edge, bouncing a little with each step. */
+    private void walkAcross() {
+        if (bubble == null) return;
+        bubble.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
+        int w = bubble.getMeasuredWidth(), to = side == 0 ? screenW() - w - dp(6) : dp(6);
+        int y = clampY(lp.y + (int) ((Math.random() - 0.5) * dp(240)));
+        face.animate().rotation(0).setDuration(200).start();
+        bounce(true);
+        glide(to, y, 2600, () -> {
+            bounce(false);
+            side = side == 0 ? 1 : 0;
+            arrange();
+            main.postDelayed(this::tuck, 1200);
+        });
+    }
+
+    /** Out a little from her edge, up or down to somewhere new, then back in hiding. */
+    private void strollAlongEdge() {
+        if (bubble == null) return;
+        int box = dp(68) + dp(32), x = side == 0 ? -dp(6) : screenW() - box + dp(6);
+        bounce(true);
+        glide(x, clampY((int) (dp(80) + Math.random() * (screenH() - dp(320)))), 1800, () -> { bounce(false); main.postDelayed(this::tuck, 1500); });
+    }
+
+    private void glide(int x, int y, long ms, Runnable done) {
+        if (bubble == null) return;
+        if (mover != null) mover.cancel();
+        final int x0 = lp.x, y0 = lp.y;
+        mover = ValueAnimator.ofFloat(0, 1);
+        mover.setDuration(ms);
+        mover.setInterpolator(new android.view.animation.AccelerateDecelerateInterpolator());
+        mover.addUpdateListener(a -> {
+            if (bubble == null) return;
+            float k = (float) a.getAnimatedValue();
+            lp.x = (int) (x0 + (x - x0) * k); lp.y = (int) (y0 + (y - y0) * k);
+            try { wm.updateViewLayout(bubble, lp); } catch (Exception ignored) { }
+        });
+        mover.addListener(new android.animation.AnimatorListenerAdapter() {
+            boolean cancelled;
+            @Override public void onAnimationCancel(android.animation.Animator a) { cancelled = true; bounce(false); }
+            @Override public void onAnimationEnd(android.animation.Animator a) { if (!cancelled && done != null) done.run(); }
+        });
+        mover.start();
+    }
+
+    private void bounce(boolean on) {
+        if (steps != null) { steps.cancel(); steps = null; }
+        if (face == null) return;
+        face.setTranslationY(0);
+        if (!on) return;
+        steps = android.animation.ObjectAnimator.ofFloat(face, "translationY", 0f, -dp(7));
+        steps.setDuration(190);
+        steps.setRepeatMode(ValueAnimator.REVERSE);
+        steps.setRepeatCount(ValueAnimator.INFINITE);
+        steps.start();
     }
 
     private void hop() {

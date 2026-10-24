@@ -44,6 +44,8 @@ public class MainActivity extends Activity {
     private ValueCallback<Uri[]> fileCallback;
     private PermissionRequest pendingWebMic;
     private String pendingListenLang;
+    /** On a call or listening for her name: her bubble comes out by itself when they leave the app. */
+    volatile boolean stayWithMe;
 
     @Override
     protected void onCreate(Bundle state) {
@@ -70,6 +72,10 @@ public class MainActivity extends Activity {
         CookieManager.getInstance().setAcceptCookie(true);   // the signed-in session
 
         web.addJavascriptInterface(new Bridge(), "AndroidLuma");
+        // keep her page at full speed while other apps are open (calls, listening, watching)
+        if (Build.VERSION.SDK_INT >= 26) web.setRendererPriorityPolicy(WebView.RENDERER_PRIORITY_IMPORTANT, false);
+        // files (the app update) download in the phone's browser
+        web.setDownloadListener((url, ua, cd, mime, len) -> startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url))));
         web.setWebViewClient(new WebViewClient() {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest req) {
@@ -120,7 +126,12 @@ public class MainActivity extends Activity {
     protected void onResume() { super.onResume(); LumaService.appVisible(true); }
 
     @Override
-    protected void onPause() { LumaService.appVisible(false); super.onPause(); }
+    protected void onPause() {
+        LumaService.appVisible(false);
+        if (stayWithMe && Settings.canDrawOverlays(this) && !LumaService.bubbleOn())
+            startForegroundService(new Intent(this, LumaService.class).setAction(LumaService.BUBBLE));
+        super.onPause();
+    }
 
     @Override
     public void onBackPressed() {
@@ -186,6 +197,10 @@ public class MainActivity extends Activity {
     /** What the page can call, as window.AndroidLuma. */
     class Bridge {
         @JavascriptInterface public boolean isApp() { return true; }
+        @JavascriptInterface public String version() {
+            try { return getPackageManager().getPackageInfo(getPackageName(), 0).versionName; } catch (Exception e) { return ""; }
+        }
+        @JavascriptInterface public void stayWithMe(boolean on) { stayWithMe = on; }
 
         // ----- Luma's bubble over other apps -----
         @JavascriptInterface public void bubbleShow() {

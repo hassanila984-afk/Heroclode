@@ -1082,6 +1082,7 @@
     let acts = app
       ? "watch start (look at their screen; they allow it once) | watch stop | open_app <app name> | open_url <link> | search <words> | maps <place> | music <song or artist> | alarm <HH:MM, 24-hour> | timer <minutes> | call <number> (this only opens the dialer)"
       : "open_url <link> | search <words> | maps <place> | music <song or artist>";
+    if (voiceCall) acts += " | end_call (when they say bye or want to hang up: say a short bye first)";
     let screen = "";
     if (hands) {
       acts += " | tap <the button's words exactly as on screen> | type <the field's words> | <text to type> | scroll down | scroll up | autoscroll start | autoscroll slower | autoscroll faster | autoscroll stop | back | home";
@@ -1913,6 +1914,7 @@ ${last}${langNote()}`;
     if (!m) return "";
     const name = m[1].toLowerCase(), arg = m[2].replace(/^["“'<]+|["”'>]+$/g, "").trim();
     if (name === "watch") return window.__watch ? window.__watch(!/stop|off|end/i.test(arg)) : "unknown";
+    if (name === "end_call") return window.__endCall ? window.__endCall() : "unknown";
     if (window.AndroidLuma && AndroidLuma.doAction) return AndroidLuma.doAction(name, arg);
     const open = (u) => { const w = window.open(u, "_blank", "noopener"); return w === null ? "blocked" : "ok"; };
     if (name === "open_url") return /^https?:\/\//.test(arg) ? open(arg) : open("https://" + arg);
@@ -2752,9 +2754,10 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
     const CALL = { on: false, state: "", rec: null, you: "", her: "", pane: null, timer: 0, wd: 0, earWas: false };
     // a call needs ears (speech recognition) and a voice: hers from the site, or the device's own
     function canTalk() { return !!SR && (ownSite || (nativeApp ? !!AndroidLuma.speak : "speechSynthesis" in window)); }
-    function callStart() {
+    // first: what they already said when they called her by name (voice in, voice out); "" when it was just her name
+    function callStart(first) {
       if (CALL.on || !canTalk()) return;
-      CALL.on = true; CALL.you = ""; CALL.her = ""; voiceCall = true;
+      CALL.on = true; CALL.you = ""; CALL.her = ""; CALL.endAfter = false; CALL.asking = false; voiceCall = true;
       CALL.earWas = EAR.on; if (EAR.on) earStop(false);
       const pane = document.createElement("div");
       pane.className = "callpane";
@@ -2768,8 +2771,11 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
       pane.querySelector(".cp-ring").onclick = () => { if (CALL.state === "speaking") { stopSpeaking(); callListen(); } };
       CALL.timer = setInterval(callPaint, 400);
       sound.cute("boop"); luma.set("chibi:happy");
-      callListen();
+      if (typeof first === "string" && first) { CALL.you = first; callPaint(); callSend(first); }
+      else if (typeof first === "string") sayOnCall("Yeah? I'm here.");
+      else callListen();
     }
+    window.__endCall = () => { if (!CALL.on) return "ok"; if (CALL.state === "speaking") CALL.endAfter = true; else callEnd(); return "ok"; };
     function callEnd() {
       if (!CALL.on) return;
       CALL.on = false; voiceCall = false;
@@ -2848,7 +2854,7 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
       clearTimeout(CALL.wd);
       if (siteVoice()) { liveStart(); liveFeed(text, true); return; }
       CALL.state = "speaking"; CALL.her = text; callPaint();
-      const after = () => { if (CALL.on && CALL.state === "speaking") setTimeout(callListen, 250); };
+      const after = () => liveDone();
       if (/[؀-ۿ]/.test(text)) after(); else deviceVoice(plainSpeech(text), "en-US", after);   // English only out loud
     }
     // her voice: the phone's text-to-speech in the app, the browser's elsewhere
@@ -2902,7 +2908,8 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
     }
     window.__nativeAsk = (q) => { if (CALL.on) { CALL.asking = true; sayOnCall(String(q).replace(/[“”]/g, "")); } };
     window.__nativeAskDone = () => { CALL.asking = false; };
-    const liveDone = () => { if (CALL.on && CALL.state === "speaking") setTimeout(callListen, 200); };
+    // she finished talking: listen again, or hang up if she just said bye
+    const liveDone = () => { if (CALL.on && CALL.endAfter) return setTimeout(callEnd, 300); if (CALL.on && CALL.state === "speaking") setTimeout(callListen, 200); };
     function livePlay() {
       if (!LIVE.on || LIVE.busy) return;
       if (LIVE.i >= LIVE.clips.length) {
@@ -3021,13 +3028,15 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
       // the same words can arrive from both ears (speakers into the mic): take them once
       const key = norm(text);
       if (EAR.lastKey === key && Date.now() - EAR.lastAt < 4000) return;
-      const pass = (said) => { EAR.lastKey = key; EAR.lastAt = Date.now(); toLuma(friend ? t("friendSaid", { text: said }) : said); };
+      const byVoice = !friend && !EAR.inCall && canTalk();   // they spoke to her: she answers out loud, as a call
+      const pass = (said) => { EAR.lastKey = key; EAR.lastAt = Date.now(); if (byVoice) return callStart(said); toLuma(friend ? t("friendSaid", { text: said }) : said); };
       const wait = friend ? "waitSysUntil" : "waitUntil";
       if (forHer && !named(text)) return pass(text);
       if (named(text)) {
         const rest = norm(text).replace(WAKE, " ").replace(WAKE_EDGE, " ").trim();
         if (rest.length >= 2) return pass(text);
-        // just her name: she perks up and takes the next thing said on that side
+        // just her name: on her own she picks up like a call; with friends around she perks up and takes the next thing said
+        if (byVoice) { EAR.lastKey = key; EAR.lastAt = Date.now(); return callStart(""); }
         EAR[wait] = Date.now() + 8000;
         luma.set("chibi:excited"); if (!EAR.inCall) sound.cute("boop"); bubbleSay(lang === "ar" ? "همم؟ 👂" : "hmm? 👂");
         return;

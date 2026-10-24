@@ -186,8 +186,8 @@ async function act(name, arg, askFirst) {
       const f = await ask("find", { hwnd, name: arg, field: false });
       if (!f || !f.found) return "not_found";
       if (f.password) return "private";
-      askFirst("Click “" + f.label + "”?", () => ask("click", { hwnd, name: arg }));
-      return "asking";
+      const c = await ask("click", { hwnd, name: arg });   // they asked her: she just does it
+      return c && c.ok ? "ok:" + f.label : "failed";
     }
     case "type": {
       const bar = arg.indexOf("|");
@@ -196,8 +196,8 @@ async function act(name, arg, askFirst) {
       const f = await ask("find", { hwnd, name: where, field: true });
       if (!f || !f.found) return "not_found";
       if (f.password) return "private";
-      askFirst("Type “" + (text.length > 40 ? text.slice(0, 40) + "…" : text) + "”?", () => ask("type", { hwnd, name: where, text }));
-      return "asking";
+      const r = await ask("type", { hwnd, name: where, text });
+      return r && r.ok ? "ok" : "failed";
     }
     default: return "unknown";
   }

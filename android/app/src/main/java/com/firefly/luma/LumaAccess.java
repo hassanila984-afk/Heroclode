@@ -210,7 +210,8 @@ public class LumaAccess extends AccessibilityService {
                 AccessibilityNodeInfo n = s.find(r, arg, false);
                 if (n == null) return "not_found";
                 String l = label(n);
-                return LumaService.confirm("Tap “" + l + "”?", () -> s.tap(n)) ? "asking" : "no_bubble";
+                s.main.post(() -> s.tap(n));   // they asked her: she just does it (no yes/no first)
+                return "ok:" + l;
             }
             case "type": {
                 int bar = arg.indexOf('|');
@@ -218,13 +219,14 @@ public class LumaAccess extends AccessibilityService {
                 if (text.isEmpty()) return "failed";
                 AccessibilityNodeInfo f = s.find(r, where, true);
                 if (f == null) return "not_found";
-                return LumaService.confirm("Type “" + (text.length() > 40 ? text.substring(0, 40) + "…" : text) + "”?", () -> {
+                s.main.post(() -> {
                     f.refresh();
                     Bundle b = new Bundle();
                     b.putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE, text);
                     f.performAction(AccessibilityNodeInfo.ACTION_FOCUS);
                     f.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, b);
-                }) ? "asking" : "no_bubble";
+                });
+                return "ok";
             }
             default: return "unknown";
         }

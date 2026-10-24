@@ -56,7 +56,7 @@ public class LumaService extends Service {
 
     private WindowManager wm;
     private LinearLayout bubble;
-    private ImageView face;
+    private LumaView face;
     private TextView words;
     private WindowManager.LayoutParams lp;
     private final Runnable hideWords = this::wordsDone;
@@ -196,21 +196,8 @@ public class LumaService extends Service {
         faceBox.setClipChildren(false);
         int room = dp(16);
         faceBox.setPadding(room, room, room, room / 2);
-        face = new ImageView(this);
-        face.setScaleType(ImageView.ScaleType.CENTER_CROP);
-        GradientDrawable ring = new GradientDrawable();
-        ring.setShape(GradientDrawable.OVAL);
-        ring.setColors(new int[]{0xFFFFD27A, 0xFFB48CFF, 0xFF7B3CFF});
-        ring.setGradientType(GradientDrawable.SWEEP_GRADIENT);
-        face.setBackground(ring);
-        int pad = dp(3);
-        face.setPadding(pad, pad, pad, pad);
-        face.setClipToOutline(true);
-        face.setOutlineProvider(new ViewOutlineProvider() {
-            @Override public void getOutline(View v, Outline o) { o.setOval(0, 0, v.getWidth(), v.getHeight()); }
-        });
-        face.setElevation(dp(6));
-        faceBox.addView(face, new android.widget.FrameLayout.LayoutParams(dp(68), dp(68)));
+        face = new LumaView(this);   // herself, alive (see LumaView), not a picture in a circle
+        faceBox.addView(face, new android.widget.FrameLayout.LayoutParams(dp(84), dp(104)));
         zz = new TextView(this);
         zz.setText("z z");
         zz.setTextColor(0xFFFFD27A);
@@ -505,10 +492,11 @@ public class LumaService extends Service {
                     return true;
                 case MotionEvent.ACTION_MOVE:
                     float dx = e.getRawX() - start[0], dy = e.getRawY() - start[1];
-                    if (!moved[0] && Math.abs(dx) + Math.abs(dy) > dp(8)) { moved[0] = true; showCloseTarget(true); if (mover != null) mover.cancel(); face.setRotation(0); }
+                    if (!moved[0] && Math.abs(dx) + Math.abs(dy) > dp(8)) { moved[0] = true; showCloseTarget(true); if (mover != null) mover.cancel(); face.setRotation(0); grabbed(); }
                     lastDrag = System.currentTimeMillis();   // they moved her: she stays put for a while
                     lp.x = (int) (start[2] + dx); lp.y = (int) (start[3] + dy);
                     if (bubble != null) wm.updateViewLayout(bubble, lp);
+                    face.moved(lp.x, lp.y);
                     if (closeTarget != null) {
                         boolean over = overClose(e.getRawX(), e.getRawY());
                         closeTarget.setScaleX(over ? 1.25f : 1f); closeTarget.setScaleY(over ? 1.25f : 1f);
@@ -518,8 +506,9 @@ public class LumaService extends Service {
                 case MotionEvent.ACTION_CANCEL:
                     boolean drop = moved[0] && overClose(e.getRawX(), e.getRawY());
                     showCloseTarget(false);
+                    if (moved[0] && face != null) face.setFlying(false);
                     if (drop) { removeBubble(); stopIfIdle(); }
-                    else if (moved[0]) snapToEdge();
+                    else if (moved[0]) { dropped(); snapToEdge(); }
                     else if (!moved[0] && bubble != null && e.getActionMasked() == MotionEvent.ACTION_UP) {
                         long now = System.currentTimeMillis();
                         if (LumaAccess.autoScrolling()) { LumaAccess.stopAutoScroll(); lastTap = 0; return true; }   // tap her to stop scrolling
@@ -533,6 +522,29 @@ public class LumaService extends Service {
             }
             return false;
         });
+    }
+
+    // picked up with a finger: she reacts, and again when put down
+    private static final String[][] PICKED = {{"excited", "wheee~ ✨"}, {"pout", "hey! put me down 😤"}, {"shy", "w-where are we going?"}, {"excited", "faster faster!"}, {"pout", "hmph, I was comfy there"}, {"shy", "eek! careful~"}, {"excited", "I'm flying!! 🕊️"}};
+    private static final String[][] DROPPED = {{"happy", "okay, I like it here~"}, {"pout", "next time ask first 😤"}, {"happy", "new spot, nice ✨"}, {"shy", "that was kinda fun…"}, {"happy", "hehe again?"}, {"pout", "my hair is a mess now"}};
+    private int lastQuip = -1;
+    private String[] pick(String[][] list) { int i; do i = (int) (Math.random() * list.length); while (list.length > 1 && i == lastQuip); lastQuip = i; return list[i]; }
+    private void grabbed() {
+        wake();
+        if (face != null) face.setFlying(true);
+        if (askYes != null) return;
+        String[] q = pick(PICKED);
+        quip(q[1], q[0]);
+    }
+    private void dropped() { if (Math.random() < 0.6) { String[] q = pick(DROPPED); quip(q[1], q[0]); hop(); } }
+    /** A short line beside her that doesn't move her anywhere (she's being carried). */
+    private void quip(String text, String mood) {
+        if (bubble == null) return;
+        setFace(mood); sparkle(mood);
+        words.setText(text);
+        panel.setVisibility(View.VISIBLE); words.setVisibility(View.VISIBLE);
+        main.removeCallbacks(hideWords);
+        main.postDelayed(hideWords, 2600);
     }
 
     private final Runnable openApp = () -> {
@@ -557,9 +569,7 @@ public class LumaService extends Service {
         String[] known = {"happy", "listening", "excited", "shy", "pout", "ignore", "sad", "sleepy"};
         String m = "listening";
         for (String k : known) if (k.equals(mood)) m = k;
-        try (InputStream in = getAssets().open("luma/chibi_" + m + ".webp")) {
-            face.setImageBitmap(BitmapFactory.decodeStream(in));
-        } catch (Exception ignored) { }
+        face.setMood(m);
     }
 
     private void show(String text, String mood) {
@@ -590,6 +600,7 @@ public class LumaService extends Service {
         if (bubble == null || text == null || text.trim().isEmpty()) return;
         if (words.getVisibility() != View.VISIBLE) { show(text, null); return; }
         words.setText(text.trim());
+        if (face != null) { face.talking = true; face.nod(); }
         main.removeCallbacks(hideWords);
         main.postDelayed(hideWords, Math.max(4000, text.length() * 90L));
     }
@@ -610,6 +621,7 @@ public class LumaService extends Service {
             float k = (float) a.getAnimatedValue();
             lp.x = (int) (x0 + (x - x0) * k); lp.y = (int) (y0 + (y - y0) * k);
             try { wm.updateViewLayout(bubble, lp); } catch (Exception ignored) { }
+            if (face != null) face.moved(lp.x, lp.y);
         });
         mover.start();
     }
@@ -619,7 +631,7 @@ public class LumaService extends Service {
     /** Half hidden past the edge, peeking out, as if she were behind the app. */
     private void tuck() {
         if (bubble == null || face == null) return;
-        int box = dp(68) + dp(32), x = side == 0 ? -(int) (box * 0.5f) : screenW() - (int) (box * 0.5f);
+        int box = dp(84) + dp(32), x = side == 0 ? -(int) (box * 0.5f) : screenW() - (int) (box * 0.5f);
         moveTo(x, clampY(lp.y), 520);
         face.animate().rotation(side == 0 ? 16 : -16).setDuration(400).start();
     }
@@ -644,7 +656,7 @@ public class LumaService extends Service {
     /** Every few minutes of quiet she slides out a little, looks around, and hides again. */
     private void curiousPeek() {
         if (bubble == null) return;
-        int box = dp(68) + dp(32), x = side == 0 ? -dp(10) : screenW() - box + dp(10);
+        int box = dp(84) + dp(32), x = side == 0 ? -dp(10) : screenW() - box + dp(10);
         moveTo(x, clampY(lp.y + (int) ((Math.random() - 0.5) * dp(160))), 600);
         face.animate().rotation(0).setDuration(300).start();
         main.postDelayed(this::tuck, 2200);
@@ -686,7 +698,7 @@ public class LumaService extends Service {
     /** Out a little from her edge, up or down to somewhere new, then back in hiding. */
     private void strollAlongEdge() {
         if (bubble == null) return;
-        int box = dp(68) + dp(32), x = side == 0 ? -dp(6) : screenW() - box + dp(6);
+        int box = dp(84) + dp(32), x = side == 0 ? -dp(6) : screenW() - box + dp(6);
         bounce(true);
         glide(x, clampY((int) (dp(80) + Math.random() * (screenH() - dp(320)))), 1800, () -> { bounce(false); main.postDelayed(this::tuck, 1500); });
     }
@@ -698,50 +710,34 @@ public class LumaService extends Service {
         mover = ValueAnimator.ofFloat(0, 1);
         mover.setDuration(ms);
         mover.setInterpolator(new android.view.animation.AccelerateDecelerateInterpolator());
+        if (face != null && !face.walking) face.setFlying(true);
         mover.addUpdateListener(a -> {
             if (bubble == null) return;
             float k = (float) a.getAnimatedValue();
             lp.x = (int) (x0 + (x - x0) * k); lp.y = (int) (y0 + (y - y0) * k);
             try { wm.updateViewLayout(bubble, lp); } catch (Exception ignored) { }
+            if (face != null) face.moved(lp.x, lp.y);
         });
         mover.addListener(new android.animation.AnimatorListenerAdapter() {
             boolean cancelled;
-            @Override public void onAnimationCancel(android.animation.Animator a) { cancelled = true; bounce(false); }
-            @Override public void onAnimationEnd(android.animation.Animator a) { if (!cancelled && done != null) done.run(); }
+            @Override public void onAnimationCancel(android.animation.Animator a) { cancelled = true; bounce(false); if (face != null) face.setFlying(false); }
+            @Override public void onAnimationEnd(android.animation.Animator a) { if (face != null) face.setFlying(false); if (!cancelled && done != null) done.run(); }
         });
         mover.start();
     }
 
-    private void bounce(boolean on) {
-        if (steps != null) { steps.cancel(); steps = null; }
-        if (face == null) return;
-        face.setTranslationY(0);
-        if (!on) return;
-        steps = android.animation.ObjectAnimator.ofFloat(face, "translationY", 0f, -dp(7));
-        steps.setDuration(190);
-        steps.setRepeatMode(ValueAnimator.REVERSE);
-        steps.setRepeatCount(ValueAnimator.INFINITE);
-        steps.start();
-    }
+    private void bounce(boolean on) { if (face != null) face.walking = on; }
 
-    private void hop() {
-        face.animate().translationY(-dp(10)).setDuration(140).withEndAction(() -> { if (face != null) face.animate().translationY(0).setDuration(180).start(); }).start();
-    }
+    private void hop() { if (face != null) face.hop(); }
 
-    /** A little sway while she talks. */
-    private void startWiggle(int chars) {
-        stopWiggle();
-        wiggle = android.animation.ObjectAnimator.ofFloat(face, "rotation", -7f, 7f);
-        wiggle.setDuration(280);
-        wiggle.setRepeatMode(ValueAnimator.REVERSE);
-        wiggle.setRepeatCount(Math.min(14, 4 + chars / 12));
-        wiggle.start();
-    }
+    /** Talking: she sways and bobs along (drawn by her view). */
+    private void startWiggle(int chars) { if (face != null) { face.talking = true; face.nod(); } }
 
-    private void stopWiggle() { if (wiggle != null) wiggle.cancel(); wiggle = null; }
+    private void stopWiggle() { if (face != null) face.talking = false; }
 
     private void sleep() {
         asleep = true;
+        if (face != null) face.asleep = true;
         setFace("sleepy");
         zz.setVisibility(View.VISIBLE);
         zz.setAlpha(0.3f);
@@ -753,6 +749,7 @@ public class LumaService extends Service {
         lastActivity = System.currentTimeMillis();
         if (!asleep) return;
         asleep = false;
+        if (face != null) face.asleep = false;
         zz.setVisibility(View.GONE);
         setFace("happy");
         hop();

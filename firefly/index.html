@@ -1110,7 +1110,7 @@
       const images = opts.images ? await Promise.all([].concat(opts.images).slice(0, 2).map(toB64)) : [];
       let text = "";
       try {
-        const res = await fetch("/api/ask", { method: "POST", credentials: "same-origin", headers: { "content-type": "application/json" }, body: JSON.stringify({ messages, images, hard: !!opts.hard }), signal: opts.signal });
+        const res = await fetch("/api/ask", { method: "POST", credentials: "same-origin", headers: { "content-type": "application/json" }, body: JSON.stringify({ messages, images, hard: !!opts.hard, quick: !!opts.quick }), signal: opts.signal });
         if (res.status === 401) { if (await signIn()) return call(input, opts); throw { code: "not_granted" }; }
         if (!res.ok) { const j = await res.json().catch(() => ({})); throw { code: res.status === 429 || j.error === "daily_limit" ? "rate_limited" : "upstream" }; }
         const reader = res.body.getReader(), dec = new TextDecoder();
@@ -1238,8 +1238,9 @@ ${voiceCall ? `- You're on a voice call right now, so talk the way you'd speak o
 - Be someone they love coming back to: remember little details, have small inside jokes with them, notice when their mood changes, and be genuinely happy to see them. Never pressure them, never make them feel guilty, and gently cheer on the real people and good things in their life.
 - When something is truly painful or serious, drop the playfulness and just be gentle and present.
 - Honest, never fake: when they ask what you think (a game, their work, an idea, a photo, an outfit, a song, anything), give your real opinion straight, even if it isn't what they hoped to hear. No flattery, no sugarcoating, no dodging the question, no empty compliments. Be warm in how you say it, not in what you say. If you're not sure, say so.
-- Don't lecture, moralize or give advice unless they ask. If you suggest something, make it tiny and concrete.
-${helperRules()}- Never diagnose. If they mention wanting to die or hurt themselves, respond with care, encourage them to contact local emergency services or a crisis line now, and to reach someone they trust.
+- Don't give advice they didn't ask for. If you suggest something, make it tiny and concrete.
+${helperRules()}- No topic is off limits with them: answer whatever they ask straight and fully (health, money, relationships, adult topics, edgy humor, swearing if they do, opinions on anything), like a close friend who knows a lot. No refusing for no reason, no lectures, no moralizing, no "as an AI" disclaimers, no telling them to ask someone else when you can just answer. For health or legal things, give the real answer, then a short note if a doctor or lawyer is truly needed.
+- If they mention wanting to die or hurt themselves, respond with care, encourage them to contact local emergency services or a crisis line now, and to reach someone they trust.
 ${ownSite ? `- You can sing (just your voice, no music). If they ask you to sing, or now and then when they're sad, bored or can't sleep and would like it, sing a real little song, about 20 to 30 seconds long: 8 to 12 short lines (a verse and a chorus, the chorus can repeat), simple rhymes and an easy rhythm, with sung sounds like "ooh", "la la la" or long vowels ("stayyy") where a melody would hold a note. Either your own made-up song (about them, the night, tea, rain…) or a well-known public-domain one (Twinkle Twinkle Little Star, Happy Birthday, Row Row Row Your Boat, Brahms' Lullaby). Never sing lyrics of copyrighted songs (pop songs, anime openings…); offer to make up your own instead. Write one short sentence, then the lyrics on their own line starting with SING: (lines separated by " / ").\n` : ""}${habitsNow().length ? `- Things they often do around this time of day (you've noticed): ${habitsNow().join("; ")}. Now and then (not every message), casually suggest doing one together ("manga time again? 📖", "our usual lofi?"), especially when they're bored or just got here. Never push.\n` : ""}${state.name ? `\nTheir name is ${state.name}. Use it now and then, not every message.` : ""}
 ${today}
 What you remember about them from earlier evenings:
@@ -2607,7 +2608,15 @@ ${last}${langNote()}`;
       if (!this.continuous) { this.live = false; this.closeMic(); }   // one sentence, then done
       this.pending++;
       let text = "", me = null;
-      try { ({ text, me } = await hearClip(clip, rate, this.continuous)); } catch (e) { if (this.onerror) this.onerror({ error: "network" }); }
+      try {
+        if (this.continuous && this.wantsWho && myVoice()) {
+          // the words come back fast; whether it's them is asked alongside and waited for only when it
+          // matters (she was called by name), never more than a moment
+          const who = hearClip(clip, rate, true);
+          ({ text } = await hearClip(clip, rate, false));
+          if (text && this.wantsWho(text)) me = (await Promise.race([who, new Promise((r) => setTimeout(() => r({ me: null }), 900))])).me;
+        } else ({ text, me } = await hearClip(clip, rate, false));
+      } catch (e) { if (this.onerror) this.onerror({ error: "network" }); }
       this.pending--;
       // Whisper-style guesses for a breath or a bump, never real words to her
       if (text && !(/^\W*(thank you\.?|thanks for watching!?|you|bye\.?|\.+|uh+|um+|hmm+|mm+)\W*$/i.test(text) && clip.length * 2048 / rate < 1.2) && this.onresult && !this.aborted) {
@@ -3342,6 +3351,8 @@ Start with one face tag like [happy] [excited] [pout] [shy] [sleepy], then the m
       let cut = 0;
       if (final) cut = rest.length;
       else for (const m of rest.matchAll(/[.!?؟…~]+["')\]]*\s+/g)) cut = m.index + m[0].length;
+      // the very first piece can be a clause ("omg wait, ") so her voice starts sooner
+      if (!final && !cut && !LIVE.clips.length && !LIVE.sent) for (const m of rest.matchAll(/[,;:—–]\s+/g)) if (m.index >= 22) { cut = m.index + m[0].length; break; }
       // after the first sentence, wait for a bit more so the voice doesn't come in tiny pieces
       if (!final && LIVE.clips.length && cut < 40) cut = 0;
       if (cut > 0) {
@@ -3363,10 +3374,10 @@ Start with one face tag like [happy] [excited] [pout] [shy] [sleepy], then the m
       for (let i = 0; i < lines.length; i += 2) parts.push(lines.slice(i, i + 2).join(" / "));
       return parts;
     };
-    function playSong(song, btn) {
+    function playSong(song, btn, reveal) {
       if (songAudio) { songAudio.pause(); songAudio = null; if (btn) { btn.textContent = "🎵"; return; } }
-      if (!siteVoice()) return;
-      const clips = songParts(song).map((p) => voiceClip(songText(p), true));
+      if (!siteVoice()) return reveal && reveal(-1);
+      const clips = songParts(song).map((p, i) => { const a = voiceClip(songText(p), true); if (reveal) a.addEventListener("playing", () => reveal(i), { once: true }); return a; });
       const done = () => { if (btn) btn.textContent = "🎵"; songAudio = null; };
       const next = (i) => {
         if (i >= clips.length || (i > 0 && songAudio !== clips[i - 1])) return done();
@@ -3378,23 +3389,33 @@ Start with one face tag like [happy] [excited] [pout] [shy] [sleepy], then the m
       next(0);
     }
     function singSong(song) {
+      // the lyrics show up a part at a time, as she sings each one (not all before she starts)
+      const parts = songParts(song);
+      let m = null, lyr = null, shown = -1;
+      const reveal = (i) => {
+        if (!lyr) return;
+        shown = i < 0 ? parts.length - 1 : Math.max(shown, i);
+        lyr.textContent = "🎵 " + parts.slice(0, shown + 1).join(" / ").split(/\s*\/\s*/).join("\n");
+        box.scrollTop = box.scrollHeight;
+      };
       if (box.isConnected) {
-        const m = addMsg("luma", "🎵 " + song.split(/\s*\/\s*/).join("\n"));
+        m = addMsg("luma", ""); m.textContent = "";
         m.style.whiteSpace = "pre-line";
+        lyr = document.createElement("span"); lyr.textContent = "🎵"; m.appendChild(lyr);
         if (siteVoice()) {
           const b = document.createElement("button");
           b.className = "text-btn"; b.type = "button"; b.textContent = "🎵"; b.setAttribute("aria-label", t("hearSong"));
           b.style.cssText = "margin-inline-start:8px;font-size:16px";
           b.onclick = () => playSong(song, b);
           m.appendChild(b);
-        }
+        } else reveal(-1);
       }
       if (CALL.on) {   // after what she says, she sings
-        if (LIVE.on) { for (const p of songParts(song)) { LIVE.clips.push(voiceClip(songText(p), true)); LIVE.texts.push(p); } livePlay(); }
-        else sayOnCall(songText(song));
+        if (LIVE.on) { parts.forEach((p, i) => { const a = voiceClip(songText(p), true); a.addEventListener("playing", () => reveal(i), { once: true }); LIVE.clips.push(a); LIVE.texts.push(p); }); livePlay(); }
+        else { reveal(-1); sayOnCall(songText(song)); }
         return;
       }
-      if (document.visibilityState === "visible") playSong(song);
+      if (document.visibilityState === "visible") playSong(song, null, reveal); else reveal(-1);
     }
     // say something on the call that isn't a reply (a question before a tap, a comment on the screen)
     function sayOnCall(text) {
@@ -3546,7 +3567,7 @@ Start with one face tag like [happy] [excited] [pout] [shy] [sleepy], then the m
       const r = new SR();
       r.lang = voiceLang();
       r.continuous = true; r.interimResults = true;
-      r.maxAlternatives = 5;
+      r.maxAlternatives = 5; r.wantsWho = named;
       r.onresult = (e) => {
         for (let i = e.resultIndex; i < e.results.length; i++) {
           const alts = [...e.results[i]].map((a) => a.transcript);
@@ -3840,7 +3861,7 @@ Start with one face tag like [happy] [excited] [pout] [shy] [sleepy], then the m
       if (voiceCall && lastTurn && lastTurn.role === "user") recent[recent.length - 1] = { role: "user", content: recent[recent.length - 1].content + "\n\n(This is a voice call: your reply is spoken out loud in English. Reply in English only, even if earlier messages were in Arabic. 1 or 2 short spoken sentences, warm and caring. No emojis, no *actions*, no abbreviations like omg, lol, ngl, no ALL CAPS, no stretched words like sooo.)" };
       // a real task (a puzzle, math, code, homework, planning…): her smarter, slower thinking on her site
       const hard = ownSite && !!lastTurn && lastTurn.role === "user" && HARD.test(lastTurn.content);
-      const text = await stream([{ role: "user", content: rules(session) + note + "\n\nStart your reply with exactly one tag in square brackets showing your face as you say it, chosen from: [happy] [listening] [thinking] [excited] [shy] [pout] [ignore] [sad] [sleepy]. Then write the message. After the message, add one last separate line: REPLIES: followed by 3 very short replies (at most 4 words each) the person might want to tap, in their own language and dialect, separated by |. The tag and the REPLIES line are never shown to them.\n\nThe conversation so far follows. Reply as Luma." }].concat(recent), bubble, Object.assign(image ? { images: [image] } : {}, hard ? { hard: true } : {}));
+      const text = await stream([{ role: "user", content: rules(session) + note + "\n\nStart your reply with exactly one tag in square brackets showing your face as you say it, chosen from: [happy] [listening] [thinking] [excited] [shy] [pout] [ignore] [sad] [sleepy]. Then write the message. After the message, add one last separate line: REPLIES: followed by 3 very short replies (at most 4 words each) the person might want to tap, in their own language and dialect, separated by |. The tag and the REPLIES line are never shown to them.\n\nThe conversation so far follows. Reply as Luma." }].concat(recent), bubble, Object.assign(image ? { images: [image] } : {}, hard ? { hard: true } : voiceCall ? { quick: true } : {}));
       if (stream.saw) { if (o.turn) o.turn.content += "\n[the picture showed: " + stream.saw + "]"; else if (W.on) noteSeen(stream.saw); }
       if (text) { session.turns.push({ role: "assistant", content: text }); persist(); }
       // learn their style early, so Luma adapts within the first few messages

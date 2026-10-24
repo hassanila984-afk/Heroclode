@@ -42,7 +42,8 @@ export async function onRequestPost({ request, env, waitUntil }) {
   // only delays her first word). A real task (a puzzle, math, code, homework…; the page marks it): she
   // thinks it through first.
   const hard = body.hard === true;
-  const model = "claude-sonnet-5-5";
+  // on a voice call (quick): Haiku, the fastest to answer; a call needs a reply right away
+  const model = body.quick === true && !hard ? "claude-haiku-5-5" : "claude-sonnet-5-5";
   const client = new Anthropic({ apiKey: key, defaultHeaders: { "x-api-key": key } });
   // the long, steady start of the conversation (her personality) is cached so it isn't re-read every turn
   const params = hard

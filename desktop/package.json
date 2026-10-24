@@ -1,7 +1,7 @@
 {
   "name": "firefly-desktop",
   "productName": "Firefly",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "description": "Luma on Windows: Firefly in its own window, her bubble on the desktop, and her hands on the computer.",
   "main": "main.js",
   "private": true,

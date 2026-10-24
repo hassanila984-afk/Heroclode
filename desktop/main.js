@@ -20,8 +20,11 @@ process.on("unhandledRejection", logError);
 
 // ---------- settings (kept in the app's own folder) ----------
 const SETTINGS = path.join(app.getPath("userData"), "settings.json");
-let settings = { control: false, bubble: true, autostart: true, toldTray: false };
+let settings = { control: true, bubble: true, autostart: true, toldTray: false };
 try { Object.assign(settings, JSON.parse(fs.readFileSync(SETTINGS, "utf8"))); } catch (e) {}
+// 1.6: her hands are on from the start (every click and typing is still asked first, never in games);
+// turned off from the tray it stays off
+if (!settings.v16) { settings.control = true; settings.v16 = true; try { fs.writeFileSync(SETTINGS, JSON.stringify(settings)); } catch (e) {} }
 const save = () => { try { fs.writeFileSync(SETTINGS, JSON.stringify(settings)); } catch (e) {} };
 
 let win = null, bubble = null, tray = null, quitting = false;

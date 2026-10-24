@@ -329,14 +329,19 @@ public class LumaService extends Service {
         }
         askYes = yes;
         show(question, "thinking");
+        if (MainActivity.current != null) MainActivity.current.js("window.__nativeAsk && __nativeAsk(" + org.json.JSONObject.quote(question) + ")");
         main.removeCallbacks(hideWords);   // the question stays until answered
         askRow.setVisibility(View.VISIBLE);
         main.removeCallbacks(askTimeout);
-        main.postDelayed(askTimeout, 20_000);
+        main.postDelayed(askTimeout, 30_000);
     }
+
+    /** A yes or no from the page (said out loud on a call). */
+    static void answerAsk(boolean yes) { main.post(() -> { if (me != null && me.askYes != null) me.answer(yes); }); }
 
     private void answer(boolean yes) {
         main.removeCallbacks(askTimeout);
+        if (MainActivity.current != null) MainActivity.current.js("window.__nativeAskDone && __nativeAskDone()");
         Runnable r = askYes;
         askYes = null;
         if (askRow != null) askRow.setVisibility(View.GONE);
@@ -510,6 +515,7 @@ public class LumaService extends Service {
                     else if (moved[0]) snapToEdge();
                     else if (!moved[0] && bubble != null && e.getActionMasked() == MotionEvent.ACTION_UP) {
                         long now = System.currentTimeMillis();
+                        if (LumaAccess.autoScrolling()) { LumaAccess.stopAutoScroll(); lastTap = 0; return true; }   // tap her to stop scrolling
                         if (now - lastTap < 350) {   // double-tap: type to her right here
                             main.removeCallbacks(openApp);
                             if (inputRow.getVisibility() == View.VISIBLE) closeInput(); else openInput();

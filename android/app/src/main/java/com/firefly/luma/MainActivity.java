@@ -244,7 +244,7 @@ public class MainActivity extends Activity {
             String a = arg == null ? "" : arg.trim();
             try {
                 switch (name) {
-                    case "tap": case "type": case "scroll": case "back": case "home": case "notifications":
+                    case "tap": case "type": case "scroll": case "autoscroll": case "back": case "home": case "notifications":
                         return LumaAccess.act(name, a);   // asked on her bubble first
                     default: return Actions.run(MainActivity.this, name, a);
                 }
@@ -260,6 +260,9 @@ public class MainActivity extends Activity {
                 startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS));
             });
         }
+        /** Yes or no to the question on her bubble ("Tap Send?"), said out loud on a call. */
+        @JavascriptInterface public void answerAsk(boolean yes) { LumaService.answerAsk(yes); }
+        @JavascriptInterface public boolean autoScrolling() { return LumaAccess.autoScrolling(); }
         /** The app on screen and its buttons, as JSON ("" when she can't see any). */
         @JavascriptInterface public String screen() { return LumaAccess.screen(); }
 

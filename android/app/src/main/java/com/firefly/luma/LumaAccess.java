@@ -26,6 +26,35 @@ import java.util.regex.Pattern;
 public class LumaAccess extends AccessibilityService {
     private static LumaAccess me;
     private String lastPkg = "";
+    private final android.os.Handler main = new android.os.Handler(android.os.Looper.getMainLooper());
+
+    // ----- reading hands-free: she keeps scrolling while they read (a webtoon, an article) -----
+    private String scrollPkg;          // the app she's scrolling; leaving it stops her
+    private long scrollEvery;          // ms between gentle swipes
+    private final Runnable scrollStep = new Runnable() {
+        @Override public void run() {
+            if (scrollPkg == null) return;
+            swipe(true, 0.33f, 700);
+            main.postDelayed(this, scrollEvery);
+        }
+    };
+    static boolean autoScrolling() { return me != null && me.scrollPkg != null; }
+    static void stopAutoScroll() { if (me != null) me.main.post(() -> me.endScroll()); }
+    private void endScroll() {
+        if (scrollPkg == null) return;
+        scrollPkg = null;
+        main.removeCallbacks(scrollStep);
+        LumaService.say("Okay, stopped scrolling~", "happy");
+    }
+    /** A finger swipe in the middle of the screen: up the page (down = true) or back. */
+    private void swipe(boolean down, float part, long ms) {
+        android.util.DisplayMetrics dm = getResources().getDisplayMetrics();
+        float x = dm.widthPixels / 2f, mid = dm.heightPixels * 0.55f, d = dm.heightPixels * part / 2f;
+        Path p = new Path();
+        p.moveTo(x, down ? mid + d : mid - d);
+        p.lineTo(x, down ? mid - d : mid + d);
+        dispatchGesture(new GestureDescription.Builder().addStroke(new GestureDescription.StrokeDescription(p, 0, ms)).build(), null, null);
+    }
 
     /** Apps (and screens) she must never touch. */
     private static final Pattern OFF_LIMITS = Pattern.compile(
@@ -46,7 +75,11 @@ public class LumaAccess extends AccessibilityService {
     public void onAccessibilityEvent(AccessibilityEvent e) {
         if (e.getEventType() == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED && e.getPackageName() != null) {
             String p = e.getPackageName().toString();
-            if (!p.equals(getPackageName())) lastPkg = p;
+            if (!p.equals(getPackageName())) {
+                lastPkg = p;
+                // they left the app she was scrolling (system UI like the keyboard doesn't count)
+                if (scrollPkg != null && !p.equals(scrollPkg) && !p.startsWith("com.android.systemui") && !p.contains("inputmethod")) endScroll();
+            }
         }
     }
 
@@ -152,10 +185,26 @@ public class LumaAccess extends AccessibilityService {
         if (s.offLimits(r, secret[0])) return "private";
         switch (name) {
             case "scroll": {
-                AccessibilityNodeInfo list = s.biggestScrollable(r);
-                if (list == null) return "not_found";
+                // a real swipe works everywhere, including comic and webtoon readers
                 boolean up = arg.toLowerCase(Locale.ROOT).contains("up");
-                return list.performAction(up ? AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD : AccessibilityNodeInfo.ACTION_SCROLL_FORWARD) ? "ok" : "failed";
+                s.main.post(() -> s.swipe(!up, 0.6f, 350));
+                return "ok";
+            }
+            case "autoscroll": {
+                String a = arg.toLowerCase(Locale.ROOT);
+                if (a.contains("stop") || a.contains("off")) { s.main.post(s::endScroll); return "ok"; }
+                long every = s.scrollPkg == null ? 3000 : s.scrollEvery;
+                if (a.contains("slow")) every = Math.min(9000, (long) (every * 1.5));
+                else if (a.contains("fast")) every = Math.max(1000, (long) (every / 1.5));
+                final long gap = every;
+                final String pkg = String.valueOf(r.getPackageName());
+                s.main.post(() -> {
+                    boolean starting = s.scrollPkg == null;
+                    s.scrollPkg = pkg; s.scrollEvery = gap;
+                    s.main.removeCallbacks(s.scrollStep);
+                    s.main.postDelayed(s.scrollStep, starting ? 1500 : gap);
+                });
+                return "ok";
             }
             case "tap": {
                 AccessibilityNodeInfo n = s.find(r, arg, false);

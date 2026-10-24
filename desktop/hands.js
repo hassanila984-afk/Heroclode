@@ -116,6 +116,25 @@ async function refreshScreen() {
   } finally { snapping = false; }
 }
 
+// the installed program whose name is closest to what was heard (letters only), if it's close enough
+function soundsLike(want) {
+  const w = want.replace(/[^a-z0-9]/g, "");
+  if (w.length < 4) return null;
+  let best = null, top = 0;
+  for (const a of apps) {
+    const n = String(a.n).toLowerCase().replace(/[^a-z0-9]/g, "");
+    if (!n) continue;
+    const d = Array.from({ length: n.length + 1 }, (_, j) => j);
+    for (let i = 1; i <= w.length; i++) {
+      let prev = d[0]; d[0] = i;
+      for (let j = 1; j <= n.length; j++) { const t = d[j]; d[j] = Math.min(d[j] + 1, d[j - 1] + 1, prev + (w[i - 1] === n[j - 1] ? 0 : 1)); prev = t; }
+    }
+    const score = 1 - d[n.length] / Math.max(w.length, n.length);
+    if (score > top) { top = score; best = a; }
+  }
+  return top >= (w.length >= 8 ? 0.5 : 0.6) ? best : null;
+}
+
 // ---------- doing things (clicks and typing asked first) ----------
 // Returns "ok", "ok:<app>", "asking", "not_found", "private", "no_access" or "failed".
 async function act(name, arg, askFirst) {
@@ -129,6 +148,7 @@ async function act(name, arg, askFirst) {
         const s = l === want ? 3 : l.startsWith(want) ? 2 : l.includes(want) || (l.length > 2 && want.includes(l)) ? 1 : 0;
         if (s > score) { score = s; best = a; }
       }
+      if (!best) best = soundsLike(want);   // misheard ("Minecraft player" for Manga Slayer): the closest name
       if (!best) return "not_found";
       const r = await ask("launch", { app: best.id });
       return r && r.ok ? "ok:" + best.n : "failed";

@@ -4,22 +4,9 @@
   html, body { margin: 0; height: 100%; background: transparent; overflow: hidden; user-select: none; font: 600 14px/1.4 "Segoe UI", system-ui, sans-serif; }
   #wrap { position: absolute; inset: 0; display: flex; align-items: flex-end; padding: 10px; gap: 6px; box-sizing: border-box; }
   #wrap.right { flex-direction: row-reverse; }
-  .face { flex: none; width: 76px; height: 76px; border-radius: 50%; padding: 3px; cursor: grab; position: relative;
-    background: conic-gradient(#ffd27a, #b48cff, #7b3cff, #ffd27a); box-shadow: 0 4px 18px rgba(0,0,0,.35), 0 0 22px #b48cff66; }
-  .face img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; object-position: 50% 12%; background: #1b1640; pointer-events: none; }
-  .face.hop { animation: hop .5s cubic-bezier(.3,1.6,.5,1); }
-  .face.walk { animation: step .38s ease-in-out infinite alternate; }
-  .face.talk { animation: sway .56s ease-in-out infinite alternate; }
-  .face.float { animation: bob 2.8s ease-in-out infinite alternate; }
-  .face.fly { animation: flutter .3s ease-in-out infinite alternate; }
-  @keyframes bob { to { transform: translateY(-6px); } }
-  @keyframes flutter { from { transform: translateY(-3px) rotate(-5deg); } to { transform: translateY(3px) rotate(5deg); } }
-  .face.fly::after { content: "✨"; position: absolute; bottom: -4px; left: -10px; font-size: 13px; animation: trail .6s linear infinite; }
-  @keyframes trail { to { transform: translate(-10px, 6px); opacity: 0; } }
-  @keyframes hop { 30% { transform: translateY(-14px); } }
-  @keyframes step { to { transform: translateY(-7px) rotate(3deg); } }
-  @keyframes sway { from { transform: rotate(-6deg); } to { transform: rotate(6deg); } }
-  .zz { position: absolute; top: -10px; right: -2px; color: #ffd27a; font-size: 14px; display: none; }
+  .face { flex: none; width: 124px; height: 150px; cursor: grab; position: relative; }
+  .face canvas { width: 124px; height: 150px; display: block; pointer-events: none; filter: drop-shadow(0 3px 6px rgba(0,0,0,.35)) drop-shadow(0 0 10px #b48cff55); }
+  .zz { position: absolute; top: 4px; right: 4px; color: #ffd27a; font-size: 14px; display: none; text-shadow: 0 1px 3px #000; }
   .face.sleep .zz { display: block; animation: zz 2s ease-in-out infinite; }
   @keyframes zz { 50% { transform: translate(3px, -5px); opacity: .5; } }
   .panel { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; max-width: 270px; }
@@ -36,8 +23,9 @@
   @keyframes rise { to { transform: translateY(-36px); opacity: 0; } }
 </style></head>
 <body>
+<canvas id="trail" style="position:absolute;inset:0;width:380px;height:170px;pointer-events:none"></canvas>
 <div id="wrap">
-  <div class="face float" id="face"><img id="img" src="assets/chibi_happy.webp" alt=""><span class="zz">z z</span></div>
+  <div class="face" id="face"><canvas id="cv"></canvas><span class="zz">z z</span></div>
   <div class="panel">
     <div class="words" id="words"></div>
     <div class="row" id="ask"><button class="chip yes" id="yes">✓ Yes</button><button class="chip no" id="no">✕ No</button></div>
@@ -51,13 +39,132 @@
   const W = 380, H = 170;
   let hideTimer = 0, lastActive = Date.now(), lastDrag = 0, walking = null, asleep = false;
 
+  // ---- her, alive: drawn on a canvas every frame, so she breathes, blinks, sways her hair, leans into
+  // flights, squashes when she lands, nods along with her words and turns toward where she's going ----
+  const cv = $("cv"), ctx = cv.getContext("2d"), CW = 124, CH = 150, DPR = Math.max(1, window.devicePixelRatio || 1);
+  cv.width = CW * DPR; cv.height = CH * DPR;
+  const IM = {};
+  for (const m of MOODS) { const i = new Image(); i.src = "assets/chibi_" + m + ".webp"; IM[m] = i; }
+  // where her open eyes are in each picture (left, top, right, bottom), and the skin around them, for blinking
+  const EYES = {
+    excited: [[64, 130, 107, 176], [148, 126, 187, 166]], listening: [[65, 235, 135, 300], [202, 225, 265, 288]],
+    pout: [[65, 148, 100, 180], [142, 140, 180, 170]], sad: [[67, 142, 105, 178], [145, 137, 180, 168]],
+    shy: [[62, 162, 100, 188], [140, 150, 175, 175]], ignore: [[100, 230, 130, 290]],
+  };
+  const SKIN = { excited: "#fcd3cc", listening: "#fdd4cf", pout: "#fcd2cd", sad: "#fdd3cd", shy: "#fbc9c4", ignore: "#fcd3d1" };
+  const me = { mood: "happy", prev: null, fadeAt: 0, mode: null, vx: 0, vy: 0, lean: 0, squash: 0, hop: 0, nod: 0,
+    talking: false, blinkAt: 0, nextBlink: performance.now() + 2500, lastX: null, lastY: null, lastT: 0, sparkAt: 0 };
+  const body = {
+    mood(m) { if (!MOODS.includes(m) || m === me.mood) return; me.prev = me.mood; me.mood = m; me.fadeAt = performance.now(); },
+    hop() { me.hop = 1; },
+    nod() { me.nod = 1; },
+    talk(on) { me.talking = on; },
+    go(mode) { if (me.mode && !mode) me.squash = me.mode === "fly" ? 1 : .5; else if (mode && !me.mode) me.squash = -.7; me.mode = mode; },
+    at(x, y) {   // where her window is now: how fast and which way she's moving
+      const t = performance.now();
+      if (me.lastX !== null && t > me.lastT) {
+        const k = Math.min(1, (t - me.lastT) / 60);
+        me.vx += ((x - me.lastX) / (t - me.lastT) * 16 - me.vx) * k;
+        me.vy += ((y - me.lastY) / (t - me.lastT) * 16 - me.vy) * k;
+      }
+      me.lastX = x; me.lastY = y; me.lastT = t;
+    },
+  };
+  function drawPic(img, alpha, t, trail) {
+    if (!img.complete || !img.naturalWidth) return;
+    const h = 132, w = img.naturalWidth * h / img.naturalHeight, rows = img.naturalHeight, sh = 3, k = h / rows;
+    ctx.globalAlpha = alpha;
+    // in thin strips, each nudged sideways: her hair drifting, and trailing behind her when she flies
+    for (let r = 0; r < rows; r += sh) {
+      const f = r / rows;
+      const dx = Math.sin(t / 900 + f * 4) * 1.3 * f * f + trail * f * f;
+      ctx.drawImage(img, 0, r, img.naturalWidth, Math.min(sh, rows - r), -w / 2 + dx, -h + r * k, w, sh * k + .6);
+    }
+    const eyes = EYES[img === IM[me.mood] ? me.mood : me.prev];
+    const bt = t - me.blinkAt;
+    if (eyes && bt >= 0 && bt < 170) {   // a blink: lids come down and back up
+      const p = Math.sin(Math.PI * bt / 170), ks = w / img.naturalWidth;
+      for (const [x0, y0, x1, y1] of eyes) {
+        const L = -w / 2 + x0 * ks, R = -w / 2 + x1 * ks, T = -h + y0 * k, B = -h + y1 * k, lid = T + (B - T) * .78 * p, mid = (L + R) / 2;
+        const ex = (R - L) / 2 + 1, ey = (B - T) / 2;
+        ctx.save(); ctx.beginPath(); ctx.ellipse(mid, (T + B) / 2, ex, ey, 0, 0, Math.PI * 2); ctx.clip();   // only over the eye itself
+        ctx.fillStyle = SKIN[img === IM[me.mood] ? me.mood : me.prev] || "#fcd3cc";
+        ctx.beginPath(); ctx.moveTo(L - 2, T - 2); ctx.lineTo(R + 2, T - 2); ctx.lineTo(R + 2, lid); ctx.quadraticCurveTo(mid, lid + 3 * p, L - 2, lid); ctx.closePath(); ctx.fill();
+        ctx.restore();
+        if (p > .5) { ctx.beginPath(); ctx.moveTo(L + 2, lid); ctx.quadraticCurveTo(mid, lid + 3 * p, R - 2, lid); ctx.stroke(); }
+      }
+    }
+    ctx.globalAlpha = 1;
+  }
+  function frame(t) {
+    requestAnimationFrame(frame);
+    // settle everything a little each frame
+    const going = me.mode === "fly" || me.mode === "walk";
+    if (!going) { me.vx *= .85; me.vy *= .85; }
+    me.squash *= .86; me.hop *= .9; me.nod *= .86;
+    me.lean += ((me.mode === "fly" ? Math.max(-.35, Math.min(.35, me.vx * .03)) : 0) - me.lean) * .12;
+    if (t > me.nextBlink && !asleep && me.mood !== "happy" && me.mood !== "sleepy") {
+      me.blinkAt = t; me.nextBlink = t + 2200 + Math.random() * 3800 + (Math.random() < .2 ? -1900 : 0);   // sometimes a double blink
+    }
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.clearRect(0, 0, CW, CH);
+    const breath = Math.sin(t / 3200 * Math.PI * 2) * (asleep ? 1.6 : 1);
+    let y = 0, rot = Math.sin(t / 2300) * .03 + me.lean;
+    if (me.mode === "walk") { y -= Math.abs(Math.sin(t / 170)) * 5; rot += Math.sin(t / 170) * .05; }
+    else if (me.mode === "fly") { y -= 4 + Math.sin(t / 140) * 3; }
+    else if (!asleep) y += Math.sin(t / 1400) * 3 - 3;
+    if (me.talking) { y -= Math.abs(Math.sin(t / 150)) * 1.5; rot += Math.sin(t / 300) * .02; }
+    y -= me.hop * Math.sin((1 - me.hop) * Math.PI) * 16 + me.nod * 3;
+    rot += me.nod * .04;
+    // her, standing on the bottom middle: breathing, squashing and stretching
+    const sq = me.squash, sx = (1 + sq * .12) * (1 - breath * .006), sy = (1 - sq * .12) * (1 + breath * .012);
+    ctx.translate(CW / 2, CH - 8 + y); ctx.rotate(rot); ctx.scale(sx, sy);
+    const trail = Math.max(-14, Math.min(14, -me.vx * 1.1));
+    const fade = Math.min(1, (t - me.fadeAt) / 200);
+    if (me.prev && fade < 1) drawPic(IM[me.prev], 1 - fade, t, trail);
+    drawPic(IM[me.mood], me.prev && fade < 1 ? fade : 1, t, trail);
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    ctx.globalCompositeOperation = "destination-out";
+    const fadeTop = CH - 30 + y, fg = ctx.createLinearGradient(0, fadeTop, 0, CH - 6 + y);
+    fg.addColorStop(0, "rgba(0,0,0,0)"); fg.addColorStop(1, "rgba(0,0,0,1)");
+    ctx.fillStyle = fg; ctx.fillRect(0, fadeTop, CW, CH - fadeTop);
+    ctx.globalCompositeOperation = "source-over";
+    // a soft glow she floats on (fainter when she's up in the air)
+    const up = Math.min(1, Math.max(0, -y / 20 + (me.mode === "fly" ? .5 : 0)));
+    const gl = ctx.createRadialGradient(CW / 2, CH - 8, 0, CW / 2, CH - 8, 40);
+    gl.addColorStop(0, "rgba(255,214,140," + (.38 - up * .2) + ")"); gl.addColorStop(1, "rgba(180,140,255,0)");
+    ctx.save(); ctx.translate(0, CH - 8); ctx.scale(1, .22); ctx.translate(0, -(CH - 8));
+    ctx.fillStyle = gl; ctx.beginPath(); ctx.arc(CW / 2, CH - 8, 40, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+    // sparkles left in the air behind her while she flies (they stay where they were on the screen)
+    tctx.setTransform(DPR, 0, 0, DPR, 0, 0); tctx.clearRect(0, 0, W, H);
+    if (me.lastX !== null) {
+      const fx0 = wrap.classList.contains("right") ? W - 10 - CW : 10, fy0 = H - 10 - CH;   // where her canvas sits in the window
+      if (me.mode === "fly" && t - me.sparkAt > 70) { me.sparkAt = t; SPARKS.push({ x: me.lastX + fx0 + CW / 2 + (Math.random() - .5) * 50, y: me.lastY + fy0 + CH - 55 + Math.random() * 40, t }); }
+      for (let i = SPARKS.length - 1; i >= 0; i--) {
+        const s = SPARKS[i], age = (t - s.t) / 1000;
+        if (age >= 1) { SPARKS.splice(i, 1); continue; }
+        tctx.fillStyle = "rgba(255,226,140," + (1 - age) * .9 + ")";
+        tctx.beginPath(); tctx.arc(s.x - me.lastX, s.y - me.lastY + age * 14, 2.4 * (1 - age) + .6, 0, Math.PI * 2); tctx.fill();
+      }
+    }
+    // her firefly: a little light circling her
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    const a = t / 1600, fx = CW / 2 + Math.cos(a) * 50, fy = 40 + y + Math.sin(a * 2) * 14, glow = .55 + .45 * Math.sin(t / 260);
+    const g = ctx.createRadialGradient(fx, fy, 0, fx, fy, 9);
+    g.addColorStop(0, "rgba(255,236,150," + glow + ")"); g.addColorStop(1, "rgba(255,210,122,0)");
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(fx, fy, 9, 0, Math.PI * 2); ctx.fill();
+  }
+  const SPARKS = [], tcv = $("trail"), tctx = tcv.getContext("2d");
+  tcv.width = W * DPR; tcv.height = H * DPR;
+  requestAnimationFrame(frame);
+  window.__luma = me;   // for tests
+
   // see-through except over her (the window passes clicks through elsewhere)
   for (const el of document.querySelectorAll(".face, .words, .row, .input")) {
     el.addEventListener("mouseenter", () => host.mouse(true));
     el.addEventListener("mouseleave", () => { if (document.activeElement !== $("say")) host.mouse(false); });
   }
-  function setMood(m) { if (MOODS.includes(m)) $("img").src = "assets/chibi_" + m + ".webp"; }
-  function hop() { face.classList.remove("hop"); void face.offsetWidth; face.classList.add("hop"); }
+  function setMood(m) { body.mood(m); }
+  function hop() { body.hop(); }
   function sparkle(m) {
     const fx = { happy: "💕", shy: "💗", excited: "✨", pout: "💢", ignore: "💢", sad: "💧" }[m];
     if (!fx) return;
@@ -80,9 +187,9 @@
     wake(); arrange();
     if (words.style.display !== "block") { words.style.display = "block"; words.style.animation = "none"; void words.offsetWidth; words.style.animation = ""; }
     words.textContent = text.length > 160 ? text.slice(0, 157) + "…" : text;
-    face.classList.add("talk");
+    face.classList.add("talk"); body.talk(true); body.nod();
     clearTimeout(hideTimer);
-    if (!keep) hideTimer = setTimeout(() => { words.style.display = "none"; face.classList.remove("talk"); }, Math.max(4500, text.length * 90));
+    if (!keep) hideTimer = setTimeout(() => { words.style.display = "none"; face.classList.remove("talk"); body.talk(false); }, Math.max(4500, text.length * 90));
   }
   host.on("say", ({ text, mood }) => { if (mood) { setMood(mood); hop(); sparkle(mood); } showWords(text); });
   host.on("words", (text) => showWords(text));
@@ -99,7 +206,7 @@
     const dx = e.screenX - down.sx, dy = e.screenY - down.sy;
     if (!down.moved && Math.abs(dx) + Math.abs(dy) < 6) return;
     down.moved = true; lastDrag = Date.now();
-    if (down.b && Number.isFinite(dx) && Number.isFinite(dy)) host.move(down.b.x + dx, down.b.y + dy);
+    if (down.b && Number.isFinite(dx) && Number.isFinite(dy)) { host.move(down.b.x + dx, down.b.y + dy); body.at(down.b.x + dx, down.b.y + dy); }
   });
   window.addEventListener("mouseup", () => {
     if (!down) return;
@@ -114,18 +221,18 @@
   $("say").addEventListener("keydown", (e) => { if (e.key === "Escape") closeInput(); });
 
   // ---- living on the desktop: flying around like a firefly, resting on the edges, now and then on her own ----
-  function stopWalk() { if (walking) { cancelAnimationFrame(walking); walking = null; face.classList.remove("walk", "fly"); } }
+  function stopWalk() { if (walking) { cancelAnimationFrame(walking); walking = null; body.go(null); } }
   // walking along the taskbar, or flying in a soft arc anywhere on the screen
   function walkTo(x, y, ms, done, fly) {
     stopWalk();
     const b = host.where(), x0 = b.x, y0 = b.y, t0 = performance.now();
     const lift = fly ? Math.min(220, Math.hypot(x - x0, y - y0) * 0.35) : 0;   // how high the arc goes
-    face.classList.add(fly ? "fly" : "walk");
+    body.go(fly ? "fly" : "walk");
     const step = (now) => {
       const k = Math.min(1, (now - t0) / ms), e = k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
       const nx = x0 + (x - x0) * e, ny = y0 + (y - y0) * e - lift * Math.sin(Math.PI * e);
-      if (Number.isFinite(nx) && Number.isFinite(ny)) host.move(nx, ny);
-      if (k < 1) walking = requestAnimationFrame(step); else { walking = null; face.classList.remove("walk", "fly"); arrange(); if (done) done(); }
+      if (Number.isFinite(nx) && Number.isFinite(ny)) { host.move(nx, ny); body.at(nx, ny); }
+      if (k < 1) walking = requestAnimationFrame(step); else { walking = null; body.go(null); arrange(); if (done) done(); }
     };
     walking = requestAnimationFrame(step);
   }

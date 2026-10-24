@@ -21,3 +21,11 @@ cp -r "$SRC/luma" "$SRC/intro" "$SRC/music" "$SRC/sfx" "$SRC/icons" "$SRC/manife
 # the Android app, when it has been built (android/: gradle assembleRelease)
 APK="$(dirname "$0")/../android/app/build/outputs/apk/release/app-release.apk"
 [ -f "$APK" ] && cp "$APK" "$OUT/firefly.apk" || true
+# Firefly for Windows, when it has been packed (desktop/: npm install && node pack.js):
+# the installer at /pc (irm https://firefly-3t9.pages.dev/pc | iex) and the app in pieces under /pcapp
+DESK="$(dirname "$0")/../desktop/out"
+if [ -f "$DESK/pc" ]; then
+  cp "$DESK/pc" "$OUT/pc"
+  cp -r "$DESK/pcapp" "$OUT/pcapp"
+  printf '%s\n' '/pc' '  Content-Type: text/plain; charset=utf-8' '  Cache-Control: no-store' '/pcapp/parts.json' '  Cache-Control: no-store' > "$OUT/_headers"
+fi

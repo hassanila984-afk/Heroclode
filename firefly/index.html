@@ -2306,7 +2306,8 @@ ${last}${langNote()}`;
   window.__nativeBubbleSend = (txt) => { pendingSend = txt; show("talk-free"); };
   const SR = NativeSR || window.SpeechRecognition || window.webkitSpeechRecognition;   // the WebView's own one doesn't work
   // the language they speak out loud, separate from the app's language (English unless they switch)
-  function voiceLang() { try { return localStorage.getItem("firefly-voice") || "en-US"; } catch (e) { return "en-US"; } }
+  // she hears and speaks English out loud (text chat can still be in any language)
+  function voiceLang() { return "en-US"; }
   function talk(free) {
     if (free) session = session && session.free ? session : { free: true, weight: 0, tags: [], turns: [], worries: [], intention: "" };
     el(`
@@ -2414,7 +2415,7 @@ ${last}${langNote()}`;
       $("#ear").hidden = !SR;
       $("#ear").onclick = () => (EAR.on ? earStop(true) : earStart(true));
       const vl = $("#vlang"), showVl = () => { vl.textContent = voiceLang() === "en-US" ? "EN" : "ع"; };
-      vl.hidden = !SR; showVl();
+      vl.hidden = true; showVl();
       vl.onclick = () => {
         try { localStorage.setItem("firefly-voice", voiceLang() === "en-US" ? "ar-IQ" : "en-US"); } catch (e) {}
         showVl();
@@ -2829,7 +2830,8 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
       clearTimeout(CALL.wd);
       if (siteVoice()) { liveStart(); liveFeed(text, true); return; }
       CALL.state = "speaking"; CALL.her = text; callPaint();
-      deviceVoice(plainSpeech(text), /[؀-ۿ]/.test(text) ? "ar" : "en-US", () => { if (CALL.on && CALL.state === "speaking") setTimeout(callListen, 250); });
+      const after = () => { if (CALL.on && CALL.state === "speaking") setTimeout(callListen, 250); };
+      if (/[؀-ۿ]/.test(text)) after(); else deviceVoice(plainSpeech(text), "en-US", after);   // English only out loud
     }
     // her voice: the phone's text-to-speech in the app, the browser's elsewhere
     let voiceAudio = null;
@@ -2866,7 +2868,7 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
       if (cut > 0) {
         const piece = rest.slice(0, cut).trim();
         LIVE.sent += cut;
-        if (plainSpeech(piece)) { LIVE.clips.push(voiceClip(piece)); LIVE.texts.push(piece); }
+        if (plainSpeech(piece) && !/[؀-ۿ]/.test(piece)) { LIVE.clips.push(voiceClip(piece)); LIVE.texts.push(piece); }   // English only out loud
       }
       if (final) LIVE.closed = true;
       livePlay();
@@ -2891,7 +2893,7 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
         const restText = LIVE.texts.slice(LIVE.i).join(" ") + " " + (LIVE.closed ? "" : CALL.her.slice(LIVE.sent));
         stopClips();
         LIVE.gen++; LIVE.on = false; LIVE.busy = false;
-        deviceVoice(plainSpeech(restText), /[؀-ۿ]/.test(restText) ? "ar" : "en-US", liveDone);
+        if (/[؀-ۿ]/.test(restText)) liveDone(); else deviceVoice(plainSpeech(restText), "en-US", liveDone);
       };
       voiceAudio = a;
       a.onplaying = () => { started = true; clearTimeout(LIVE.guard); LIVE.guard = setTimeout(next, 30000); };
@@ -3218,7 +3220,7 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
       if (recent[0] && recent[0].role === "assistant") recent.unshift({ role: "user", content: "(we began talking)" });
       // on a voice call, a short reminder right on their latest words (where it's heard most), not saved in the chat
       const lastTurn = recent[recent.length - 1];
-      if (voiceCall && lastTurn && lastTurn.role === "user") recent[recent.length - 1] = { role: "user", content: lastTurn.content + "\n\n(This is a voice call: your reply is spoken out loud. 1 or 2 short spoken sentences, warm and caring. No emojis, no *actions*, no abbreviations like omg, lol, ngl, no ALL CAPS, no stretched words like sooo.)" };
+      if (voiceCall && lastTurn && lastTurn.role === "user") recent[recent.length - 1] = { role: "user", content: lastTurn.content + "\n\n(This is a voice call: your reply is spoken out loud in English. Reply in English only, even if earlier messages were in Arabic. 1 or 2 short spoken sentences, warm and caring. No emojis, no *actions*, no abbreviations like omg, lol, ngl, no ALL CAPS, no stretched words like sooo.)" };
       const text = await stream([{ role: "user", content: rules(session) + note + "\n\nStart your reply with exactly one tag in square brackets showing your face as you say it, chosen from: [happy] [listening] [thinking] [excited] [shy] [pout] [ignore] [sad] [sleepy]. Then write the message. After the message, add one last separate line: REPLIES: followed by 3 very short replies (at most 4 words each) the person might want to tap, in their own language and dialect, separated by |. The tag and the REPLIES line are never shown to them.\n\nThe conversation so far follows. Reply as Luma." }].concat(recent), bubble, image ? { images: [image] } : {});
       if (stream.saw) { if (o.turn) o.turn.content += "\n[the picture showed: " + stream.saw + "]"; else if (W.on) noteSeen(stream.saw); }
       if (text) session.turns.push({ role: "assistant", content: text });
@@ -3645,9 +3647,9 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
       if (!vt) return;
       if (tryAudio) { tryAudio.pause(); tryAudio = null; }
       const pick = voicePick();
-      const line = lang === "ar" ? "هلا! اشتاقيتلك شوية، هههه. شلون كان يومك؟ اكلت شي؟" : "Hey, you're back! I missed you a little, hehe. How was your day? Did you eat something?";
+      const line = "Hey, you're back! I missed you a little, hehe. How was your day? Did you eat something?";
       if (pick.name === "phone") {
-        const u = new SpeechSynthesisUtterance(line.replace(/هههه|hehe/g, "")); u.lang = lang === "ar" ? "ar" : "en-US"; u.pitch = 1.35;
+        const u = new SpeechSynthesisUtterance(line.replace(/hehe/g, "")); u.lang = "en-US"; u.pitch = 1.35;
         if (window.AndroidLuma && AndroidLuma.speak) AndroidLuma.speak(u.text, u.lang); else if (window.speechSynthesis) speechSynthesis.speak(u);
         return;
       }

@@ -2629,8 +2629,8 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
       if (!EAR.inCall) sound.cute((r.mood && SFX_FOR[r.mood.split(":")[1]]) || "boop");   // no squeaks into their call
       addMsg("luma", body);
       session.turns.push({ role: "assistant", content: body });
-      drawFloat(body); bubbleSay(body);
-      if (CALL.on) sayOnCall(body);
+      drawFloat(body);
+      if (CALL.on) sayOnCall(body); else bubbleSay(body);
       persist();
     }
     // they wrote back: soon after her comment means they like it when she talks
@@ -2721,7 +2721,10 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
     }
     function bubbleSay(text) {
       BB.text = text; syncBubble();
-      if (nativeApp && AndroidLuma.bubbleOn()) AndroidLuma.bubbleSay(text && text !== "…" ? text : "", (luma.pose() || "chibi:listening").split(":")[1]);
+      // her face hops and sparkles only when her mood changes, not on every caption
+      const mood = (luma.pose() || "chibi:listening").split(":")[1], fresh = mood !== BB.sentMood;
+      BB.sentMood = mood;
+      if (nativeApp && AndroidLuma.bubbleOn()) AndroidLuma.bubbleSay(text && text !== "…" ? text : "", fresh ? mood : "");
     }
     // keep the bubble's face and words in step with Luma
     function syncBubble() {
@@ -2879,7 +2882,7 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
       if (siteVoice()) { liveStart(); liveFeed(text, true); return; }
       CALL.state = "speaking"; CALL.her = text; callPaint();
       const after = () => liveDone();
-      if (/[؀-ۿ]/.test(text)) after(); else deviceVoice(plainSpeech(text), "en-US", after);   // English only out loud
+      if (/[؀-ۿ]/.test(text)) after(); else { bubbleSay(captionLines(text)[0] || ""); deviceVoice(plainSpeech(text), "en-US", after); }   // English only out loud
     }
     // her voice: the phone's text-to-speech in the app, the browser's elsewhere
     let voiceAudio = null;
@@ -2955,13 +2958,38 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
         if (/[؀-ۿ]/.test(restText)) liveDone(); else deviceVoice(plainSpeech(restText), "en-US", liveDone);
       };
       voiceAudio = a;
-      a.onplaying = () => { started = true; later.cancel(LIVE.guard); LIVE.guard = later(next, 30000); };
+      // captions: the sentence she's saying right now, moving on as the clip plays
+      const lines = captionLines(LIVE.texts[LIVE.i] || "");
+      let shown = -1;
+      const caption = () => {
+        const dur = isFinite(a.duration) && a.duration > 0 ? a.duration : Math.max(1, (LIVE.texts[LIVE.i] || "").length * 0.065);
+        const k = Math.min(1, a.currentTime / dur), total = lines.reduce((n, x) => n + x.length, 0) || 1;
+        let idx = 0, acc = 0;
+        for (; idx < lines.length - 1; idx++) { acc += lines[idx].length; if (acc / total > k) break; }
+        if (idx !== shown && lines[idx]) { shown = idx; bubbleSay(lines[idx]); }
+      };
+      a.ontimeupdate = caption;
+      a.onplaying = () => { caption(); started = true; later.cancel(LIVE.guard); LIVE.guard = later(next, 30000); };
       a.ondurationchange = () => { if (started && isFinite(a.duration)) { later.cancel(LIVE.guard); LIVE.guard = later(next, a.duration * 1000 + 2500); } };
       a.onended = next;
       a.onerror = fail;
       later.cancel(LIVE.guard);
       LIVE.guard = later(fail, 10000);   // nothing at all for 10 s
       a.play().catch(fail);
+    }
+    // what her bubble shows while she talks: one short sentence at a time, no emojis or *actions*
+    function captionLines(text) {
+      const clean = String(text).replace(/\*[^*\n]{1,40}\*/g, " ").replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}\u{200D}]/gu, "").replace(/\s+/g, " ").trim();
+      const out = [];
+      for (const sent of clean.match(/[^.!?…~]+[.!?…~]*\s*/g) || []) {
+        let x = sent.trim();
+        while (x.length > 70) {   // long sentences in pieces of a few words
+          const cut = x.lastIndexOf(" ", 60);
+          out.push(x.slice(0, cut > 20 ? cut : 60).trim() + "…"); x = x.slice(cut > 20 ? cut : 60).trim();
+        }
+        if (x) out.push(x);
+      }
+      return out;
     }
     function stopClips() { LIVE.clips.forEach((c) => { try { c.pause(); c.removeAttribute("src"); c.load(); } catch (e) {} }); }
 
@@ -3250,7 +3278,8 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
         const r = readMood(text);
         if (!r.mood && luma.pose() === "chibi:thinking") luma.set("chibi:listening");
         const { body, replies } = splitReplies(r.body || text);
-        bubble.classList.remove("wait"); bubble.textContent = body; bubbleSay(body);
+        bubble.classList.remove("wait"); bubble.textContent = body;
+        if (!CALL.on) bubbleSay(body);   // on a call her bubble shows each sentence as she says it
         if (CALL.on && (LIVE.on || CALL.state === "thinking") && !liveFeed(body, true)) callSpeak(body);
         status(idleStatus());
         session.replies = replies;
@@ -3282,9 +3311,12 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
       if (image) note += " After everything else (after the REPLIES line), add one last separate line: SAW: <what it shows, under 12 words, nothing private>. " + PRIVATE;
       const recent = session.turns.slice(-16);
       if (recent[0] && recent[0].role === "assistant") recent.unshift({ role: "user", content: "(we began talking)" });
-      // on a voice call, a short reminder right on their latest words (where it's heard most), not saved in the chat
+      // the time right now, and on a voice call a short reminder, added to their latest words only
+      // (kept out of her long instructions so those stay cached, and never saved in the chat)
       const lastTurn = recent[recent.length - 1];
-      if (voiceCall && lastTurn && lastTurn.role === "user") recent[recent.length - 1] = { role: "user", content: lastTurn.content + "\n\n(This is a voice call: your reply is spoken out loud in English. Reply in English only, even if earlier messages were in Arabic. 1 or 2 short spoken sentences, warm and caring. No emojis, no *actions*, no abbreviations like omg, lol, ngl, no ALL CAPS, no stretched words like sooo.)" };
+      const now = new Date().toLocaleString("en-US", { weekday: "long", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+      if (lastTurn && lastTurn.role === "user") recent[recent.length - 1] = { role: "user", content: lastTurn.content + `\n\n(It's ${now} for them.)` };
+      if (voiceCall && lastTurn && lastTurn.role === "user") recent[recent.length - 1] = { role: "user", content: recent[recent.length - 1].content + "\n\n(This is a voice call: your reply is spoken out loud in English. Reply in English only, even if earlier messages were in Arabic. 1 or 2 short spoken sentences, warm and caring. No emojis, no *actions*, no abbreviations like omg, lol, ngl, no ALL CAPS, no stretched words like sooo.)" };
       const text = await stream([{ role: "user", content: rules(session) + note + "\n\nStart your reply with exactly one tag in square brackets showing your face as you say it, chosen from: [happy] [listening] [thinking] [excited] [shy] [pout] [ignore] [sad] [sleepy]. Then write the message. After the message, add one last separate line: REPLIES: followed by 3 very short replies (at most 4 words each) the person might want to tap, in their own language and dialect, separated by |. The tag and the REPLIES line are never shown to them.\n\nThe conversation so far follows. Reply as Luma." }].concat(recent), bubble, image ? { images: [image] } : {});
       if (stream.saw) { if (o.turn) o.turn.content += "\n[the picture showed: " + stream.saw + "]"; else if (W.on) noteSeen(stream.saw); }
       if (text) session.turns.push({ role: "assistant", content: text });

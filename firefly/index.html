@@ -967,6 +967,8 @@
   // (browser storage only when the store is unavailable).
   let docRef = null, writing = Promise.resolve();
   function persist() {
+    // the open conversation (the last 200 messages, words only) travels with everything else
+    if (session && session.free) state.chat = session.turns.slice(-200).map((x) => ({ role: x.role, content: String(x.content).slice(0, 4000) }));
     state.savedAt = Date.now();
     try { localStorage.setItem(LS, JSON.stringify(state)); } catch (e) {}
     if (SYNC.on) { clearTimeout(SYNC.timer); SYNC.timer = setTimeout(pushSite, 3000); }
@@ -1017,6 +1019,7 @@
   // ---- on Firefly's own site: the same Firefly on all their devices (phone, computer…) ----
   // The newest save wins. A device's first sync merges instead, so what each device already had is kept.
   const SYNC = { on: false, timer: 0, busy: false };
+  const CALL_ON = () => !!document.querySelector(".callpane");   // never redraw the chat under a call
   const SYNCED = "firefly-synced";
   function mergeStates(a, b) {
     const out = Object.assign(blank(), b, a);
@@ -1028,13 +1031,16 @@
     for (const k of ["fireflies", "golden", "streak", "best"]) out[k] = Math.max(a[k] || 0, b[k] || 0);
     out.lastDate = [a.lastDate, b.lastDate].filter(Boolean).sort().pop() || null;
     out.name = a.name || b.name; out.onboarded = a.onboarded || b.onboarded; out.introSeen = a.introSeen || b.introSeen;
+    out.chat = (a.chat || []).length >= (b.chat || []).length ? a.chat || [] : b.chat;
     return out;
   }
   function adopt(remote) {
     state = Object.assign(blank(), remote);
+    if (session && session.free) session.turns = (state.chat || []).map((x) => ({ role: x.role, content: x.content }));
     try { localStorage.setItem(LS, JSON.stringify(state)); } catch (e) {}
     syncSky(); renderCount();
-    if (["home", "nights"].includes(screen) || (screen === "onboard" && state.onboarded)) show(screen === "onboard" ? "home" : screen);
+    // redraw with the newer copy (never under a call or while she's answering)
+    if (["home", "nights", "talk-free"].includes(screen) && !CALL_ON() && !ctl || (screen === "onboard" && state.onboarded)) show(screen === "onboard" ? "home" : screen);
   }
   async function pullSite() {
     if (!ownSite || SYNC.busy) return;
@@ -2429,7 +2435,7 @@ ${last}${langNote()}`;
   // she hears and speaks English out loud (text chat can still be in any language)
   function voiceLang() { return "en-US"; }
   function talk(free) {
-    if (free) session = session && session.free ? session : { free: true, weight: 0, tags: [], turns: [], worries: [], intention: "" };
+    if (free) session = session && session.free ? session : { free: true, weight: 0, tags: [], turns: (state.chat || []).map((x) => ({ role: x.role, content: x.content })), worries: [], intention: "" };
     el(`
       ${free ? backBtn() : stepBar(3)}
       <div class="chat-head">
@@ -2466,6 +2472,7 @@ ${last}${langNote()}`;
       heard();
       addMsg("me", text);
       session.turns.push({ role: "user", content: text });
+      persist();
       showQuick([]);
       lumaReply();
     };
@@ -3581,7 +3588,7 @@ Start with one face tag like [happy] [excited] [pout] [shy] [sleepy], then the m
         ? "They opened a conversation with you outside the nightly ritual. Write a short, warm opening line that invites them to say what's on their mind. If you remember something fitting, you may mention it lightly."
         : "Write your opening line for tonight. Greet them warmly, acknowledge how the day felt in your own words, and ask one gentle question about it. If you remember something from earlier evenings that fits, you may mention it lightly.";
       const text = await stream([{ role: "user", content: rules(session) + "\n\n" + opener + "\n\nStart your reply with exactly one tag in square brackets showing your face as you say it, chosen from: [happy] [listening] [thinking] [excited] [shy] [pout] [ignore] [sad] [sleepy]. Then write the message. After the message, add one last separate line: REPLIES: followed by 3 very short replies (at most 4 words each) the person might want to tap, in their own language and dialect, separated by |. The tag and the REPLIES line are never shown to them." }], bubble);
-      if (text) session.turns.push({ role: "assistant", content: text });
+      if (text) { session.turns.push({ role: "assistant", content: text }); persist(); }
     }
     async function lumaReply(o = {}) {
       if (aiOff) { addMsg("luma", t("saved")); return; }
@@ -3601,7 +3608,7 @@ Start with one face tag like [happy] [excited] [pout] [shy] [sleepy], then the m
       if (voiceCall && lastTurn && lastTurn.role === "user") recent[recent.length - 1] = { role: "user", content: recent[recent.length - 1].content + "\n\n(This is a voice call: your reply is spoken out loud in English. Reply in English only, even if earlier messages were in Arabic. 1 or 2 short spoken sentences, warm and caring. No emojis, no *actions*, no abbreviations like omg, lol, ngl, no ALL CAPS, no stretched words like sooo.)" };
       const text = await stream([{ role: "user", content: rules(session) + note + "\n\nStart your reply with exactly one tag in square brackets showing your face as you say it, chosen from: [happy] [listening] [thinking] [excited] [shy] [pout] [ignore] [sad] [sleepy]. Then write the message. After the message, add one last separate line: REPLIES: followed by 3 very short replies (at most 4 words each) the person might want to tap, in their own language and dialect, separated by |. The tag and the REPLIES line are never shown to them.\n\nThe conversation so far follows. Reply as Luma." }].concat(recent), bubble, image ? { images: [image] } : {});
       if (stream.saw) { if (o.turn) o.turn.content += "\n[the picture showed: " + stream.saw + "]"; else if (W.on) noteSeen(stream.saw); }
-      if (text) session.turns.push({ role: "assistant", content: text });
+      if (text) { session.turns.push({ role: "assistant", content: text }); persist(); }
       // learn their style early, so Luma adapts within the first few messages
       const n = session.turns.filter((x) => x.role === "user").length;
       if (n === 3 || n === 8) remember(session);

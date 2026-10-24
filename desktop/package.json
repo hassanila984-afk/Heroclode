@@ -1,0 +1,15 @@
+{
+  "name": "firefly-desktop",
+  "productName": "Firefly",
+  "version": "1.2.0",
+  "description": "Luma on Windows: Firefly in its own window, her bubble on the desktop, and her hands on the computer.",
+  "main": "main.js",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "pack": "node pack.js"
+  },
+  "devDependencies": {
+    "electron": "33.2.1"
+  }
+}

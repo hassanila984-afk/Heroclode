@@ -1,0 +1,153 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Luma</title>
+<style>
+  html, body { margin: 0; height: 100%; background: transparent; overflow: hidden; user-select: none; font: 600 14px/1.4 "Segoe UI", system-ui, sans-serif; }
+  #wrap { position: absolute; inset: 0; display: flex; align-items: flex-end; padding: 10px; gap: 6px; box-sizing: border-box; }
+  #wrap.right { flex-direction: row-reverse; }
+  .face { flex: none; width: 76px; height: 76px; border-radius: 50%; padding: 3px; cursor: grab; position: relative;
+    background: conic-gradient(#ffd27a, #b48cff, #7b3cff, #ffd27a); box-shadow: 0 4px 18px rgba(0,0,0,.35), 0 0 22px #b48cff66; }
+  .face img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; object-position: 50% 12%; background: #1b1640; pointer-events: none; }
+  .face.hop { animation: hop .5s cubic-bezier(.3,1.6,.5,1); }
+  .face.walk { animation: step .38s ease-in-out infinite alternate; }
+  .face.talk { animation: sway .56s ease-in-out infinite alternate; }
+  .face.float { animation: bob 2.8s ease-in-out infinite alternate; }
+  .face.fly { animation: flutter .3s ease-in-out infinite alternate; }
+  @keyframes bob { to { transform: translateY(-6px); } }
+  @keyframes flutter { from { transform: translateY(-3px) rotate(-5deg); } to { transform: translateY(3px) rotate(5deg); } }
+  .face.fly::after { content: "✨"; position: absolute; bottom: -4px; left: -10px; font-size: 13px; animation: trail .6s linear infinite; }
+  @keyframes trail { to { transform: translate(-10px, 6px); opacity: 0; } }
+  @keyframes hop { 30% { transform: translateY(-14px); } }
+  @keyframes step { to { transform: translateY(-7px) rotate(3deg); } }
+  @keyframes sway { from { transform: rotate(-6deg); } to { transform: rotate(6deg); } }
+  .zz { position: absolute; top: -10px; right: -2px; color: #ffd27a; font-size: 14px; display: none; }
+  .face.sleep .zz { display: block; animation: zz 2s ease-in-out infinite; }
+  @keyframes zz { 50% { transform: translate(3px, -5px); opacity: .5; } }
+  .panel { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; max-width: 270px; }
+  #wrap.right .panel { align-items: flex-end; }
+  .words { background: #fff; color: #1a1440; padding: 8px 12px; border-radius: 16px; box-shadow: 0 4px 16px rgba(0,0,0,.3); display: none; animation: pop .22s ease-out; }
+  @keyframes pop { from { transform: scale(.85); opacity: 0; } }
+  .row { display: none; gap: 6px; }
+  .chip { border: 0; border-radius: 999px; padding: 6px 14px; font: inherit; cursor: pointer; box-shadow: 0 2px 10px rgba(0,0,0,.3); }
+  .yes { background: #ffd27a; color: #07051a; } .no { background: #1a1342; color: #fbf7ff; }
+  .input { display: none; align-items: center; gap: 4px; background: #1a1342f0; border: 1px solid #ffd27a55; border-radius: 22px; padding: 3px 4px 3px 12px; }
+  .input input { width: 180px; border: 0; outline: 0; background: transparent; color: #fbf7ff; font: inherit; }
+  .input button { width: 30px; height: 30px; border-radius: 50%; border: 0; background: #ffd27a; color: #07051a; cursor: pointer; }
+  .fx { position: absolute; pointer-events: none; font-size: 15px; animation: rise 1.1s ease-out forwards; }
+  @keyframes rise { to { transform: translateY(-36px); opacity: 0; } }
+</style></head>
+<body>
+<div id="wrap">
+  <div class="face float" id="face"><img id="img" src="assets/chibi_happy.webp" alt=""><span class="zz">z z</span></div>
+  <div class="panel">
+    <div class="words" id="words"></div>
+    <div class="row" id="ask"><button class="chip yes" id="yes">✓ Yes</button><button class="chip no" id="no">✕ No</button></div>
+    <form class="input" id="input"><input id="say" placeholder="Say something…" autocomplete="off"><button>➤</button></form>
+  </div>
+</div>
+<script>
+  const $ = (id) => document.getElementById(id);
+  const face = $("face"), words = $("words"), wrap = $("wrap");
+  const MOODS = ["happy", "listening", "excited", "shy", "pout", "ignore", "sad", "sleepy"];
+  const W = 380, H = 170;
+  let hideTimer = 0, lastActive = Date.now(), lastDrag = 0, walking = null, asleep = false;
+
+  // see-through except over her (the window passes clicks through elsewhere)
+  for (const el of document.querySelectorAll(".face, .words, .row, .input")) {
+    el.addEventListener("mouseenter", () => host.mouse(true));
+    el.addEventListener("mouseleave", () => { if (document.activeElement !== $("say")) host.mouse(false); });
+  }
+  function setMood(m) { if (MOODS.includes(m)) $("img").src = "assets/chibi_" + m + ".webp"; }
+  function hop() { face.classList.remove("hop"); void face.offsetWidth; face.classList.add("hop"); }
+  function sparkle(m) {
+    const fx = { happy: "💕", shy: "💗", excited: "✨", pout: "💢", ignore: "💢", sad: "💧" }[m];
+    if (!fx) return;
+    const r = face.getBoundingClientRect();
+    for (let k = 0; k < 3; k++) setTimeout(() => {
+      const p = document.createElement("span"); p.className = "fx"; p.textContent = fx;
+      p.style.left = (r.left + (k % 2 ? r.width - 10 : 0)) + "px"; p.style.top = (r.top + 6 * k) + "px";
+      document.body.appendChild(p); setTimeout(() => p.remove(), 1200);
+    }, k * 180);
+  }
+  // which side faces the screen: near the right edge her words sit on her left
+  function arrange() {
+    const b = host.where(), a = host.area();
+    if (!b || !a) return;
+    wrap.classList.toggle("right", b.x + W / 2 > a.x + a.width / 2);
+  }
+  function wake() { if (asleep) { asleep = false; face.classList.remove("sleep"); setMood("happy"); } lastActive = Date.now(); }
+  function showWords(text, keep) {
+    if (!text) return;
+    wake(); arrange();
+    if (words.style.display !== "block") { words.style.display = "block"; words.style.animation = "none"; void words.offsetWidth; words.style.animation = ""; }
+    words.textContent = text.length > 160 ? text.slice(0, 157) + "…" : text;
+    face.classList.add("talk");
+    clearTimeout(hideTimer);
+    if (!keep) hideTimer = setTimeout(() => { words.style.display = "none"; face.classList.remove("talk"); }, Math.max(4500, text.length * 90));
+  }
+  host.on("say", ({ text, mood }) => { if (mood) { setMood(mood); hop(); sparkle(mood); } showWords(text); });
+  host.on("words", (text) => showWords(text));
+  host.on("ask", (q) => { setMood("listening"); hop(); showWords(q, true); $("ask").style.display = "flex"; host.mouse(true); });
+  host.on("asked", (yes) => { $("ask").style.display = "none"; showWords(yes ? "Done~ ✨" : "Okay, I won't 🙂"); });
+  $("yes").onclick = () => host.answer(true);
+  $("no").onclick = () => host.answer(false);
+
+  // drag her anywhere; a click opens Firefly; a double-click opens a little box to type to her
+  let down = null, clickTimer = 0;
+  face.addEventListener("mousedown", (e) => { down = { sx: e.screenX, sy: e.screenY, b: host.where(), moved: false }; stopWalk(); });
+  window.addEventListener("mousemove", (e) => {
+    if (!down) return;
+    const dx = e.screenX - down.sx, dy = e.screenY - down.sy;
+    if (!down.moved && Math.abs(dx) + Math.abs(dy) < 6) return;
+    down.moved = true; lastDrag = Date.now();
+    if (down.b && Number.isFinite(dx) && Number.isFinite(dy)) host.move(down.b.x + dx, down.b.y + dy);
+  });
+  window.addEventListener("mouseup", () => {
+    if (!down) return;
+    const wasMove = down.moved; down = null;
+    if (wasMove) { arrange(); return; }
+    if (clickTimer) { clearTimeout(clickTimer); clickTimer = 0; openInput(); return; }
+    clickTimer = setTimeout(() => { clickTimer = 0; host.open(); }, 320);
+  });
+  function openInput() { wake(); arrange(); $("input").style.display = "flex"; host.mouse(true); host.typing(true); setTimeout(() => $("say").focus(), 50); }
+  function closeInput() { $("input").style.display = "none"; $("say").value = ""; host.mouse(false); }
+  $("input").onsubmit = (e) => { e.preventDefault(); const t = $("say").value.trim(); closeInput(); if (t) { host.send(t); showWords("…", true); } };
+  $("say").addEventListener("keydown", (e) => { if (e.key === "Escape") closeInput(); });
+
+  // ---- living on the desktop: flying around like a firefly, resting on the edges, now and then on her own ----
+  function stopWalk() { if (walking) { cancelAnimationFrame(walking); walking = null; face.classList.remove("walk", "fly"); } }
+  // walking along the taskbar, or flying in a soft arc anywhere on the screen
+  function walkTo(x, y, ms, done, fly) {
+    stopWalk();
+    const b = host.where(), x0 = b.x, y0 = b.y, t0 = performance.now();
+    const lift = fly ? Math.min(220, Math.hypot(x - x0, y - y0) * 0.35) : 0;   // how high the arc goes
+    face.classList.add(fly ? "fly" : "walk");
+    const step = (now) => {
+      const k = Math.min(1, (now - t0) / ms), e = k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+      const nx = x0 + (x - x0) * e, ny = y0 + (y - y0) * e - lift * Math.sin(Math.PI * e);
+      if (Number.isFinite(nx) && Number.isFinite(ny)) host.move(nx, ny);
+      if (k < 1) walking = requestAnimationFrame(step); else { walking = null; face.classList.remove("walk", "fly"); arrange(); if (done) done(); }
+    };
+    walking = requestAnimationFrame(step);
+  }
+  function busy() { return words.style.display === "block" || $("ask").style.display === "flex" || $("input").style.display === "flex" || !!down; }
+  function edgeSpot(a) {   // somewhere to rest: a side edge or the taskbar
+    const r = Math.random(), bottom = a.y + a.height - H;
+    if (r < 0.4) return [a.x + Math.random() * (a.width - W), bottom];
+    return [r < 0.7 ? a.x - 8 : a.x + a.width - W + 8, a.y + 40 + Math.random() * (a.height - H - 80)];
+  }
+  function wander() {
+    if (!busy() && !asleep && Date.now() - lastDrag > 60000) {
+      const a = host.area(), r = Math.random();
+      if (r < 0.55) {
+        // up into the screen for a little flight, a float in the air, then back to an edge
+        const x = a.x + 40 + Math.random() * (a.width - W - 80), y = a.y + 30 + Math.random() * (a.height - H - 60);
+        walkTo(x, y, 3800 + Math.random() * 2500, () => setTimeout(() => { if (!busy() && !walking) { const [ex, ey] = edgeSpot(a); walkTo(ex, ey, 3600, null, true); } }, 5000 + Math.random() * 7000), true);
+      } else if (r < 0.8) { const [ex, ey] = edgeSpot(a); walkTo(ex, ey, 4200, null, true); }   // over to another edge
+      else walkTo(a.x + Math.random() * (a.width - W), a.y + a.height - H, 2600);   // a little walk on the taskbar
+    }
+    if (!asleep && Date.now() - lastActive > 8 * 60000) { asleep = true; setMood("sleepy"); face.classList.add("sleep"); }
+    setTimeout(wander, 15000 + Math.random() * 20000);
+  }
+  setTimeout(() => { arrange(); wander(); }, 4000);
+</script>
+</body></html>

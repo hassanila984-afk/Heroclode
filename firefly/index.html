@@ -2376,11 +2376,29 @@ ${last}${langNote()}`;
   // with the same shape: start/stop/abort, onresult/onerror/onend.
   const nativeApp = !!(window.AndroidLuma && AndroidLuma.isApp && AndroidLuma.isApp());
   const desktopApp = nativeApp && !!AndroidLuma.platform && AndroidLuma.platform() === "windows";   // Firefly for Windows
+  // Hidden next to the clock, the Windows app keeps running (her ears, calls), but its drawing rests:
+  // the sky and other animations draw once a second instead of 60 times, so the computer stays fast.
+  if (desktopApp) {
+    const raf = window.requestAnimationFrame.bind(window), caf = window.cancelAnimationFrame.bind(window), resting = new Map();
+    let n = 0;
+    window.requestAnimationFrame = (fn) => {
+      if (!window.__resting) return raf(fn);
+      const id = 2e9 + (++n); resting.set(id, setTimeout(() => { resting.delete(id); fn(performance.now()); }, 1000));
+      return id;
+    };
+    window.cancelAnimationFrame = (id) => { if (resting.has(id)) { clearTimeout(resting.get(id)); resting.delete(id); } else caf(id); };
+    // its CSS animations (the hidden window still counts as "visible", so the browser keeps them going) pause too
+    let rest = false;
+    const css = document.createElement("style");
+    css.textContent = "html.resting *, html.resting *::before, html.resting *::after { animation-play-state: paused !important; }";
+    document.head.appendChild(css);
+    Object.defineProperty(window, "__resting", { get: () => rest, set: (v) => { rest = !!v; document.documentElement.classList.toggle("resting", rest); } });
+  }
   // the newest Android app; older ones lack tapping, scrolling or her moving bubble
   const APP_LATEST = 2.2;
   const appVersion = () => !nativeApp ? 0 : AndroidLuma.version ? parseFloat(AndroidLuma.version()) || 0
     : AndroidLuma.answerAsk ? 1.9 : AndroidLuma.accessOn ? 1.6 : AndroidLuma.doAction ? 1.5 : 1.4;
-  const DESKTOP_LATEST = 1.3;   // Firefly for Windows
+  const DESKTOP_LATEST = 1.4;   // Firefly for Windows
   const appOld = () => nativeApp && appVersion() < (desktopApp ? DESKTOP_LATEST : APP_LATEST);
   // opened through the phone's browser (the trailing dot makes it another address for the app), which downloads it
   const APK_URL = "https://firefly-3t9.pages.dev./firefly.apk";
@@ -3049,7 +3067,7 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
     function callListen(more) {
       if (!CALL.on) return;
       if (!more) { CALL.heard = ""; later.cancel(CALL.hold); }
-      CALL.state = "listening"; callPaint();
+      CALL.state = "listening"; CALL.listenAt = performance.now(); callPaint();
       // on her site she hears through Whisper (far better with accents); the phone's recognizer is the fallback
       if (ownSite && !MIC.failed) { micStart(); return; }
       const r = new SR();
@@ -3137,7 +3155,8 @@ Start with one face tag like [happy] [excited] [pout] [shy] [sleepy], then the m
         src.connect(node); node.connect(mute); mute.connect(ac.destination);
         const vad = makeVad(0.8, 15);
         node.onaudioprocess = (e) => {
-          if (!CALL.on || CALL.state !== "listening") { vad.reset(); MIC.talking = false; return; }
+          // (her voice's echo in the room right after she stops isn't them talking)
+          if (!CALL.on || CALL.state !== "listening" || performance.now() - (CALL.listenAt || 0) < 400) { vad.reset(); MIC.talking = false; return; }
           const clip = vad.push(e.inputBuffer.getChannelData(0), ac.sampleRate);
           if (vad.talking && !MIC.talking) later.cancel(CALL.hold);   // they started (again): no answering yet
           MIC.talking = vad.talking;
@@ -3158,6 +3177,14 @@ Start with one face tag like [happy] [excited] [pout] [shy] [sleepy], then the m
       if (MIC.stream) MIC.stream.getTracks().forEach((x) => x.stop());
       MIC.ac = MIC.node = MIC.stream = null; MIC.talking = false; MIC.kept = false;
     }
+    // Her own voice coming back through the mic (speakers, no headphones): most of the words are what she
+    // just said. Taken as them talking, she'd answer herself and go round the same thing again and again.
+    function herEcho(text) {
+      const words = (x) => String(x || "").toLowerCase().replace(/[^a-z0-9' ]/g, " ").split(/\s+/).filter((w) => w.length > 1);
+      const heard = words(text), hers = new Set(words(CALL.her));
+      if (heard.length < 3 || !hers.size) return false;
+      return heard.filter((w) => hers.has(w)).length / heard.length >= 0.6;
+    }
     // Whisper's usual guesses for noise or breathing, never real speech to her
     const NOISE_WORDS = /^\W*(thank you\.?|thanks for watching!?|you|bye\.?|\.+|okay\.?|uh+|um+|hmm+|mm+)\W*$/i;
     async function micSend(blocks, rate) {
@@ -3167,7 +3194,7 @@ Start with one face tag like [happy] [excited] [pout] [shy] [sleepy], then the m
         const d = await r.json().catch(() => ({}));
         const text = String(d.text || "").trim();
         if (!CALL.on || CALL.state !== "listening") return;
-        if (text && !(NOISE_WORDS.test(text) && blocks.length * 2048 / rate < 1.2)) {
+        if (text && !(NOISE_WORDS.test(text) && blocks.length * 2048 / rate < 1.2) && !herEcho(text)) {
           CALL.heard = fixName(((CALL.heard || "") + " " + text).trim());
           CALL.you = CALL.heard; callPaint();
         }

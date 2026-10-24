@@ -5,7 +5,7 @@
   #wrap { position: absolute; inset: 0; display: flex; align-items: flex-end; padding: 10px; gap: 6px; box-sizing: border-box; }
   #wrap.right { flex-direction: row-reverse; }
   .face { flex: none; width: 124px; height: 150px; cursor: grab; position: relative; }
-  .face canvas { width: 124px; height: 150px; display: block; pointer-events: none; filter: drop-shadow(0 3px 6px rgba(0,0,0,.35)) drop-shadow(0 0 10px #b48cff55); }
+  .face canvas { width: 124px; height: 150px; display: block; pointer-events: none; }
   .zz { position: absolute; top: 4px; right: 4px; color: #ffd27a; font-size: 14px; display: none; text-shadow: 0 1px 3px #000; }
   .face.sleep .zz { display: block; animation: zz 2s ease-in-out infinite; }
   @keyframes zz { 50% { transform: translate(3px, -5px); opacity: .5; } }
@@ -70,16 +70,32 @@
       me.lastX = x; me.lastY = y; me.lastT = t;
     },
   };
+  // each picture shrunk to her size once, with its soft shadow and glow baked in (filters every frame are
+  // slow in a see-through window): the frames only cut it into strips
+  const SMALL = new Map(), PAD = 10;
+  function small(img) {
+    let c = SMALL.get(img);
+    if (c) return c;
+    const h = 132, w = img.naturalWidth * h / img.naturalHeight;
+    c = document.createElement("canvas"); c.width = Math.ceil((w + PAD * 2) * DPR); c.height = Math.ceil((h + PAD * 2) * DPR);
+    const g = c.getContext("2d"); g.scale(DPR, DPR);
+    g.shadowColor = "rgba(40,20,90,.55)"; g.shadowBlur = 8; g.shadowOffsetY = 2;
+    g.drawImage(img, PAD, PAD, w, h);
+    c.w = w; c.h = h; SMALL.set(img, c);
+    return c;
+  }
   function drawPic(img, alpha, t, trail) {
     if (!img.complete || !img.naturalWidth) return;
-    const h = 132, w = img.naturalWidth * h / img.naturalHeight, rows = img.naturalHeight, sh = 3, k = h / rows;
+    const c = small(img), w = c.w, h = c.h, step = 4;   // strips 4 px tall
     ctx.globalAlpha = alpha;
-    // in thin strips, each nudged sideways: her hair drifting, and trailing behind her when she flies
-    for (let r = 0; r < rows; r += sh) {
-      const f = r / rows;
+    // in strips, each nudged sideways: her hair drifting, and trailing behind her when she flies
+    for (let y = -PAD; y < h + PAD; y += step) {
+      const f = Math.max(0, y / h);
       const dx = Math.sin(t / 900 + f * 4) * 1.3 * f * f + trail * f * f;
-      ctx.drawImage(img, 0, r, img.naturalWidth, Math.min(sh, rows - r), -w / 2 + dx, -h + r * k, w, sh * k + .6);
+      const sy = (y + PAD) * DPR, shh = Math.min(step * DPR, c.height - sy);
+      if (shh > 0) ctx.drawImage(c, 0, sy, c.width, shh, -w / 2 - PAD + dx, -h + y, w + PAD * 2, shh / DPR + .5);
     }
+    const k = h / img.naturalHeight;
     const eyes = EYES[img === IM[me.mood] ? me.mood : me.prev];
     const bt = t - me.blinkAt;
     if (eyes && bt >= 0 && bt < 170) {   // a blink: lids come down and back up
@@ -96,8 +112,12 @@
     }
     ctx.globalAlpha = 1;
   }
+  let lastFrame = 0, trailDirty = false;
   function frame(t) {
     requestAnimationFrame(frame);
+    // 30 frames a second is plenty for her (12 asleep): light on the computer
+    if (document.hidden || t - lastFrame < (asleep ? 80 : 32)) return;
+    lastFrame = t;
     // settle everything a little each frame
     const going = me.mode === "fly" || me.mode === "walk";
     if (!going) { me.vx *= .85; me.vy *= .85; }
@@ -135,7 +155,7 @@
     ctx.save(); ctx.translate(0, CH - 8); ctx.scale(1, .22); ctx.translate(0, -(CH - 8));
     ctx.fillStyle = gl; ctx.beginPath(); ctx.arc(CW / 2, CH - 8, 40, 0, Math.PI * 2); ctx.fill(); ctx.restore();
     // sparkles left in the air behind her while she flies (they stay where they were on the screen)
-    tctx.setTransform(DPR, 0, 0, DPR, 0, 0); tctx.clearRect(0, 0, W, H);
+    if (trailDirty || SPARKS.length) { tctx.setTransform(DPR, 0, 0, DPR, 0, 0); tctx.clearRect(0, 0, W, H); trailDirty = SPARKS.length > 0; }
     if (me.lastX !== null) {
       const fx0 = wrap.classList.contains("right") ? W - 10 - CW : 10, fy0 = H - 10 - CH;   // where her canvas sits in the window
       if (me.mode === "fly" && t - me.sparkAt > 70) { me.sparkAt = t; SPARKS.push({ x: me.lastX + fx0 + CW / 2 + (Math.random() - .5) * 50, y: me.lastY + fy0 + CH - 55 + Math.random() * 40, t }); }

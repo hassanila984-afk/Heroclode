@@ -21,6 +21,11 @@ public static class LumaWin {
   [DllImport("user32.dll")] public static extern bool SetCursorPos(int x, int y);
   [DllImport("user32.dll")] public static extern void mouse_event(uint f, int dx, int dy, int data, UIntPtr extra);
   [DllImport("user32.dll")] public static extern void keybd_event(byte vk, byte scan, uint f, UIntPtr extra);
+  [DllImport("user32.dll")] public static extern short GetAsyncKeyState(int vk);
+  // Win, Ctrl, Alt and Shift let go if any is still down (a stuck Win + Ctrl + Enter starts Narrator)
+  public static void LetGo() {
+    foreach (byte k in new byte[] { 0x5B, 0x5C, 0x11, 0x12, 0x10 }) if ((GetAsyncKeyState(k) & 0x8000) != 0) keybd_event(k, 0, 2, UIntPtr.Zero);
+  }
   [DllImport("user32.dll")] public static extern IntPtr MonitorFromWindow(IntPtr h, uint flags);
   [DllImport("user32.dll")] public static extern bool GetMonitorInfo(IntPtr m, ref MONITORINFO mi);
   [DllImport("user32.dll", CharSet = CharSet.Unicode)] public static extern int GetClassName(IntPtr h, StringBuilder s, int n);
@@ -66,7 +71,7 @@ function Focus([IntPtr]$h) {
 }
 
 function Wheel([IntPtr]$h, [string]$dir, [int]$notches) {
-  Focus $h
+  if (-not [LumaWin]::IsWindow($h)) { throw 'gone' }
   $r = New-Object LumaWin+RECT; [void][LumaWin]::GetWindowRect($h, [ref]$r)
   $p = New-Object LumaWin+POINT; [void][LumaWin]::GetCursorPos([ref]$p)
   # the wheel goes to whatever is under the pointer: keep it inside their window
@@ -82,6 +87,8 @@ function Keys([IntPtr]$h, [string]$combo) {
   foreach ($k in $parts) { [LumaWin]::keybd_event([byte]$k, 0, 0, [UIntPtr]::Zero) }
   [array]::Reverse($parts)
   foreach ($k in $parts) { [LumaWin]::keybd_event([byte]$k, 0, 2, [UIntPtr]::Zero) }
+  Start-Sleep -Milliseconds 30
+  [LumaWin]::LetGo()
 }
 
 # The buttons and fields a person could see in their window, with the words on them.
@@ -159,10 +166,12 @@ function Handle($c) {
   }
 }
 
+[LumaWin]::LetGo()
 while ($null -ne ($line = [Console]::In.ReadLine())) {
   $c = $null
   try { $c = $line | ConvertFrom-Json; $r = Handle $c } catch { $r = @{ error = $_.Exception.Message } }
   if ($r -isnot [hashtable]) { $r = @{ value = $r } }
+  if ($c -and $c.cmd -in @('keys', 'click', 'type')) { try { [LumaWin]::LetGo() } catch {} }
   if ($c) { $r.id = $c.id }
   [Console]::Out.WriteLine(($r | ConvertTo-Json -Compress -Depth 4))
   [Console]::Out.Flush()

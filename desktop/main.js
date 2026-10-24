@@ -33,9 +33,14 @@ function createWindow() {
     width: 460, height: 860, minWidth: 360, minHeight: 560,
     title: "Firefly", icon: asset("icon.png"), backgroundColor: "#0e0b26", autoHideMenuBar: true,
     show: !process.argv.includes("--hidden"),
+    // not throttled when hidden: her ears and calls keep working next to the clock (the page rests its drawing)
     webPreferences: { preload: path.join(__dirname, "preload.js"), contextIsolation: true, backgroundThrottling: false },
   });
   win.loadURL(SITE);
+  // hidden or minimized, the page's animations rest (see window.__resting in the page)
+  const rest = () => { if (!win.isDestroyed()) win.webContents.executeJavaScript("window.__resting = " + !(win.isVisible() && !win.isMinimized())).catch(() => {}); };
+  for (const ev of ["show", "hide", "minimize", "restore"]) win.on(ev, rest);
+  win.webContents.on("did-finish-load", rest);
   // her own site stays here; every other link opens in the browser
   win.webContents.setWindowOpenHandler(({ url }) => { shell.openExternal(url); return { action: "deny" }; });
   win.webContents.on("will-navigate", (e, url) => { try { if (new URL(url).host !== HOST) { e.preventDefault(); shell.openExternal(url); } } catch (x) { e.preventDefault(); } });

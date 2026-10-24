@@ -29,11 +29,22 @@ try {
 } finally { $out.Close() }
 if ((Get-Item $zip).Length -ne $info.size) { throw 'The download was incomplete. Please run the command again.' }
 
-Get-Process Firefly -ErrorAction SilentlyContinue | Where-Object { $_.Path -like "$dir*" } | Stop-Process -Force
-Start-Sleep -Milliseconds 800
-if (Test-Path $dir) { Remove-Item $dir -Recurse -Force }
+# close the running Firefly (all of its processes) and wait until Windows lets go of its files
+Write-Host '  closing the old Firefly...'
+for ($t = 0; $t -lt 20 -and (Get-Process Firefly -ErrorAction SilentlyContinue); $t++) {
+  Get-Process Firefly -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+  Start-Sleep -Milliseconds 500
+}
 Write-Host '  installing...'
-Expand-Archive -Path $zip -DestinationPath $dir -Force
+$done = $false
+for ($t = 0; $t -lt 10 -and -not $done; $t++) {
+  try {
+    if (Test-Path $dir) { Remove-Item $dir -Recurse -Force -ErrorAction Stop }
+    Expand-Archive -Path $zip -DestinationPath $dir -Force -ErrorAction Stop
+    $done = $true
+  } catch { Start-Sleep -Seconds 1 }
+}
+if (-not $done) { throw 'Windows is still using the old Firefly files. Restart the computer, then run the command again.' }
 Remove-Item $zip -Force
 
 $ws = New-Object -ComObject WScript.Shell

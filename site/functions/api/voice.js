@@ -2,25 +2,38 @@ import { configured, sessionFrom, sameOrigin, json, voiceKey } from "../../lib/a
 
 // Luma's voice. Signed-in devices only, short lines only. Returns MP3.
 // Inworld TTS (through DeepInfra, with the saved DeepInfra key) streams the audio back as it's made, so a
-// plain <audio src="/api/voice?t=…"> starts playing within half a second. English and Arabic each have
-// their own voice. Without the key, or if Inworld fails, Cloudflare's Aura voice is used (English).
-const MODEL = "inworld-ai/inworld-tts-1.5-max";
-const VOICES = ["Hana", "Julia", "Sarah", "Olivia", "Ashley", "Pixie"];   // English, picked on the You page
+// plain <audio src="/api/voice?t=…&m=happy"> starts playing within half a second. English uses Realtime
+// TTS 2, told how to sound from her mood (warm and caring, bubbly, pouty…), so she never sounds flat;
+// Arabic uses its own native voice. Without the key, or if Inworld fails, Cloudflare's Aura voice is used.
+const MODEL = "inworld-ai/realtime-tts-2", ARABIC_MODEL = "inworld-ai/inworld-tts-1.5-max";
+const VOICES = ["Hana", "Julia", "Mia", "Ashley", "Pixie", "Jessica"];   // English, picked on the You page
 const ARABIC_VOICE = "Nour";
+// how she sounds, by the feeling she's showing as she says it
+const TONE = {
+  happy: "warm and happy, smiling while she talks, sweet and caring",
+  excited: "excited and happy, bright and bubbly, smiling big",
+  shy: "shy and sweet, a little giggly, soft and affectionate",
+  pout: "playfully sulky and pouty, teasing, then softening",
+  ignore: "playfully sulky and pouty, teasing, then softening",
+  sad: "gentle and caring, warm, a little worried for them",
+  sleepy: "sleepy and cozy, slow, soft and warm",
+  thinking: "curious and warm, interested, a little playful",
+  listening: "warm and caring, really interested in them, smiling",
+};
 const MAX_TEXT = 600;
 
 // GET /api/voice?t=<text>&v=<voice>: streamed, for <audio src>. POST {text, voice}: the same, for fetch().
 export async function onRequestGet({ request, env }) {
   const u = new URL(request.url);
-  return speak(request, env, u.searchParams.get("t"), u.searchParams.get("v"));
+  return speak(request, env, u.searchParams.get("t"), u.searchParams.get("v"), u.searchParams.get("m"));
 }
 export async function onRequestPost({ request, env }) {
   let body = {};
   try { body = await request.json(); } catch (e) {}
-  return speak(request, env, body.text, body.voice);
+  return speak(request, env, body.text, body.voice, body.mood);
 }
 
-async function speak(request, env, rawText, voice) {
+async function speak(request, env, rawText, voice, mood) {
   if (!configured(env)) return json({ error: "not_configured" }, 503);
   const site = request.headers.get("sec-fetch-site");
   if (!sameOrigin(request) || (site && site !== "same-origin")) return json({ error: "forbidden" }, 403);
@@ -32,10 +45,12 @@ async function speak(request, env, rawText, voice) {
   const key = await voiceKey(env);
   if (key) {
     try {
-      const r = await fetch("https://api.deepinfra.com/v1/inference/" + MODEL, {
+      const r = await fetch("https://api.deepinfra.com/v1/inference/" + (arabic ? ARABIC_MODEL : MODEL), {
         method: "POST",
         headers: { authorization: "Bearer " + key, "content-type": "application/json" },
-        body: JSON.stringify({ text, voice: arabic ? ARABIC_VOICE : (VOICES.includes(voice) ? voice : VOICES[0]), output_format: "mp3", stream: true }),
+        body: JSON.stringify(arabic
+          ? { text, voice: ARABIC_VOICE, output_format: "mp3", stream: true }
+          : { text: `[${TONE[mood] || TONE.listening}] ` + text, voice: VOICES.includes(voice) ? voice : VOICES[0], output_format: "mp3", stream: true }),
       });
       if (r.ok && r.body) return new Response(r.body, { headers: { "content-type": "audio/mpeg", "cache-control": "no-store" } });
     } catch (e) { }

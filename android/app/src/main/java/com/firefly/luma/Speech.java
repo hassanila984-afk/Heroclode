@@ -41,9 +41,6 @@ class Speech implements RecognitionListener {
                 .putExtra(RecognizerIntent.EXTRA_LANGUAGE, lang == null || lang.isEmpty() ? "en-US" : lang)
                 .putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
                 .putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 5)
-                // wait through short pauses instead of stopping at the first breath (not every phone honours these)
-                .putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, 2000L)
-                .putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, 1500L)
                 .putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, app.getPackageName());
         mute(true);
         active = true;

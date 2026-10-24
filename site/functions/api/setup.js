@@ -24,9 +24,9 @@ export async function onRequestPost({ request, env }) {
   if (vkey) {
     if (!/^[\w-]{16,200}$/.test(vkey)) return json({ ok: false, error: "voice_key_rejected" }, 400);
     // a tiny real line, so a key that can't make her voice is never saved
-    const r = await fetch("https://api.deepinfra.com/v1/openai/audio/speech", {
+    const r = await fetch("https://api.deepinfra.com/v1/inference/inworld-ai/inworld-tts-1.5-max", {
       method: "POST", headers: { authorization: "Bearer " + vkey, "content-type": "application/json" },
-      body: JSON.stringify({ model: "canopylabs/orpheus-3b-0.1-ft", input: "Hi!", voice: "tara", response_format: "mp3" }),
+      body: JSON.stringify({ text: "Hi!", voice: "Hana", output_format: "mp3" }),
     }).catch(() => null);
     if (!r || !r.ok) return json({ ok: false, error: "voice_key_rejected", status: r ? r.status : 0 }, 400);
     await saveSecret(env, "deepinfra", vkey);

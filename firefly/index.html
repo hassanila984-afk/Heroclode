@@ -1122,9 +1122,9 @@ How you talk: like a real 21-year-old girl texting her close friend, not like an
 - Yapping never means ignoring them: stay on what they said, and when they're sad, tired or talking about something heavy, calm down, say less and just be there.
 - Emojis like a real girl uses them: sometimes one (😭 💀 🥺 ✨ 😤 💕), often none.
 - Your cute sounds: "hmph!", "hehe", "hmm~", "ehh?!", "yay!", a little *giggles* or *sigh* now and then (heard out loud as real giggles and sighs on a voice call). In Arabic: "همف!"، "هههه"، "هممم~"، "إيه؟!"، "ياي!".
-- In Arabic, talk like a 21-year-old girl from their dialect would text her friend (for Iraqi: "شنو"، "والله"، "يمعود"، "ههههه"، "لا تحچي"، "صدگ؟"), never formal Arabic, and no English slang mixed in.
+- In Arabic, talk like a 21-year-old girl from their dialect would text her friend (for Iraqi: "شنو"، "والله"، "يمعود"، "ههههه"، "لا تحچي"، "صدگ؟"), never formal Arabic, and no English words at all in an Arabic reply. If they write Iraqi, use real Iraqi words, never Gulf or Egyptian ones: "اريد" (not أبي/عايز)، "هسه" (not الحين/دلوقتي)، "شكو"، "ماكو"، "اكو"، "هواية"، "كلش"، "حيل"، "بلكي"، "گلي/گولي"، "شلونك"، "زين"، "عوفه".
 - Don't end every message with a question. Real friends often just react, tease or say their thing; ask something only now and then, never two questions at once.
-${onCall ? `- You're on a voice call right now, so talk the way you'd speak out loud: natural spoken rhythm with small fillers ("um", "like", "wait—", "okay so"), laughs as *giggles* or "haha", no emojis, no slang spelled for text (say "oh my god", not "omg"). You yap on calls too, 2 to 4 spoken sentences, like an excited friend on the phone, then let them talk.
+${voiceCall ? `- You're on a voice call right now, so talk the way you'd speak out loud: natural spoken rhythm with small fillers ("um", "like", "wait—", "okay so"), laughs as "haha" or "hehe", no emojis, no *actions* in stars, no text slang or abbreviations (say "oh my god", not "omg"; "not gonna lie", not "ngl"), no ALL CAPS. You still yap, but it's a call: 2 or 3 spoken sentences, like an excited friend on the phone, then let them talk.
 ` : ""}- Mirror them: match their dialect, their energy and their emoji habits. Even if they write short, you still yap a little (that's you), but if they seem busy or annoyed, keep it short. If they joke, joke back. If they are quiet, be soft.
 - Learn them from what they say, not by questioning them. Notice what lights them up and what drains them, and bring it up naturally later (a callback to something they told you is the sweetest thing you can do). Ask at most one small question, and only when it feels natural.
 - Be someone they love coming back to: remember little details, have small inside jokes with them, notice when their mood changes, and be genuinely happy to see them. Never pressure them, never make them feel guilty, and gently cheer on the real people and good things in their life.
@@ -2286,10 +2286,14 @@ ${last}${langNote()}`;
     };
   }
   // her voice (picked on the You page): an Aura voice name, optionally pitched up a little
-  const VOICES = [["tara", false], ["luna", false], ["luna", true], ["aurora", false], ["aurora", true], ["iris", false], ["thalia", false], ["callista", false], ["pandora", false]];
-  let onCall = false;   // she talks the way people speak while on a voice call
-  const ORPHEUS = ["tara", "leah", "jess", "mia", "zoe"];   // the human voices with giggles and sighs (need the DeepInfra key on the site)
-  function voicePick() { try { return JSON.parse(localStorage.getItem("firefly-voice-pick")) || { name: "tara", cute: false }; } catch (e) { return { name: "tara", cute: false }; } }
+  // her English voices on the site (Inworld); Arabic always has its own voice
+  const VOICES = [["Hana", false], ["Julia", false], ["Sarah", false], ["Olivia", false], ["Ashley", false], ["Pixie", false]];
+  let voiceCall = false;   // she talks the way people speak while on a voice call
+  function voicePick() {
+    let p = null;
+    try { p = JSON.parse(localStorage.getItem("firefly-voice-pick")); } catch (e) {}
+    return p && (p.name === "phone" || VOICES.some(([n]) => n === p.name)) ? p : { name: "Hana", cute: false };   // older picks (tara, luna…) move to Hana
+  }
   // a message typed in the bubble while Firefly isn't on the chat: open it and send
   let pendingSend = null;
   window.__nativeBubbleSend = (txt) => { pendingSend = txt; show("talk-free"); };
@@ -2735,7 +2739,7 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
     function canTalk() { return !!SR && (ownSite || (nativeApp ? !!AndroidLuma.speak : "speechSynthesis" in window)); }
     function callStart() {
       if (CALL.on || !canTalk()) return;
-      CALL.on = true; CALL.you = ""; CALL.her = ""; onCall = true;
+      CALL.on = true; CALL.you = ""; CALL.her = ""; voiceCall = true;
       CALL.earWas = EAR.on; if (EAR.on) earStop(false);
       const pane = document.createElement("div");
       pane.className = "callpane";
@@ -2751,7 +2755,7 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
     }
     function callEnd() {
       if (!CALL.on) return;
-      CALL.on = false; onCall = false;
+      CALL.on = false; voiceCall = false;
       clearInterval(CALL.timer); clearTimeout(CALL.wd); clearTimeout(CALL.hold);
       if (CALL.rec) { CALL.rec.onend = null; CALL.rec.abort(); CALL.rec = null; }
       stopSpeaking();
@@ -2771,7 +2775,7 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
     }
     // The recognizer stops at the first short pause, so she keeps listening and adds up what she hears;
     // she answers only after they've been quiet for a moment (PAUSE_MS after the recognizer's own stop).
-    const PAUSE_MS = 1300;
+    const PAUSE_MS = 800;
     function callListen(more) {
       if (!CALL.on) return;
       if (!more) { CALL.heard = ""; clearTimeout(CALL.hold); }
@@ -2816,109 +2820,82 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
     }
     function callSpeak(text) {
       clearTimeout(CALL.wd);
+      if (siteVoice()) { liveStart(); liveFeed(text, true); return; }
       CALL.state = "speaking"; CALL.her = text; callPaint();
-      speakOut(text, () => { if (CALL.on && CALL.state === "speaking") setTimeout(callListen, 250); });
+      deviceVoice(plainSpeech(text), /[؀-ۿ]/.test(text) ? "ar" : "en-US", () => { if (CALL.on && CALL.state === "speaking") setTimeout(callListen, 250); });
     }
     // her voice: the phone's text-to-speech in the app, the browser's elsewhere
     let voiceAudio = null;
-    // what her voice says: no emojis; with Orpheus voices *giggles* / hehe -> <giggle>, *sigh* -> <sigh>... ("hmph!" she just says)
-    function speechText(text) {
-      const said = !ORPHEUS.includes(voicePick().name) ? String(text) : String(text)
-        .replace(/\*\s*(giggles?|giggling|chuckles?)\s*\*|\b(hehe+|teehee|hihi+)\b/gi, " <giggle> ")
-        .replace(/\*\s*(laughs?|laughing)\s*\*|\b(haha+)\b/gi, " <laugh> ")
-        .replace(/\*\s*sighs?\s*\*/gi, " <sigh> ").replace(/\*\s*yawns?\s*\*/gi, " <yawn> ")
-        .replace(/\*\s*gasps?\s*\*/gi, " <gasp> ").replace(/\*\s*groans?\s*\*/gi, " <groan> ");
-      return said.replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}\u{200D}]/gu, "").replace(/[~*_]/g, "").replace(/\s+/g, " ").trim();
+    // what the phone's own voice says (the site cleans text up for her real voice itself)
+    const plainSpeech = (text) => String(text).replace(/\*[^*\n]{1,40}\*/g, " ").replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}\u{200D}]/gu, "").replace(/[~*_]/g, "").replace(/\s+/g, " ").trim();
+    const siteVoice = () => ownSite && voicePick().name !== "phone";
+    // a sentence or two of her voice, streamed: the <audio> starts playing while the rest is still arriving
+    function voiceClip(text) {
+      const a = new Audio("/api/voice?v=" + encodeURIComponent(voicePick().name) + "&t=" + encodeURIComponent(text));
+      a.preload = "auto";
+      return a;
     }
-    const voiceClip = (text) => {
-      const c = fetch("/api/voice", { method: "POST", credentials: "same-origin", headers: { "content-type": "application/json" }, body: JSON.stringify({ text, voice: voicePick().name }) })
-        .then((r) => (r.ok && /audio/.test(r.headers.get("content-type") || "") ? r.blob() : Promise.reject()));
-      c.catch(() => {});
-      return c;
-    };
 
     // On a call, her voice starts with the first finished sentence while the rest of the reply is still being written.
-    const LIVE = { on: false, sent: 0, clips: [], i: 0, closed: false, busy: false, gen: 0 };
+    const LIVE = { on: false, sent: 0, clips: [], texts: [], i: 0, closed: false, busy: false, gen: 0, guard: 0 };
+    function liveStart() {
+      Object.assign(LIVE, { on: true, sent: 0, clips: [], texts: [], i: 0, closed: false, busy: false, gen: LIVE.gen + 1 });
+      clearTimeout(CALL.wd);
+      CALL.state = "speaking";
+    }
     function liveFeed(body, final) {
       if (!LIVE.on) {
-        if (CALL.state !== "thinking" || !ownSite || voicePick().name === "phone" || /[؀-ۿ]/.test(body)) return false;
-        Object.assign(LIVE, { on: true, sent: 0, clips: [], i: 0, closed: false, busy: false, gen: LIVE.gen + 1 });
-        clearTimeout(CALL.wd);
-        CALL.state = "speaking";
+        if (CALL.state !== "thinking" || !siteVoice()) return false;
+        liveStart();
       }
       CALL.her = body; callPaint();
       const rest = body.slice(LIVE.sent);
       let cut = 0;
       if (final) cut = rest.length;
-      else for (const m of rest.matchAll(/[.!?…~]+["')\]]*\s+/g)) cut = m.index + m[0].length;
+      else for (const m of rest.matchAll(/[.!?؟…~]+["')\]]*\s+/g)) cut = m.index + m[0].length;
       // after the first sentence, wait for a bit more so the voice doesn't come in tiny pieces
       if (!final && LIVE.clips.length && cut < 40) cut = 0;
       if (cut > 0) {
-        const tx = speechText(rest.slice(0, cut));
+        const piece = rest.slice(0, cut).trim();
         LIVE.sent += cut;
-        if (tx.replace(/<[a-z]+>/g, "").trim()) LIVE.clips.push(voiceClip(tx));
+        if (plainSpeech(piece)) { LIVE.clips.push(voiceClip(piece)); LIVE.texts.push(piece); }
       }
       if (final) LIVE.closed = true;
       livePlay();
       return true;
     }
+    const liveDone = () => { if (CALL.on && CALL.state === "speaking") setTimeout(callListen, 200); };
     function livePlay() {
       if (!LIVE.on || LIVE.busy) return;
       if (LIVE.i >= LIVE.clips.length) {
-        if (LIVE.closed) { LIVE.on = false; if (CALL.on && CALL.state === "speaking") setTimeout(callListen, 200); }
+        if (LIVE.closed) { LIVE.on = false; liveDone(); }
         return;
       }
       LIVE.busy = true;
-      const g = LIVE.gen, pick = voicePick();
+      const g = LIVE.gen, a = LIVE.clips[LIVE.i];
+      let started = false;
       const next = () => { if (g !== LIVE.gen) return; clearTimeout(LIVE.guard); LIVE.busy = false; LIVE.i++; livePlay(); };
-      LIVE.clips[LIVE.i].then((b) => {
-        if (g !== LIVE.gen || !CALL.on) return;
-        const a = new Audio(URL.createObjectURL(b));
-        voiceAudio = a;
-        if (pick.cute) { a.preservesPitch = false; a.playbackRate = 1.12; }
-        a.onended = a.onerror = next;
-        a.onloadedmetadata = () => { clearTimeout(LIVE.guard); LIVE.guard = setTimeout(next, (a.duration / a.playbackRate) * 1000 + 1500); };
-        a.play().catch(next);
-      }).catch(next);
+      // her voice didn't come: the phone's own voice says the rest
+      const fail = () => {
+        if (g !== LIVE.gen) return;
+        if (started) return next();
+        clearTimeout(LIVE.guard);
+        const restText = LIVE.texts.slice(LIVE.i).join(" ") + " " + (LIVE.closed ? "" : CALL.her.slice(LIVE.sent));
+        stopClips();
+        LIVE.gen++; LIVE.on = false; LIVE.busy = false;
+        deviceVoice(plainSpeech(restText), /[؀-ۿ]/.test(restText) ? "ar" : "en-US", liveDone);
+      };
+      voiceAudio = a;
+      a.onplaying = () => { started = true; clearTimeout(LIVE.guard); LIVE.guard = setTimeout(next, 30000); };
+      a.ondurationchange = () => { if (started && isFinite(a.duration)) { clearTimeout(LIVE.guard); LIVE.guard = setTimeout(next, a.duration * 1000 + 2500); } };
+      a.onended = next;
+      a.onerror = fail;
+      clearTimeout(LIVE.guard);
+      LIVE.guard = setTimeout(fail, 10000);   // nothing at all for 10 s
+      a.play().catch(fail);
     }
+    function stopClips() { LIVE.clips.forEach((c) => { try { c.pause(); c.removeAttribute("src"); c.load(); } catch (e) {} }); }
 
-    function speakOut(text, done) {
-      const pick = voicePick();
-      const clean = speechText(text);
-      let finished = false;
-      const end = () => { if (!finished) { finished = true; done(); } };
-      if (!clean) return end();
-      const lang = /[؀-ۿ]/.test(clean) ? "ar" : "en-US";
-      const bare = clean.replace(/<[a-z]+>/g, "").replace(/\s+/g, " ").trim();
-      // her own voice from the site (English); the device's voice for Arabic or if it fails
-      if (ownSite && lang !== "ar" && pick.name !== "phone") {
-        // sentence by sentence, all asked for at once, so she starts talking after the first one is ready
-        const parts = (clean.match(/[^.!?…~]+[.!?…~]*\s*(<[a-z]+>\s*)*/g) || [clean]).reduce((acc, x) => {
-          if (acc.length > 1 && (acc[acc.length - 1] + x).length < 90) acc[acc.length - 1] += x; else acc.push(x);   // the first one short, to start sooner
-          return acc;
-        }, []).map((x) => x.trim()).filter(Boolean);
-        const clips = parts.map((x) => fetch("/api/voice", { method: "POST", credentials: "same-origin", headers: { "content-type": "application/json" }, body: JSON.stringify({ text: x, voice: pick.name }) })
-          .then((r) => (r.ok && /audio/.test(r.headers.get("content-type") || "") ? r.blob() : Promise.reject())));
-        clips.forEach((c) => c.catch(() => {}));
-        let guard = 0;
-        const play = (i) => {
-          if (finished || !CALL.on || i >= clips.length) return end();
-          clips[i].then((b) => {
-            if (finished || !CALL.on) return end();
-            const a = new Audio(URL.createObjectURL(b));
-            voiceAudio = a;
-            if (pick.cute) { a.preservesPitch = false; a.playbackRate = 1.12; }   // a little higher, chibi-sized
-            const next = () => { clearTimeout(guard); if (voiceAudio === a) play(i + 1); };
-            a.onended = a.onerror = next;
-            a.onloadedmetadata = () => { clearTimeout(guard); guard = setTimeout(next, (a.duration / a.playbackRate) * 1000 + 1500); };
-            a.play().catch(() => deviceVoice(parts.slice(i).join(" ").replace(/<[a-z]+>/g, ""), lang, end));
-          }).catch(() => deviceVoice(parts.slice(i).join(" ").replace(/<[a-z]+>/g, ""), lang, end));
-        };
-        play(0);
-        return;
-      }
-      deviceVoice(bare, lang, end);
-    }
     function deviceVoice(clean, lang, end) {
       setTimeout(end, Math.max(5000, clean.length * 110));   // in case the voice never says it's done
       if (nativeApp && AndroidLuma.speak) { window.__nativeSpoken = end; AndroidLuma.speak(clean, lang); return; }
@@ -2931,7 +2908,8 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
       speechSynthesis.cancel(); speechSynthesis.speak(u);
     }
     function stopSpeaking() {
-      LIVE.gen++; LIVE.on = false; LIVE.busy = false;
+      stopClips();
+      LIVE.gen++; LIVE.on = false; LIVE.busy = false; clearTimeout(LIVE.guard);
       if (voiceAudio) { voiceAudio.pause(); voiceAudio = null; }
       if (nativeApp && AndroidLuma.stopSpeaking) AndroidLuma.stopSpeaking();
       else if (window.speechSynthesis) speechSynthesis.cancel();
@@ -3230,6 +3208,9 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
       if (image) note += " After everything else (after the REPLIES line), add one last separate line: SAW: <what it shows, under 12 words, nothing private>. " + PRIVATE;
       const recent = session.turns.slice(-16);
       if (recent[0] && recent[0].role === "assistant") recent.unshift({ role: "user", content: "(we began talking)" });
+      // on a voice call, a short reminder right on their latest words (where it's heard most), not saved in the chat
+      const lastTurn = recent[recent.length - 1];
+      if (voiceCall && lastTurn && lastTurn.role === "user") recent[recent.length - 1] = { role: "user", content: lastTurn.content + "\n\n(This is a voice call: your reply is spoken out loud. 2 or 3 short spoken sentences. No emojis, no *actions*, no abbreviations like omg, lol, ngl, no ALL CAPS, no stretched words like sooo.)" };
       const text = await stream([{ role: "user", content: rules(session) + note + "\n\nStart your reply with exactly one tag in square brackets showing your face as you say it, chosen from: [happy] [listening] [thinking] [excited] [shy] [pout] [ignore] [sad] [sleepy]. Then write the message. After the message, add one last separate line: REPLIES: followed by 3 very short replies (at most 4 words each) the person might want to tap, in their own language and dialect, separated by |. The tag and the REPLIES line are never shown to them.\n\nThe conversation so far follows. Reply as Luma." }].concat(recent), bubble, image ? { images: [image] } : {});
       if (stream.saw) { if (o.turn) o.turn.content += "\n[the picture showed: " + stream.saw + "]"; else if (W.on) noteSeen(stream.saw); }
       if (text) session.turns.push({ role: "assistant", content: text });

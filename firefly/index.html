@@ -2676,7 +2676,7 @@ ${last}${langNote()}`;
       <div class="chat-head">
         <div class="ch-av" data-luma-mirror><img alt="" draggable="false"><span class="lm-fx" aria-hidden="true"></span></div>
         <div><b>${t("luma")}</b><span class="st" id="ch-status">${t("stListening")}</span></div>
-        ${free ? `<button class="ch-watch" id="call" type="button" hidden>📞 ${t("callBtn")}</button><button class="ch-watch" id="watch" type="button" hidden>${t("watchBtn")}</button><button class="ch-bubble" id="bubble" type="button" hidden title="${t("bubbleTitle")}" aria-label="${t("bubbleTitle")}">🫧</button><button class="ch-bubble" id="ear" type="button" hidden title="${t("earTitle")}" aria-label="${t("earTitle")}" aria-pressed="false">👂</button><button class="ch-bubble" id="vlang" type="button" hidden title="${t("voiceTitle")}" aria-label="${t("voiceTitle")}" style="font:700 13px var(--body)"></button>` : ""}
+        ${free ? `<button class="ch-watch" id="call" type="button" hidden>📞 ${t("callBtn")}</button><button class="ch-watch" id="watch" type="button" hidden>${t("watchBtn")}</button><button class="ch-bubble" id="bubble" type="button" hidden title="${t("bubbleTitle")}" aria-label="${t("bubbleTitle")}">🫧</button><button class="ch-bubble" id="aloud" type="button" title="Her voice" aria-label="Her voice">🔊</button><button class="ch-bubble" id="ear" type="button" hidden title="${t("earTitle")}" aria-label="${t("earTitle")}" aria-pressed="false">👂</button><button class="ch-bubble" id="vlang" type="button" hidden title="${t("voiceTitle")}" aria-label="${t("voiceTitle")}" style="font:700 13px var(--body)"></button>` : ""}
       </div>
       ${free && appOld() ? (desktopApp ? `<div class="update">🖥️ ${t("appUpdatePC")}<br><code style="user-select:all">irm https://firefly-3t9.pages.dev/pc | iex</code></div>` : `<a class="update" href="${APK_URL}">📲 ${t("appUpdate")}</a>`) : ""}
       ${free ? `<div class="watchbar" id="watchbar" hidden><span class="wb-dot"></span><span class="wb-t">${t("watchOn")}</span><button type="button" id="wfloat" hidden>${t("watchFloat")}</button><button type="button" id="wstop">${t("watchStop")}</button></div>` : ""}
@@ -2704,6 +2704,7 @@ ${last}${langNote()}`;
     say.addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); $("#form").requestSubmit(); } });
     const send = (text) => {
       if (!text || ctl) return;
+      stopAloud();   // they're talking: she stops
       AGENT.steps = 0;   // they said something: any job she was running on her own waits for them
       heard();
       addMsg("me", text);
@@ -2780,6 +2781,10 @@ ${last}${langNote()}`;
       $("#call").onclick = callStart;
       $("#ear").hidden = !SR;
       $("#ear").onclick = () => (EAR.on ? earStop(true) : earStart(true));
+      const aloudBtn = $("#aloud");
+      const paintAloud = () => { aloudBtn.textContent = aloudOn() ? "🔊" : "🔇"; aloudBtn.classList.toggle("on", aloudOn()); };
+      aloudBtn.hidden = !ownSite; paintAloud();
+      aloudBtn.onclick = () => { try { localStorage.setItem("firefly-aloud", aloudOn() ? "off" : "on"); } catch (e) {} if (!aloudOn()) stopAloud(); paintAloud(); };
       const vl = $("#vlang"), showVl = () => { vl.textContent = voiceLang() === "en-US" ? "EN" : "ع"; };
       vl.hidden = true; showVl();
       vl.onclick = () => {
@@ -2874,6 +2879,7 @@ ${last}${langNote()}`;
           if (CALL.on) sayOnCall("Hey, reminder: " + r.text);
           else if (box.isConnected && document.visibilityState === "visible") addMsg("luma", msg);
           else bubbleSay(msg);
+          if (!CALL.on) speakOut("Hey! Reminder: " + r.text);
           try { if (window.Notification && Notification.permission === "granted") new Notification("Luma ⏰", { body: r.text }); } catch (e) {}
         }, Math.max(0, r.at - Date.now()));
       }
@@ -3016,7 +3022,7 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
       addMsg("luma", body);
       session.turns.push({ role: "assistant", content: body });
       drawFloat(body);
-      if (CALL.on) sayOnCall(body); else bubbleSay(body);
+      if (CALL.on) sayOnCall(body); else { bubbleSay(body); speakOut(body); }
       persist();
     }
     // they wrote back: soon after her comment means they like it when she talks
@@ -3288,7 +3294,7 @@ Start with one face tag like [happy] [excited] [pout] [shy] [sleepy], then the m
       if (!body || CALL.on || document.visibilityState === "visible") return;
       if (r.mood) luma.set(r.mood);
       BB.sentMood = "";   // she pops out with her face, not just words
-      bubbleSay(body);
+      bubbleSay(body); speakOut(body);
       s.turns.push({ role: "assistant", content: body });
       NUDGE.waiting = true;
       NUDGE.recent = NUDGE.recent.concat(body).slice(-4);
@@ -3430,6 +3436,29 @@ Start with one face tag like [happy] [excited] [pout] [shy] [sleepy], then the m
       return a;
     }
 
+    // Outside a call she says what she writes out loud too (her voice for everything); 🔊 turns it off.
+    // In English only (her voice is English); one sentence-group after another.
+    const ALOUD = window.__aloud || (window.__aloud = { q: [], cur: null });
+    function aloudOn() { try { return localStorage.getItem("firefly-aloud") !== "off"; } catch (e) { return true; } }
+    function speakOut(text) {
+      if (CALL.on || !siteVoice() || !aloudOn() || !text || EAR.inCall) return;
+      const say = String(text).replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}\u{200D}]/gu, "").replace(/\s+/g, " ").trim();   // (*sigh* and the like stay: they're heard)
+      if (!say || /[\u0600-\u06FF]/.test(say)) return;
+      let chunk = "";
+      for (const piece of say.match(/[^.!?…~]+[.!?…~]*\s*/g) || [say]) {
+        if ((chunk + piece).length > 220 && chunk) { ALOUD.q.push(voiceClip(chunk.trim())); chunk = ""; }
+        chunk += piece;
+      }
+      if (chunk.trim()) ALOUD.q.push(voiceClip(chunk.trim()));
+      aloudNext();
+    }
+    function aloudNext() {
+      if (ALOUD.cur || !ALOUD.q.length) return;
+      const a = ALOUD.q.shift(); ALOUD.cur = a;
+      a.onended = a.onerror = () => { ALOUD.cur = null; aloudNext(); };
+      a.play().catch(() => { ALOUD.cur = null; aloudNext(); });
+    }
+    function stopAloud() { ALOUD.q = []; if (ALOUD.cur) { ALOUD.cur.pause(); ALOUD.cur = null; } }
     // On a call, her voice starts with the first finished sentence while the rest of the reply is still being written.
     const LIVE = { on: false, sent: 0, clips: [], texts: [], i: 0, closed: false, busy: false, gen: 0, guard: 0 };
     function liveStart() {
@@ -3924,7 +3953,7 @@ Start with one face tag like [happy] [excited] [pout] [shy] [sleepy], then the m
         let { body, replies } = splitReplies(r.body || text);
         if (!body && dd.act) body = "On it~";   // she only sent the action: still say something
         bubble.classList.remove("wait"); bubble.textContent = body;
-        if (!CALL.on) bubbleSay(body);   // on a call her bubble shows each sentence as she says it
+        if (!CALL.on) { bubbleSay(body); if (!sg.song) speakOut(body); }   // on a call her bubble shows each sentence as she says it
         if (CALL.on && (LIVE.on || CALL.state === "thinking") && !liveFeed(body, true)) callSpeak(body);
         if (sg.song) singSong(sg.song);
         status(idleStatus());

@@ -3686,7 +3686,7 @@ Start with one face tag like [happy] [excited] [pout] [shy] [sleepy], then the m
     }
     function callSpeak(text) {
       later.cancel(CALL.wd);
-      if (siteVoice()) { liveStart(); liveFeed(text, true); return; }
+      if (siteVoice()) { voiceCheck(); liveStart(); liveFeed(text, true); return; }
       CALL.state = "speaking"; CALL.her = text; callPaint();
       const after = () => liveDone();
       if (/[؀-ۿ]/.test(text)) after(); else { bubbleSay(captionLines(text)[0] || ""); deviceVoice(plainSpeech(text), "en-US", after); }   // English only out loud
@@ -3709,7 +3709,19 @@ Start with one face tag like [happy] [excited] [pout] [shy] [sleepy], then the m
     // In English only (her voice is English); one sentence-group after another.
     const ALOUD = window.__aloud || (window.__aloud = { q: [], cur: null });
     function aloudOn() { try { return localStorage.getItem("firefly-aloud") !== "off"; } catch (e) { return true; } }
+    // once per visit: if her real voice (Inworld on DeepInfra) is failing, the stand-in voice speaks; say why
+    let voiceChecked = false;
+    function voiceCheck() {
+      if (voiceChecked || !ownSite) return; voiceChecked = true;
+      fetch("/api/voice?diag=1").then((r) => r.json()).then((d) => {
+        if (!d || d.ok !== false) return;
+        const why = d.status === 402 || /balance|credit|payment|insufficient/i.test(d.detail || "") ? "the DeepInfra balance ran out, top it up at deepinfra.com/dash/billing" : d.status === 401 || d.status === 403 || !d.status ? "the DeepInfra key isn't working, save a new one on the setup page" : "DeepInfra said " + d.status;
+        bubbleSay("My real voice is off right now: " + why + " 💔");
+        console.warn("[voice]", d);
+      }).catch(() => {});
+    }
     function speakOut(text) {
+      voiceCheck();
       if (CALL.on || !siteVoice() || !aloudOn() || !text || EAR.inCall) return;
       const say = String(text).replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}\u{200D}]/gu, "").replace(/\s+/g, " ").trim();   // (*sigh* and the like stay: they're heard)
       if (!say || /[\u0600-\u06FF]/.test(say)) return;

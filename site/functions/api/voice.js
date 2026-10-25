@@ -27,12 +27,31 @@ const MAX_TEXT = 900;
 // GET /api/voice?t=<text>&v=<voice>: streamed, for <audio src>. POST {text, voice}: the same, for fetch().
 export async function onRequestGet({ request, env }) {
   const u = new URL(request.url);
+  if (u.searchParams.get("diag") === "1") return diag(request, env);
   return speak(request, env, u.searchParams.get("t"), u.searchParams.get("v"), u.searchParams.get("s") === "1" ? "sing" : u.searchParams.get("m"));
 }
 export async function onRequestPost({ request, env }) {
   let body = {};
   try { body = await request.json(); } catch (e) {}
   return speak(request, env, body.text, body.voice, body.mood);
+}
+
+// GET /api/voice?diag=1: is her real (Inworld) voice working? {ok, status, detail}, so the app can say why not
+async function diag(request, env) {
+  if (!configured(env) || !sameOrigin(request) || !(await sessionFrom(request, env))) return json({ error: "forbidden" }, 403);
+  const key = await voiceKey(env);
+  if (!key) return json({ ok: false, status: 0, detail: "no DeepInfra key saved" });
+  try {
+    const r = await fetch("https://api.deepinfra.com/v1/inference/" + MODEL, {
+      method: "POST",
+      headers: { authorization: "Bearer " + key, "content-type": "application/json" },
+      body: JSON.stringify({ text: "hi", voice: VOICES[0], output_format: "mp3" }),
+    });
+    if (r.ok) return json({ ok: true, status: r.status });
+    return json({ ok: false, status: r.status, detail: (await r.text()).slice(0, 200) });
+  } catch (e) {
+    return json({ ok: false, status: -1, detail: String(e).slice(0, 200) });
+  }
 }
 
 async function speak(request, env, rawText, voice, mood) {
@@ -45,7 +64,7 @@ async function speak(request, env, rawText, voice, mood) {
   if (!text.replace(/\[[a-z_]+\]/g, "").trim()) return json({ error: "bad_request" }, 400);
 
   const key = await voiceKey(env);
-  if (key) {
+  for (let i = 0; key && i < 2; i++) {
     try {
       const r = await fetch("https://api.deepinfra.com/v1/inference/" + MODEL, {
         method: "POST",
@@ -53,6 +72,7 @@ async function speak(request, env, rawText, voice, mood) {
         body: JSON.stringify({ text: `[${mood === "sing" ? SINGING : TONE[mood] || TONE.listening}] ` + text, voice: VOICES.includes(voice) ? voice : VOICES[0], output_format: "mp3", stream: true }),
       });
       if (r.ok && r.body) return new Response(r.body, { headers: { "content-type": "audio/mpeg", "cache-control": "no-store" } });
+      if (r.status < 500) break;   // key or balance problem: retrying won't help
     } catch (e) { }
   }
   // fallback: Aura

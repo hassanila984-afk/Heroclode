@@ -585,6 +585,110 @@
     /* everything stays still, unless the person switched Firefly to full motion */
     :root:not(.ff-full) *, :root:not(.ff-full) *::before, :root:not(.ff-full) *::after { animation: none !important; transition: none !important; }
   }
+
+  /* ===== 2026 refresh: calmer, cleaner, more room for her and the chat ===== */
+  :root {
+    --night: #0c0d1d;
+    --glow: #f7c873; --glow-deep: #eba84a;
+    --mist: #f1f0fb; --haze: #a4a6c4;
+    --glass: rgba(17, 18, 38, .84); --glass-line: rgba(255, 255, 255, .08);
+    --chip: rgba(255, 255, 255, .06); --surface: rgba(255, 255, 255, .045); --surface-2: rgba(255, 255, 255, .08);
+    --lav: #b9a8ff; --pink: #ff9fc6;
+  }
+  body { font-size: 15.5px; -webkit-font-smoothing: antialiased; }
+  #wall::after { background: linear-gradient(180deg, rgba(12, 13, 29, .45) 0%, rgba(12, 13, 29, .15) 25%, rgba(12, 13, 29, .35) 60%, rgba(12, 13, 29, .82) 100%); }
+  .panel { border-radius: 24px; padding: 18px 16px 16px; gap: 12px; backdrop-filter: blur(22px) saturate(1.1); -webkit-backdrop-filter: blur(22px) saturate(1.1); box-shadow: 0 18px 50px rgba(0, 0, 0, .5); border-color: rgba(255, 255, 255, .07); }
+  h2 { font-size: 30px; } h3 { font-size: 20px; }
+  .eyebrow { font-size: 11px; letter-spacing: .16em; font-weight: 700; }
+  .tabbar { background: rgba(12, 13, 29, .92); border-top-color: rgba(255, 255, 255, .06); }
+  .tabbar button { font-size: 11.5px; }
+  .tabbar button[aria-current="page"] { background: rgba(247, 200, 115, .12); }
+
+  /* --- chat: the whole height is hers --- */
+  body[data-screen="talk-free"] .panel.chat { height: calc(100dvh - 150px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); max-height: none; padding: 12px 12px 12px; gap: 8px; }
+  body[data-screen="talk-free"] .stage { padding-left: max(10px, env(safe-area-inset-left, 0px)); padding-right: max(10px, env(safe-area-inset-right, 0px)); }
+  .chat-head { flex-wrap: nowrap; gap: 10px; padding: 0 2px 8px; }
+  .ch-av { width: 46px; height: 46px; }
+  .chat-head > div:nth-child(2) { flex: 1; min-width: 0; }
+  .chat-head b { font: 700 17px var(--body); }
+  .chat-head span.st { font-size: 12.5px; }
+  .ch-acts { display: flex; gap: 6px; flex: none; }
+  .ch-act { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--glass-line); background: var(--surface-2); font-size: 17px; display: grid; place-items: center; padding: 0; }
+  .ch-act[hidden] { display: none; }
+  .ch-act svg { width: 19px; height: 19px; color: var(--glow); }
+  .ch-act[aria-expanded="true"] { background: rgba(247, 200, 115, .2); border-color: rgba(247, 200, 115, .5); }
+  .ch-tools { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding: 2px 2px 6px; flex-shrink: 0; }
+  .ch-tools::-webkit-scrollbar { display: none; }
+  .ch-tools[hidden] { display: none; }
+  .ch-tools .ch-watch { margin: 0; padding: 8px 12px; border-color: var(--glass-line); background: var(--surface-2); }
+  .ch-tools .ch-bubble { width: 38px; height: 38px; font-size: 16px; border-color: var(--glass-line); background: var(--surface-2); }
+  .ch-tools .ch-bubble.on { background: rgba(247, 200, 115, .85); }
+  .talk { gap: 6px; padding: 4px 2px; }
+  .msg { max-width: 84%; padding: 9px 13px; border-radius: 18px; font-size: 15.5px; line-height: 1.45; box-shadow: none; }
+  .msg.luma { background: var(--surface-2); border: 1px solid rgba(255, 255, 255, .06); border-end-start-radius: 6px; }
+  .msg.me { background: linear-gradient(160deg, #7f6bff, #6a54e8); border: 0; color: #fff; border-end-end-radius: 6px; }
+  .msg.luma + .msg.luma, .msg.me + .msg.me { margin-top: -2px; }
+  .msg.pic { background: none; border: 0; padding: 0; }
+  .msg.pic img { border-radius: 16px; max-height: 380px; }
+  .quick { gap: 6px; padding: 2px 0; }
+  .quick button { padding: 7px 12px; font-size: 13.5px; border-color: rgba(247, 200, 115, .3); background: rgba(247, 200, 115, .07); }
+  .composer { align-items: center; gap: 6px; background: var(--surface-2); border: 1px solid var(--glass-line); border-radius: 26px; padding: 4px; }
+  .composer textarea { background: transparent; border: 0; padding: 10px 6px; border-radius: 0; }
+  .composer textarea:focus-visible { outline: none; }
+  .composer:focus-within { border-color: rgba(247, 200, 115, .45); }
+  .composer .attach, .composer .mic { width: 40px; height: 40px; border: 0; background: transparent; font-size: 18px; }
+  .composer .mic.on { background: #ff5a7a; }
+  .composer .send { width: 42px; height: 42px; box-shadow: none; }
+  #hint { font-size: 11.5px; opacity: .75; }
+  body[data-screen="talk-free"] .panel.chat > .row.split { min-height: 0; }
+  .update { margin: 0; }
+
+  /* --- sounds: a tidy list, sliders only for what's playing --- */
+  .layers.card { display: flex; flex-direction: column; gap: 0; padding: 4px 0; }
+  .layers.card .layer { border: 0; border-radius: 0; background: none; padding: 10px 14px; border-top: 1px solid var(--glass-line); }
+  .layers.card .layer:first-child { border-top: 0; }
+  .layers.card .layer.on { background: rgba(247, 200, 115, .06); }
+  .layers.card .layer button { width: 100%; font-size: 15px; gap: 12px; justify-content: flex-start; }
+  .layers.card .ly-ic { width: 34px; height: 34px; border-radius: 10px; background: var(--surface-2); display: grid; place-items: center; font-size: 17px; flex: none; }
+  .layers.card .ly-n { flex: 1; display: flex; flex-direction: column; }
+  .layers.card .ly-n small { font-size: 12px; font-weight: 500; color: var(--haze); }
+  .layers.card .layer:not(.on) input[type="range"] { display: none; }
+  .layers.card .layer input[type="range"] { margin: 6px 0 2px; margin-inline-start: 46px; width: calc(100% - 46px); }
+  .switch { width: 42px; height: 24px; }
+  .switch::after { width: 18px; height: 18px; top: 2px; }
+  .layer.on .switch::after, .switch[aria-checked="true"]::after { transform: translateX(18px); background: var(--glow); }
+  [dir="rtl"] .layer.on .switch::after, [dir="rtl"] .switch[aria-checked="true"]::after { transform: translateX(-18px); }
+  .layer.on .switch, .switch[aria-checked="true"] { background: rgba(247, 200, 115, .35); }
+  #wave { height: 56px !important; }
+
+  /* --- You: grouped settings --- */
+  .you-head h2 { font-size: 32px; }
+  .statgrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .statgrid div { background: var(--surface); border: 1px solid var(--glass-line); border-radius: 16px; padding: 10px 6px; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  .statgrid b { font: 700 22px var(--body); color: var(--glow); font-variant-numeric: tabular-nums; }
+  .statgrid span { font-size: 11px; color: var(--haze); text-align: center; line-height: 1.2; }
+  .sec { display: flex; flex-direction: column; gap: 8px; }
+  .sec h4 { margin: 6px 4px 0; font: 700 12px var(--body); letter-spacing: .12em; text-transform: uppercase; color: var(--haze); }
+  .card { background: var(--surface); border: 1px solid var(--glass-line); border-radius: 18px; }
+  .card.pad { padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; }
+  .set { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-top: 1px solid var(--glass-line); }
+  .set:first-child { border-top: 0; }
+  .set.flat { padding: 4px 0; border: 0; }
+  .set-t { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+  .set-t b { font-size: 15px; font-weight: 700; }
+  .set-t small { font-size: 12.5px; color: var(--haze); line-height: 1.35; }
+  .set-c { flex: none; display: flex; align-items: center; gap: 6px; }
+  .set-c input[type="time"] { padding: 8px 10px; border-radius: 12px; }
+  .sel { background: var(--surface-2); color: var(--mist); border: 1px solid var(--glass-line); border-radius: 12px; padding: 8px 10px; font: 600 14px var(--body); max-width: 150px; }
+  .icon-btn { width: 38px; height: 38px; border-radius: 12px; border: 1px solid var(--glass-line); background: var(--surface-2); color: var(--mist); font-size: 15px; display: grid; place-items: center; padding: 0; flex: none; }
+  .btn-s { border: 1px solid rgba(247, 200, 115, .4); background: rgba(247, 200, 115, .1); color: var(--mist); border-radius: 999px; padding: 8px 14px; font: 600 13.5px var(--body); text-decoration: none; white-space: nowrap; align-self: flex-start; }
+  button.switch { padding: 0; cursor: pointer; }
+  .walls { grid-template-columns: repeat(5, 1fr); }
+  .card .list li { font-size: 14.5px; }
+  .mem-add { flex-wrap: nowrap; }
+  .mem-add input { padding: 10px 12px; border-radius: 12px; }
+  .card .chart { margin-top: -4px; }
+  .sec .grid4 { margin-top: 4px; }
 </style>
 
 <canvas id="sky" aria-hidden="true"></canvas>
@@ -703,7 +807,7 @@
       friendSaid: "👥 A friend on the call: “{text}”",
       earHint: "Say “Luma” anytime and she answers. Anything else she hears isn't kept.",
       micDenied: "I can't hear you, the microphone is blocked 🥺 Allow it from the 🔒 next to the address.", micNone: "This browser can't turn speech into text 🥺 Try Chrome.",
-      appUpdatePC: "New version of Firefly for Windows. To update, run this again in PowerShell:", appUpdate: "New version of the app: she can tap, scroll and walk around your phone with it. Tap to update (install it over this one).", wallTitle: "Wallpaper: her rooms, alive", myVoiceNote: "Your voice: she learns it on your first call, so she knows when it's a friend talking.", myVoiceBtn: "🎙️ Learn my voice", myVoiceRedo: "✓ Knows your voice · redo", myVoiceTalk: "Talk normally for a few seconds… (say anything)", myVoiceShort: "Didn't catch enough of your voice, try again a bit louder.", myVoiceDone: "Got it~ I'd know your voice anywhere now 💕", apkBtn: "📱 Android app", apkNote: "The full Android app: Luma's bubble over your apps, watching your phone screen, and listening.",
+      appUpdatePC: "New version of Firefly for Windows. To update, run this again in PowerShell:", appUpdate: "New version of the app: she can tap, scroll and walk around your phone with it. Tap to update (install it over this one).", wallTitle: "Wallpaper: her rooms, alive", myVoiceNote: "She learns it on your first call, so she knows when it's a friend talking.", myVoiceBtn: "🎙️ Learn my voice", myVoiceRedo: "✓ Knows your voice · redo", myVoiceTalk: "Talk normally for a few seconds… (say anything)", myVoiceShort: "Didn't catch enough of your voice, try again a bit louder.", myVoiceDone: "Got it~ I'd know your voice anywhere now 💕", apkBtn: "📱 Android app", apkNote: "The full Android app: Luma's bubble over your apps, watching your phone screen, and listening.",
       installBtn: "📲 Install as an app", installNote: "Put Firefly on your home screen or desktop, with its own icon and window.",
       installIOS: "To install on iPhone: tap Share ⬆️ in Safari, then “Add to Home Screen”.", installManual: "Use the install icon in the address bar, or the browser menu → “Install Firefly”.",
       codeAsk: "Firefly access code (only once on this device):", codeWrong: "That code didn't work. Try again:",
@@ -730,7 +834,7 @@
       reminderTitle: "Nightly reminder", reminderNote: "A set time makes a habit much easier to keep. Choose yours and add it to your calendar.",
       reminderTime: "Reminder time", addCal: "Add to Google Calendar",
       calTitle: "Firefly: light tonight's firefly", calDetails: "Seven quiet minutes for yourself. Open Firefly in Claude.",
-      proNote: "Her own messages: good morning, a break after long hours on the PC, and a call when a reminder is important.", proOn: "On ✓", proOff: "Off", remembersTitle: "What Luma knows about you", forget: "Forget this", memAdd: "Tell her something to remember…",
+      proTitle: "Her own messages", proNote: "Good morning, a break after long hours on the PC, and a call when a reminder is important.", proOn: "On ✓", proOff: "Off", secLuma: "Luma", secApp: "App", myVoiceTitle: "Your voice", remembersTitle: "What Luma knows about you", forget: "Forget this", memAdd: "Tell her something to remember…",
       styleTitle: "How Luma talks with you", styleNote: "Learned from how you write.", styleReset: "Start fresh",
       styleNone: "Nothing yet. Luma picks up your way of talking as you chat.",
       remembersNote: "Tap a line to change it, ✕ to make her forget it.",
@@ -817,7 +921,7 @@
       friendSaid: "👥 صديقك بالمكالمة: «{text}»",
       earHint: "گول «لُمى» بأي وقت وترد عليك. أي كلام ثاني تسمعه ما ينحفظ.",
       micDenied: "ما أسمعك، المايك ممنوع 🥺 اسمح بيه من القفل 🔒 جنب العنوان.", micNone: "هذا المتصفح ما يحوّل الكلام لكتابة 🥺 جرّب Chrome.",
-      appUpdatePC: "اكو نسخة جديدة من Firefly للكمبيوتر. حتى تحدّث، شغّل هذا مرة ثانية بـ PowerShell:", appUpdate: "اكو نسخة جديدة من التطبيق: بيها تدوس وتسكرل وتتمشى بموبايلك. دوس حتى تحدّث (نصّبها فوق هاي).", wallTitle: "الخلفية: غرفها، حيّة", myVoiceNote: "صوتك: تتعلّمه من أول مكالمة، حتى تعرف لمن يحچي صديقك.", myVoiceBtn: "🎙️ تعلّمي صوتي", myVoiceRedo: "✓ تعرف صوتك · إعادة", myVoiceTalk: "احچي عادي كم ثانية… (أي شي)", myVoiceShort: "ما سمعت صوتك بما يكفي، جرّب مرة ثانية بصوت أعلى شوية.", myVoiceDone: "حفظت صوتك~ هسه أعرفك من بين الكل 💕", apkBtn: "📱 تطبيق أندرويد", apkNote: "تطبيق الأندرويد الكامل: فقاعة لُمى فوق تطبيقاتك، وتشوف شاشة موبايلك، وتسمعك.",
+      appUpdatePC: "اكو نسخة جديدة من Firefly للكمبيوتر. حتى تحدّث، شغّل هذا مرة ثانية بـ PowerShell:", appUpdate: "اكو نسخة جديدة من التطبيق: بيها تدوس وتسكرل وتتمشى بموبايلك. دوس حتى تحدّث (نصّبها فوق هاي).", wallTitle: "الخلفية: غرفها، حيّة", myVoiceNote: "تتعلّمه من أول مكالمة، حتى تعرف لمن يحچي صديقك.", myVoiceBtn: "🎙️ تعلّمي صوتي", myVoiceRedo: "✓ تعرف صوتك · إعادة", myVoiceTalk: "احچي عادي كم ثانية… (أي شي)", myVoiceShort: "ما سمعت صوتك بما يكفي، جرّب مرة ثانية بصوت أعلى شوية.", myVoiceDone: "حفظت صوتك~ هسه أعرفك من بين الكل 💕", apkBtn: "📱 تطبيق أندرويد", apkNote: "تطبيق الأندرويد الكامل: فقاعة لُمى فوق تطبيقاتك، وتشوف شاشة موبايلك، وتسمعك.",
       installBtn: "📲 ثبّته كتطبيق", installNote: "حط Firefly على شاشتك أو سطح المكتب، بأيقونته ونافذته الخاصة.",
       installIOS: "حتى تثبّته على الآيفون: اضغط زر المشاركة ⬆️ بـ Safari، بعدها «إضافة إلى الشاشة الرئيسية».", installManual: "استخدم أيقونة التثبيت بشريط العنوان، أو قائمة المتصفح ← «تثبيت Firefly».",
       codeAsk: "رمز الدخول لـFirefly (مرة واحدة فقط على هذا الجهاز):", codeWrong: "الرمز غير صحيح. حاول مرة ثانية:",
@@ -844,7 +948,7 @@
       reminderTitle: "تذكير ليلي", reminderNote: "الوقت الثابت يجعل العادة أسهل بكثير. اختر وقتك وأضفه إلى تقويمك.",
       reminderTime: "وقت التذكير", addCal: "أضف إلى تقويم Google",
       calTitle: "يراعة: أضئ يراعة الليلة", calDetails: "سبع دقائق هادئة لنفسك. افتح يراعة في Claude.",
-      proNote: "رسائلها من نفسها: صباح الخير، استراحة بعد ساعات طويلة على الحاسبة، ومكالمة إذا التذكير مهم.", proOn: "شغّال ✓", proOff: "طافي", remembersTitle: "شنو تعرف لُمى عنك", forget: "انسَ هذا", memAdd: "گلها شي تتذكره…",
+      proTitle: "رسائلها من نفسها", proNote: "صباح الخير، استراحة بعد ساعات طويلة على الحاسبة، ومكالمة إذا التذكير مهم.", proOn: "شغّال ✓", proOff: "طافي", secLuma: "لُمى", secApp: "التطبيق", myVoiceTitle: "صوتك", remembersTitle: "شنو تعرف لُمى عنك", forget: "انسَ هذا", memAdd: "گلها شي تتذكره…",
       styleTitle: "كيف تتكلّم لُمى معك", styleNote: "تعلّمته من طريقة كتابتك.", styleReset: "ابدأ من جديد",
       styleNone: "لا شيء بعد. تلتقط لُمى طريقة كلامك وأنتما تتحدّثان.",
       remembersNote: "دوس على أي سطر حتى تعدّله، و ✕ حتى تنساه.",
@@ -3474,8 +3578,9 @@ Start with one face tag like [thinking] [happy], then your help.`, Object.assign
       <div class="chat-head">
         <div class="ch-av" data-luma-mirror><img alt="" draggable="false"><span class="lm-fx" aria-hidden="true"></span></div>
         <div><b>${t("luma")}</b><span class="st" id="ch-status">${t("stListening")}</span></div>
-        ${free ? `<button class="ch-watch" id="call" type="button" hidden>📞 ${t("callBtn")}</button><button class="ch-watch" id="vcall" type="button" hidden>🎥 ${t("videoBtn")}</button><button class="ch-watch" id="watch" type="button" hidden>${t("watchBtn")}</button><button class="ch-bubble" id="bubble" type="button" hidden title="${t("bubbleTitle")}" aria-label="${t("bubbleTitle")}">🫧</button><button class="ch-bubble" id="games" type="button" title="Games" aria-label="Games">🎮</button><button class="ch-bubble" id="aloud" type="button" title="Her voice" aria-label="Her voice">🔊</button><button class="ch-bubble" id="ear" type="button" hidden title="${t("earTitle")}" aria-label="${t("earTitle")}" aria-pressed="false">👂</button><button class="ch-bubble" id="vlang" type="button" hidden title="${t("voiceTitle")}" aria-label="${t("voiceTitle")}" style="font:700 13px var(--body)"></button>` : ""}
+        ${free ? `<div class="ch-acts"><button class="ch-act" id="call" type="button" hidden title="${t("callBtn")}" aria-label="${t("callBtn")}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/></svg></button><button class="ch-act" id="vcall" type="button" hidden title="${t("videoBtn")}" aria-label="${t("videoBtn")}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="13" height="12" rx="2"/><path d="m16 10 5-3v10l-5-3"/></svg></button><button class="ch-act" id="more" type="button" aria-expanded="false" title="More" aria-label="More"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></button></div>` : ""}
       </div>
+      ${free ? `<div class="ch-tools" id="tools" hidden><button class="ch-watch" id="watch" type="button" hidden>${t("watchBtn")}</button><button class="ch-bubble" id="bubble" type="button" hidden title="${t("bubbleTitle")}" aria-label="${t("bubbleTitle")}">🫧</button><button class="ch-bubble" id="games" type="button" title="Games" aria-label="Games">🎮</button><button class="ch-bubble" id="aloud" type="button" title="Her voice" aria-label="Her voice">🔊</button><button class="ch-bubble" id="ear" type="button" hidden title="${t("earTitle")}" aria-label="${t("earTitle")}" aria-pressed="false">👂</button><button class="ch-bubble" id="vlang" type="button" hidden title="${t("voiceTitle")}" aria-label="${t("voiceTitle")}" style="font:700 13px var(--body)"></button></div>` : ""}
       ${free && appOld() ? (desktopApp ? `<div class="update">🖥️ ${t("appUpdatePC")}<br><code style="user-select:all">irm https://firefly-3t9.pages.dev/pc | iex</code></div>` : `<a class="update" href="${APK_URL}">📲 ${t("appUpdate")}</a>`) : ""}
       ${free ? `<div class="watchbar" id="watchbar" hidden><span class="wb-dot"></span><span class="wb-t">${t("watchOn")}</span><button type="button" id="wfloat" hidden>${t("watchFloat")}</button><button type="button" id="wstop">${t("watchStop")}</button></div>` : ""}
       <div class="talk" id="talk"></div>
@@ -3574,6 +3679,7 @@ Start with one face tag like [thinking] [happy], then your help.`, Object.assign
       window.__nativeBubbleSend = (txt) => { NUDGE.waiting = false; if (box.isConnected) { heard(); send(txt); } else { pendingSend = txt; show("talk-free"); } };
       window.__nudge = nudge;   // the newest chat's version; the timer below is started once
       window.__callOn = () => CALL.on;
+      $("#more").onclick = () => { const tl = $("#tools"), open = tl.hidden; tl.hidden = !open; $("#more").setAttribute("aria-expanded", String(open)); };
       $("#games").onclick = () => GAME.menu();
       window.__speak = speakOut; window.__bubble = bubbleSay;
       // her own message, with her chat open and in front of him: said right here (a call: she calls)
@@ -5212,13 +5318,13 @@ Start with one face tag like [happy] [excited] [pout] [shy] [sleepy], then the m
       <p class="eyebrow">${t("soundsEyebrow")}</p>
       <h2>${t("soundsTitle")}</h2>
       <canvas id="wave" aria-hidden="true"></canvas>
-      <div class="layers">${sound.LAYERS.map((l) => `
+      <div class="layers card">${sound.LAYERS.map((l) => `
         <div class="layer ${sound.isOn(l.id) ? "on" : ""}" data-l="${l.id}">
-          <button aria-pressed="${sound.isOn(l.id)}">${t("layer_" + l.id)}<span class="switch"></span></button>
+          <button aria-pressed="${sound.isOn(l.id)}"><span class="ly-ic" aria-hidden="true">${({ song: "📻", music: "🎵", rain: "🌧️", ocean: "🌊", crickets: "🦗", wind: "🍃", hum: "🌫️" })[l.id] || "🎶"}</span><span class="ly-n">${t("layer_" + l.id)}</span><span class="switch"></span></button>
           <input type="range" min="0" max="1" step="0.01" value="${sound.vol(l.id)}" aria-label="${t("volume", { name: t("layer_" + l.id) })}">
         </div>`).join("")}
       </div>
-      <div class="layer ${sound.cuteOn() ? "on" : ""}" id="cute-row"><button aria-pressed="${sound.cuteOn()}">${t("lumaSounds")}<span class="switch"></span></button><span class="tiny">${t("lumaSoundsNote")}</span></div>
+      <div class="layers card"><div class="layer ${sound.cuteOn() ? "on" : ""}" id="cute-row"><button aria-pressed="${sound.cuteOn()}"><span class="ly-ic" aria-hidden="true">💗</span><span class="ly-n">${t("lumaSounds")}<small>${t("lumaSoundsNote")}</small></span><span class="switch"></span></button></div></div>
       <h3>${t("tonesTitle")}</h3>
       <p class="tiny">${t("tonesNote")}</p>
       <div class="chips" role="group" aria-label="${t("tonesTitle")}">${Object.keys(TONES).map((k) => `<button data-tone="${k}" aria-pressed="${sound.tone() === k}">${t("tone_" + k)}</button>`).join("")}</div>
@@ -5401,38 +5507,44 @@ Start with one face tag like [happy] [excited] [pout] [shy] [sleepy], then the m
     }
     const time = nights.time || "21:00";
     el(`
-      ${backBtn()}
-      ${quietGrid()}
-      <p class="eyebrow">${t("nightsEyebrow")}</p>
-      <h2>${t("nightsTitle")}</h2>
-      ${chart}
-      <p class="soft">${insight}</p>
-      <div class="stats">
+      <div class="you-head"><p class="eyebrow">${t("tabYou")}</p><h2>${esc(state.name || t("tabYou"))}</h2></div>
+      <div class="statgrid">
         <div><b>${num(state.fireflies)}</b><span>${t("statLit")}</span></div>
         <div><b>${num(state.best || state.streak)}</b><span>${t("statBest")}</span></div>
         <div><b>${num(state.golden)}</b><span>${t("statGolden")}</span></div>
         <div><b>${num(state.gifts.length)}</b><span>${t("statGifts")}</span></div>
       </div>
-      <h3>${t("reminderTitle")}</h3>
-      <p class="tiny">${t("reminderNote")}</p>
-      <div class="row"><input type="time" id="time" value="${time}" aria-label="${t("reminderTime")}"><a class="ghost" id="cal" target="_blank" rel="noopener">${t("addCal")}</a></div>
-      <h3>${t("remembersTitle")}</h3>
-      ${state.memory.length ? `<ul class="list mem">${state.memory.map((m, i) => `<li><span dir="auto" class="mem-t" data-edit="${i}" contenteditable="plaintext-only" spellcheck="false">${esc(m)}</span><button data-forget="${i}" aria-label="${t("forget")}">✕</button></li>`).join("")}</ul><p class="tiny">${t("remembersNote")}</p>`
-                            : `<p class="tiny">${t("remembersNone")}</p>`}
-      <div class="row mem-add"><input id="mem-new" dir="auto" maxlength="200" placeholder="${t("memAdd")}"><button class="ghost" id="mem-add">＋</button></div>
-      <h3>${t("styleTitle")}</h3>
-      ${state.style.length ? `<ul class="list">${state.style.map((m) => `<li><span dir="auto">${esc(m)}</span></li>`).join("")}</ul><div class="row split"><p class="tiny">${t("styleNote")}</p><button class="text-btn" id="style-reset">${t("styleReset")}</button></div>`
-                           : `<p class="tiny">${t("styleNone")}</p>`}
+      <section class="sec"><h4>${t("secLuma")}</h4><div class="card">
+        ${ownSite ? `<div class="set"><div class="set-t"><b>${t("voiceTitle2")}</b></div><div class="set-c"><select id="voicepick" class="sel">${VOICES.map(([n, c], i) => `<option value="${i}">${i + 1} · ${n}${c ? " ✨" : ""}</option>`).join("")}<option value="phone">${t("voicePhone")}</option></select><button class="icon-btn" id="voicetry" type="button" aria-label="${t("voiceTry")}" title="${t("voiceTry")}">▶</button></div></div>` : ""}
+        <div class="set"><div class="set-t"><b>${t("proTitle")}</b><small>${t("proNote")}</small></div><div class="set-c"><button class="switch" id="pro-toggle" type="button" role="switch" aria-checked="${!state.proOff}" aria-label="${t("proTitle")}"></button></div></div>
+        ${ownSite ? `<div class="set"><div class="set-t"><b>${t("myVoiceTitle")}</b><small id="myvoice-note">${t("myVoiceNote")}</small></div><div class="set-c"><button class="btn-s" id="myvoice" type="button">${t(myVoice() ? "myVoiceRedo" : "myVoiceBtn")}</button></div></div>` : ""}
+        ${window.AndroidLuma && AndroidLuma.accessOpen ? `<div class="set"><div class="set-t"><b>${t(desktopApp ? "accessTitlePC" : "accessTitle")}</b><small>${t(desktopApp ? "accessNotePC" : "accessNote")}</small></div><div class="set-c"><button class="btn-s" id="hands" type="button">${t(AndroidLuma.accessOn() ? "accessOn" : "accessOff")}</button></div></div>` : ""}
+      </div></section>
+      <section class="sec"><h4>${t("wallTitle")}</h4><div class="walls" id="walls">${Object.entries(WALLS).map(([k, w]) => `<button type="button" data-wall="${k}" aria-pressed="${wall.key() === k}" style="${w.img ? `background-image:url('${w.img.replace(".webp", "_s.webp")}')` : "background:radial-gradient(circle at 50% 30%,#2a2d6a,#0b0d2a)"}"><span>${esc(w.name)}</span></button>`).join("")}</div></section>
+      <section class="sec"><h4>${t("remembersTitle")}</h4><div class="card pad">
+        ${state.memory.length ? `<ul class="list mem">${state.memory.map((m, i) => `<li><span dir="auto" class="mem-t" data-edit="${i}" contenteditable="plaintext-only" spellcheck="false">${esc(m)}</span><button data-forget="${i}" aria-label="${t("forget")}">✕</button></li>`).join("")}</ul><p class="tiny">${t("remembersNote")}</p>`
+        : `<p class="tiny">${t("remembersNone")}</p>`}
+        <div class="row mem-add"><input id="mem-new" type="text" dir="auto" maxlength="200" placeholder="${t("memAdd")}"><button class="icon-btn" id="mem-add" type="button" aria-label="Add">＋</button></div>
+      </div></section>
+      <section class="sec"><h4>${t("styleTitle")}</h4><div class="card pad">
+        ${state.style.length ? `<ul class="list">${state.style.map((m) => `<li><span dir="auto">${esc(m)}</span></li>`).join("")}</ul><div class="row split"><p class="tiny">${t("styleNote")}</p><button class="text-btn" id="style-reset">${t("styleReset")}</button></div>`
+        : `<p class="tiny">${t("styleNone")}</p>`}
+      </div></section>
+      <section class="sec"><h4>${t("nightsEyebrow")}</h4><div class="card pad">
+        ${chart}
+        <p class="soft">${insight}</p>
+        <div class="set flat"><div class="set-t"><b>${t("reminderTitle")}</b><small>${t("reminderNote")}</small></div><div class="set-c"><input type="time" id="time" value="${time}" aria-label="${t("reminderTime")}"></div></div>
+        <a class="btn-s" id="cal" target="_blank" rel="noopener">${t("addCal")}</a>
+      </div>
+      ${quietGrid()}</section>
       ${state.gifts.length ? `<h3>${t("giftsTitle")}</h3><ul class="list">${state.gifts.slice(0, 15).map((g) => `<li><span dir="auto"><b style="color:var(--glow);font-weight:600">${esc(g.kind)}.</b> ${esc(g.text)}</span></li>`).join("")}</ul>` : ""}
-      <div class="row split"><p class="tiny">${t("recorded", { n: num(state.history.length) })}</p><button class="text-btn" id="replay">${t("replayIntro")}</button></div>
-      ${ownSite ? `<div class="row split"><p class="tiny">${t("voiceTitle2")}</p><select id="voicepick" class="ghost" style="padding:8px 12px">${VOICES.map(([n, c], i) => `<option value="${i}">${i + 1} · ${n}${c ? " ✨" : ""}</option>`).join("")}<option value="phone">${t("voicePhone")}</option></select><button class="ghost" id="voicetry" type="button" aria-label="${t("voiceTry")}" title="${t("voiceTry")}" style="padding:8px 12px">▶</button></div>` : ""}
-      ${window.AndroidLuma && AndroidLuma.accessOpen ? `<div class="row split"><p class="tiny"><b>${t(desktopApp ? "accessTitlePC" : "accessTitle")}</b><br>${t(desktopApp ? "accessNotePC" : "accessNote")}</p><button class="ghost" id="hands">${t(AndroidLuma.accessOn() ? "accessOn" : "accessOff")}</button></div>` : ""}
-      <div class="row" style="flex-direction:column;align-items:stretch;gap:8px;flex:none"><p class="tiny">${t("wallTitle")}</p><div class="walls" id="walls">${Object.entries(WALLS).map(([k, w]) => `<button type="button" data-wall="${k}" aria-pressed="${wall.key() === k}" style="${w.img ? `background-image:url('${w.img.replace(".webp", "_s.webp")}')` : "background:radial-gradient(circle at 50% 30%,#2a2d6a,#0b0d2a)"}"><span>${esc(w.name)}</span></button>`).join("")}</div></div>
-      <div class="row split"><p class="tiny">${t("proNote")}</p><button class="ghost" id="pro-toggle" aria-pressed="${!state.proOff}">${t(state.proOff ? "proOff" : "proOn")}</button></div>
-      ${ownSite ? `<div class="row split"><p class="tiny" id="myvoice-note">${t("myVoiceNote")}</p><button class="ghost" id="myvoice">${t(myVoice() ? "myVoiceRedo" : "myVoiceBtn")}</button></div>` : ""}
-      ${ownSite && /Android/i.test(navigator.userAgent) && !window.AndroidLuma ? `<div class="row split"><p class="tiny">${t("apkNote")}</p><a class="ghost" href="/firefly.apk" download style="text-decoration:none">${t("apkBtn")}</a></div>` : ""}
-      ${appOld() && !desktopApp ? `<div class="row split"><p class="tiny">${t("appUpdate")}</p><a class="ghost" href="${APK_URL}" style="text-decoration:none">${t("apkBtn")}</a></div>` : ""}
-      ${ownSite && !installed() && !window.AndroidLuma ? `<div class="row split"><p class="tiny" id="install-note">${t(isIOS() ? "installIOS" : "installNote")}</p>${isIOS() ? "" : `<button class="ghost" id="install">${t("installBtn")}</button>`}</div>` : ""}
+      <section class="sec"><h4>${t("secApp")}</h4><div class="card pad">
+        ${ownSite && /Android/i.test(navigator.userAgent) && !window.AndroidLuma ? `<div class="row split"><p class="tiny">${t("apkNote")}</p><a class="ghost" href="/firefly.apk" download style="text-decoration:none">${t("apkBtn")}</a></div>` : ""}
+        ${appOld() && !desktopApp ? `<div class="row split"><p class="tiny">${t("appUpdate")}</p><a class="ghost" href="${APK_URL}" style="text-decoration:none">${t("apkBtn")}</a></div>` : ""}
+        ${ownSite && !installed() && !window.AndroidLuma ? `<div class="row split"><p class="tiny" id="install-note">${t(isIOS() ? "installIOS" : "installNote")}</p>${isIOS() ? "" : `<button class="ghost" id="install">${t("installBtn")}</button>`}</div>` : ""}
+        <div class="row split"><p class="tiny">${t("recorded", { n: num(state.history.length) })}</p><button class="text-btn" id="replay">${t("replayIntro")}</button></div>
+        <p class="tiny">${t("aiHint")}</p>
+      </div></section>
     `);
     wireBack();
     $$("[data-to]").forEach((b) => b.onclick = () => show(b.dataset.to));

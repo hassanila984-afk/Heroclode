@@ -3527,8 +3527,19 @@ Start with one face tag like [happy] [excited] [pout] [shy] [sleepy], then the m
       if (ctl) { later(() => callSend(text), 400); return; }
       CALL.state = "thinking"; CALL.her = ""; LIVE.mood = ""; callPaint();
       send(text);
+      backchannel();
       later.cancel(CALL.wd);
       CALL.wd = later(() => { if (CALL.on && CALL.state === "thinking") callListen(); }, 30000);   // no reply: listen again
+    }
+    // A tiny "hmm~" / "oh?" in her voice right after they stop talking (most turns, never the same one twice
+    // in a row), so she's clearly there while her real answer is on its way
+    const FILLS = [1, 2, 3, 4].map((n) => { const a = new Audio("luma/fill_" + n + ".mp3"); a.preload = "auto"; return a; });
+    let lastFill = -1;
+    function backchannel() {
+      if (!siteVoice() || Math.random() < 0.25) return;
+      let i; do i = Math.floor(Math.random() * FILLS.length); while (i === lastFill);
+      lastFill = i;
+      later(() => { if (CALL.on && CALL.state === "thinking" && !LIVE.on) { const a = FILLS[i]; a.currentTime = 0; a.play().catch(() => {}); } }, 200);
     }
     function callSpeak(text) {
       later.cancel(CALL.wd);

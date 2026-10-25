@@ -2775,10 +2775,10 @@ ${last}${langNote()}`;
     Object.defineProperty(window, "__resting", { get: () => rest, set: (v) => { rest = !!v; document.documentElement.classList.toggle("resting", rest); } });
   }
   // the newest Android app; older ones lack tapping, scrolling or her moving bubble
-  const APP_LATEST = 2.6;
+  const APP_LATEST = 2.7;
   const appVersion = () => !nativeApp ? 0 : AndroidLuma.version ? parseFloat(AndroidLuma.version()) || 0
     : AndroidLuma.answerAsk ? 1.9 : AndroidLuma.accessOn ? 1.6 : AndroidLuma.doAction ? 1.5 : 1.4;
-  const DESKTOP_LATEST = 2.1;   // Firefly for Windows
+  const DESKTOP_LATEST = 2.2;   // Firefly for Windows
   const appOld = () => nativeApp && appVersion() < (desktopApp ? DESKTOP_LATEST : APP_LATEST);
   // opened through the phone's browser (the trailing dot makes it another address for the app), which downloads it
   const APK_URL = "https://firefly-3t9.pages.dev./firefly.apk";
@@ -2821,6 +2821,22 @@ ${last}${langNote()}`;
   }
   function linkDefaultName() { return desktopApp ? "computer" : nativeApp ? "phone" : "web"; }
   function linkName() { try { return localStorage.getItem("firefly-dev-name") || linkDefaultName(); } catch (e) { return linkDefaultName(); } }
+  // seconds since he last used THIS device, so Luma can follow him to the screen he's on
+  let lastTouch = Date.now();
+  if (typeof window !== "undefined") for (const ev of ["pointerdown", "keydown", "touchstart", "wheel"]) addEventListener(ev, () => { lastTouch = Date.now(); }, { passive: true, capture: true });
+  function linkIdle() {
+    try {
+      if (typeof window.__idle === "number") return window.__idle;   // (test hook)
+      if (desktopApp && AndroidLuma.idleSecs) return Number(AndroidLuma.idleSecs()) || 0;   // whole computer idle
+      const here = document.visibilityState === "visible" && (!nativeApp || document.hasFocus());
+      if (here) return Math.round((Date.now() - lastTouch) / 1000);
+      // phone/tablet in another app: still "in use" if Luma's hands see a foreground app (not locked/off)
+      if (nativeApp && AndroidLuma.accessOn && AndroidLuma.accessOn() && AndroidLuma.screen) {
+        try { const sc = JSON.parse(AndroidLuma.screen() || "null"); if (sc && sc.app && !sc.off) return 5; } catch (e) {}
+      }
+      return 9999;
+    } catch (e) { return 9999; }
+  }
   function linkCaps() {
     const caps = ["notify"];
     if (nativeApp) caps.push("apps", "screen");
@@ -2833,10 +2849,11 @@ ${last}${langNote()}`;
   async function linkPing() {
     if (!ownSite) return;
     try {
-      const r = await fetch("/api/link?do=ping", { method: "POST", credentials: "same-origin", headers: { "content-type": "application/json" }, body: JSON.stringify({ id: LINK.id, name: linkName(), caps: linkCaps() }) });
+      const r = await fetch("/api/link?do=ping", { method: "POST", credentials: "same-origin", headers: { "content-type": "application/json" }, body: JSON.stringify({ id: LINK.id, name: linkName(), caps: linkCaps(), idle: linkIdle() }) });
       if (!r.ok) return;
       const d = await r.json();
       LINK.devices = Array.isArray(d.devices) ? d.devices : [];
+      LINK.active = d.active || null;
       LINK.seen = Date.now();
       for (const job of d.jobs || []) linkRun(job);
     } catch (e) {}
@@ -2867,6 +2884,12 @@ ${last}${langNote()}`;
     noteHabit("handing a job to the " + dev.name);
     return "ok";
   }
+  // the device he's actively on right now, when it isn't this one (so her own messages can follow him there)
+  window.__linkActiveElsewhere = () => (LINK.active && LINK.active.id && LINK.active.id !== LINK.id ? LINK.active : null);
+  function linkSendTo(id, action, arg) {
+    fetch("/api/link?do=send", { method: "POST", credentials: "same-origin", headers: { "content-type": "application/json" }, body: JSON.stringify({ from: LINK.id, to: id, action, arg }) }).catch(() => {});
+  }
+  window.__linkSendTo = linkSendTo;
   window.__linkSend = linkSend;
   window.__linkDevices = () => LINK.devices.map((d) => d.name);
   if (ownSite && !LINK.on) {
@@ -2885,12 +2908,14 @@ ${last}${langNote()}`;
   // (tapping it opens her chat). Something important (a reminder he marked important, "call me at…") rings
   // like a phone call; answering starts a voice call where she says it. With her chat open, she just says it.
   const CALLSAY = { text: "" };   // what she says first on a call she started
-  function reachOut(text, call) {
+  function reachOut(text, call, follow) {
     text = String(text || "").trim();
     if (!text) return;
     if (session && session.free) session.turns.push({ role: "assistant", content: text });
     else state.chat = (state.chat || []).concat({ role: "assistant", content: text }).slice(-200);
     persist();
+    // her own message (morning, a break, an important reminder): send it to whichever device he's using now
+    if (follow) { const d = window.__linkActiveElsewhere && window.__linkActiveElsewhere(); if (d) { if (window.__linkSendTo) window.__linkSendTo(d.id, call ? "call" : "say", text); return; } }
     if (window.__chatSay && window.__chatSay(text, call)) return;   // her chat is open, in front of him
     if (nativeApp && AndroidLuma.notify) AndroidLuma.notify(text, !!call);
     else try { if (window.Notification && Notification.permission === "granted") new Notification(call ? "Luma 📞" : "Luma", { body: text }); } catch (e) {}
@@ -2941,11 +2966,11 @@ ${last}${langNote()}`;
     try {
       if (here && !busy && now.getHours() >= 6 && now.getHours() < 14 && pro.morning !== today) {
         pro.morning = today; persist();
-        reachOut(await proWrite("morning"));
+        reachOut(await proWrite("morning"), false, true);
       }
       if (here && !busy && now.getDay() === 5 && now.getHours() >= 15 && pro.recap !== today) {   // Friday afternoon: her recap of his week
         pro.recap = today; persist();
-        reachOut(await proWrite("recap"));
+        reachOut(await proWrite("recap"), false, true);
       }
       if (desktopApp && idle !== null) {
         if (idle > 600) PRO.since = 0; else if (!PRO.since) PRO.since = Date.now();
@@ -2953,7 +2978,7 @@ ${last}${langNote()}`;
         try { const sc = JSON.parse(AndroidLuma.screen() || "null"); gaming = !!(sc && sc.game); } catch (e) {}
         if (PRO.since && Date.now() - PRO.since > 2.5 * 3600e3 && Date.now() - (pro.breakAt || 0) > 3 * 3600e3 && !gaming && !busy) {
           pro.breakAt = Date.now(); PRO.since = Date.now(); persist();
-          reachOut(await proWrite("break"));
+          reachOut(await proWrite("break"), false, true);
         }
       }
     } catch (e) {} finally { PRO.busy = false; }
@@ -3887,7 +3912,7 @@ Start with one face tag like [thinking] [happy], then your help.`, Object.assign
           state.reminders = state.reminders.filter((x) => x.id !== r.id); persist();
           luma.set("chibi:excited"); sound.cute("excited");
           const msg = "⏰ " + r.text;
-          if (r.important) { reachOut("Hey! Reminder: " + r.text, true); return; }   // important: she calls
+          if (r.important) { reachOut("Hey! Reminder: " + r.text, true, true); return; }   // important: she calls, on the device he's using
           if (CALL.on) sayOnCall("Hey, reminder: " + r.text);
           else if (box.isConnected && document.visibilityState === "visible") addMsg("luma", msg);
           else bubbleSay(msg);

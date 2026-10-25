@@ -46,23 +46,27 @@ export async function onRequestPost({ request, env }) {
 
   // ping (the default): refresh this device's presence, read who else is online and our pending jobs
   const now = Date.now();
-  const me = { id, name: clean(body.name, 40) || id, caps: Array.isArray(body.caps) ? body.caps.slice(0, 12).map((c) => clean(c, 24)) : [], at: now };
+  const idle = Math.max(0, Math.min(99999, Number(body.idle) || 0));   // seconds since he last touched this device
+  const me = { id, name: clean(body.name, 40) || id, caps: Array.isArray(body.caps) ? body.caps.slice(0, 12).map((c) => clean(c, 24)) : [], at: now, idle };
   await env.FIREFLY_KV.put(devKey(id), JSON.stringify(me), { expirationTtl: PRESENCE_TTL });
 
   const others = [];
+  let active = { id: me.id, name: me.name, idle: me.idle };   // who he's using right now (lowest idle, must be recent)
   let cursor;
   do {
     const page = await env.FIREFLY_KV.list({ prefix: "link:dev:", cursor });
     for (const k of page.keys) {
-      if (k.name === devKey(id)) continue;
       const d = await env.FIREFLY_KV.get(k.name, "json");
-      if (d && now - d.at < PRESENCE_TTL * 1000) others.push({ id: d.id, name: d.name, caps: d.caps || [] });
+      if (!d || now - d.at >= PRESENCE_TTL * 1000) continue;
+      if (d.id !== id) others.push({ id: d.id, name: d.name, caps: d.caps || [] });
+      if ((d.idle || 0) < active.idle) active = { id: d.id, name: d.name, idle: d.idle || 0 };
     }
     cursor = page.list_complete ? null : page.cursor;
   } while (cursor);
+  const activeDev = active.idle < 150 ? { id: active.id, name: active.name } : null;   // nobody active lately: don't guess
 
   const pending = (await env.FIREFLY_KV.get(cmdKey(id), "json")) || [];
   if (pending.length) await env.FIREFLY_KV.delete(cmdKey(id));
 
-  return json({ ok: true, devices: others, jobs: pending });
+  return json({ ok: true, devices: others, active: activeDev, jobs: pending });
 }

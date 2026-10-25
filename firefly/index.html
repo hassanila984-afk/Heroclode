@@ -25,6 +25,18 @@
   html, body { height: 100%; }
   body { margin: 0; background: var(--night); color: var(--mist); font: 16px/1.55 var(--body); overflow: hidden; }
   #sky { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+  /* her rooms as living wallpapers: the picture drifts slowly, and its light, steam, rain and dust move */
+  #wall { position: fixed; inset: 0; overflow: hidden; background: var(--night); }
+  #wall img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; animation: drift 46s ease-in-out infinite alternate; transform-origin: 60% 40%; }
+  #wall canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  #wall::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(11, 13, 42, .35) 0%, rgba(11, 13, 42, 0) 22%, rgba(11, 13, 42, .15) 55%, rgba(11, 13, 42, .72) 100%); pointer-events: none; }
+  @keyframes drift { from { transform: scale(1.04) translate(0, 0); } to { transform: scale(1.12) translate(-1.5%, -1%); } }
+  body.walled #sky { visibility: hidden; }
+  @media (prefers-reduced-motion: reduce) { #wall img { animation: none; } }
+  .walls { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); grid-auto-rows: min-content; align-content: start; gap: 8px; flex: none; }
+  .walls button { position: relative; aspect-ratio: 3 / 4; max-width: 100%; border-radius: 14px; overflow: hidden; border: 1px solid var(--glass-line); padding: 0; background: var(--chip) center / cover no-repeat; color: var(--mist); font-size: 11px; }
+  .walls button span { position: absolute; inset: auto 0 0; padding: 14px 6px 6px; background: linear-gradient(transparent, rgba(11, 13, 42, .85)); text-align: center; }
+  .walls button[aria-pressed="true"] { border-color: var(--glow); box-shadow: 0 0 0 2px rgba(255, 210, 122, .35); }
 
   .top {
     position: fixed; z-index: 3;
@@ -151,8 +163,8 @@
 
   .talk { display: flex; flex-direction: column; gap: 10px; overflow-y: auto; min-height: 120px; flex: 1; padding-right: 2px; overscroll-behavior: contain; }
   .msg { flex-shrink: 0; max-width: 88%; padding: 10px 14px; border-radius: 18px; white-space: pre-wrap; overflow-wrap: anywhere; animation: rise .35s ease both; }
-  .msg.luma { background: var(--luma); border: 1px solid rgba(255, 210, 122, .18); align-self: flex-start; border-end-start-radius: 6px; }
-  .msg.me { background: var(--me); align-self: flex-end; border-end-end-radius: 6px; }
+  .msg.luma { background: linear-gradient(160deg, rgba(255, 210, 122, .16), rgba(180, 140, 255, .08)); border: 1px solid rgba(255, 210, 122, .22); align-self: flex-start; border-end-start-radius: 6px; box-shadow: 0 4px 18px rgba(0, 0, 0, .18); }
+  .msg.me { background: linear-gradient(160deg, rgba(180, 140, 255, .22), rgba(123, 60, 255, .14)); border: 1px solid rgba(180, 140, 255, .22); align-self: flex-end; border-end-end-radius: 6px; box-shadow: 0 4px 18px rgba(0, 0, 0, .18); }
   .msg.wait { color: var(--haze); font-style: italic; }
   .dots::after { content: ""; animation: dots 1.4s steps(4) infinite; }
   @keyframes dots { 0% { content: ""; } 25% { content: "."; } 50% { content: ".."; } 75% { content: "..."; } }
@@ -498,6 +510,7 @@
 </style>
 
 <canvas id="sky" aria-hidden="true"></canvas>
+<div id="wall" aria-hidden="true" hidden><img id="wallimg" alt=""><canvas id="wallfx"></canvas></div>
 
 <div class="top">
   <span class="brand" id="brand">Firefly</span>
@@ -612,7 +625,7 @@
       friendSaid: "👥 A friend on the call: “{text}”",
       earHint: "Say “Luma” anytime and she answers. Anything else she hears isn't kept.",
       micDenied: "I can't hear you, the microphone is blocked 🥺 Allow it from the 🔒 next to the address.", micNone: "This browser can't turn speech into text 🥺 Try Chrome.",
-      appUpdatePC: "New version of Firefly for Windows. To update, run this again in PowerShell:", appUpdate: "New version of the app: she can tap, scroll and walk around your phone with it. Tap to update (install it over this one).", myVoiceNote: "Your voice: she learns it on your first call, so she knows when it's a friend talking.", myVoiceBtn: "🎙️ Learn my voice", myVoiceRedo: "✓ Knows your voice · redo", myVoiceTalk: "Talk normally for a few seconds… (say anything)", myVoiceShort: "Didn't catch enough of your voice, try again a bit louder.", myVoiceDone: "Got it~ I'd know your voice anywhere now 💕", apkBtn: "📱 Android app", apkNote: "The full Android app: Luma's bubble over your apps, watching your phone screen, and listening.",
+      appUpdatePC: "New version of Firefly for Windows. To update, run this again in PowerShell:", appUpdate: "New version of the app: she can tap, scroll and walk around your phone with it. Tap to update (install it over this one).", wallTitle: "Wallpaper: her rooms, alive", myVoiceNote: "Your voice: she learns it on your first call, so she knows when it's a friend talking.", myVoiceBtn: "🎙️ Learn my voice", myVoiceRedo: "✓ Knows your voice · redo", myVoiceTalk: "Talk normally for a few seconds… (say anything)", myVoiceShort: "Didn't catch enough of your voice, try again a bit louder.", myVoiceDone: "Got it~ I'd know your voice anywhere now 💕", apkBtn: "📱 Android app", apkNote: "The full Android app: Luma's bubble over your apps, watching your phone screen, and listening.",
       installBtn: "📲 Install as an app", installNote: "Put Firefly on your home screen or desktop, with its own icon and window.",
       installIOS: "To install on iPhone: tap Share ⬆️ in Safari, then “Add to Home Screen”.", installManual: "Use the install icon in the address bar, or the browser menu → “Install Firefly”.",
       codeAsk: "Firefly access code (only once on this device):", codeWrong: "That code didn't work. Try again:",
@@ -726,7 +739,7 @@
       friendSaid: "👥 صديقك بالمكالمة: «{text}»",
       earHint: "گول «لُمى» بأي وقت وترد عليك. أي كلام ثاني تسمعه ما ينحفظ.",
       micDenied: "ما أسمعك، المايك ممنوع 🥺 اسمح بيه من القفل 🔒 جنب العنوان.", micNone: "هذا المتصفح ما يحوّل الكلام لكتابة 🥺 جرّب Chrome.",
-      appUpdatePC: "اكو نسخة جديدة من Firefly للكمبيوتر. حتى تحدّث، شغّل هذا مرة ثانية بـ PowerShell:", appUpdate: "اكو نسخة جديدة من التطبيق: بيها تدوس وتسكرل وتتمشى بموبايلك. دوس حتى تحدّث (نصّبها فوق هاي).", myVoiceNote: "صوتك: تتعلّمه من أول مكالمة، حتى تعرف لمن يحچي صديقك.", myVoiceBtn: "🎙️ تعلّمي صوتي", myVoiceRedo: "✓ تعرف صوتك · إعادة", myVoiceTalk: "احچي عادي كم ثانية… (أي شي)", myVoiceShort: "ما سمعت صوتك بما يكفي، جرّب مرة ثانية بصوت أعلى شوية.", myVoiceDone: "حفظت صوتك~ هسه أعرفك من بين الكل 💕", apkBtn: "📱 تطبيق أندرويد", apkNote: "تطبيق الأندرويد الكامل: فقاعة لُمى فوق تطبيقاتك، وتشوف شاشة موبايلك، وتسمعك.",
+      appUpdatePC: "اكو نسخة جديدة من Firefly للكمبيوتر. حتى تحدّث، شغّل هذا مرة ثانية بـ PowerShell:", appUpdate: "اكو نسخة جديدة من التطبيق: بيها تدوس وتسكرل وتتمشى بموبايلك. دوس حتى تحدّث (نصّبها فوق هاي).", wallTitle: "الخلفية: غرفها، حيّة", myVoiceNote: "صوتك: تتعلّمه من أول مكالمة، حتى تعرف لمن يحچي صديقك.", myVoiceBtn: "🎙️ تعلّمي صوتي", myVoiceRedo: "✓ تعرف صوتك · إعادة", myVoiceTalk: "احچي عادي كم ثانية… (أي شي)", myVoiceShort: "ما سمعت صوتك بما يكفي، جرّب مرة ثانية بصوت أعلى شوية.", myVoiceDone: "حفظت صوتك~ هسه أعرفك من بين الكل 💕", apkBtn: "📱 تطبيق أندرويد", apkNote: "تطبيق الأندرويد الكامل: فقاعة لُمى فوق تطبيقاتك، وتشوف شاشة موبايلك، وتسمعك.",
       installBtn: "📲 ثبّته كتطبيق", installNote: "حط Firefly على شاشتك أو سطح المكتب، بأيقونته ونافذته الخاصة.",
       installIOS: "حتى تثبّته على الآيفون: اضغط زر المشاركة ⬆️ بـ Safari، بعدها «إضافة إلى الشاشة الرئيسية».", installManual: "استخدم أيقونة التثبيت بشريط العنوان، أو قائمة المتصفح ← «تثبيت Firefly».",
       codeAsk: "رمز الدخول لـFirefly (مرة واحدة فقط على هذا الجهاز):", codeWrong: "الرمز غير صحيح. حاول مرة ثانية:",
@@ -1278,6 +1291,103 @@ ${last}${langNote()}`;
     return t("errGeneric");
   }
 
+  // ================= living wallpapers: her rooms =================
+  // Her pictures as the background (instead of the night meadow), each with its own motion drawn on top:
+  // the lamp breathing and steam rising off her tea in the cozy room, sun dust in the kitchen and by the
+  // plants, LED light and rain at her gaming desk. Points are in the picture's own 0..1 coordinates.
+  const WALLS = {
+    night: { name: "Night meadow" },
+    cozy: { name: "Cozy reading", img: "luma/wall_cozy.webp", w: 1500, h: 1500, dust: "255,214,150", glow: [[0.86, 0.2, 0.22, "255,200,120"]], steam: [[0.91, 0.84], [0.94, 0.38]] },
+    kitchen: { name: "Morning kitchen", img: "luma/wall_kitchen.webp", w: 1600, h: 893, dust: "255,236,190", rays: [0.22, 0.18], steam: [[0.37, 0.76]] },
+    gaming: { name: "Night gaming", img: "luma/wall_gaming.webp", w: 1600, h: 893, dust: "190,150,255", glow: [[0.12, 0.2, 0.18, "170,110,255"], [0.17, 0.48, 0.16, "120,190,255"], [0.34, 0.46, 0.14, "140,200,255"]], rain: [0.565, 0.08, 0.76, 0.46] },
+    plants: { name: "Watering plants", img: "luma/wall_plants.webp", w: 1208, h: 1500, dust: "255,240,200", rays: [0.08, 0.12] },
+  };
+  const WALL_LS = "firefly-wall";
+  const wall = (() => {
+    let key = "night", cv, cx, raf = 0, parts = [], drops = [], last = 0;
+    const pickSaved = () => { try { const k = localStorage.getItem(WALL_LS); return WALLS[k] ? k : "night"; } catch (e) { return "night"; } };
+    function set(k) {
+      key = WALLS[k] ? k : "night";
+      try { localStorage.setItem(WALL_LS, key); } catch (e) {}
+      const w = WALLS[key], el = document.getElementById("wall");
+      if (!el) return;
+      cancelAnimationFrame(raf);
+      if (!w.img) { el.hidden = true; document.body.classList.remove("walled"); window.__skyOff = false; return; }
+      document.getElementById("wallimg").src = w.img;
+      el.hidden = false; document.body.classList.add("walled"); window.__skyOff = true;
+      cv = document.getElementById("wallfx"); cx = cv.getContext("2d");
+      parts = []; drops = [];
+      fit(); raf = requestAnimationFrame(frame);
+    }
+    function fit() { if (!cv) return; const d = Math.min(2, devicePixelRatio || 1); cv.width = innerWidth * d; cv.height = innerHeight * d; cx.setTransform(d, 0, 0, d, 0, 0); }
+    // picture point -> screen point, the way object-fit: cover places it
+    function at(w, x, y) {
+      const W = innerWidth, H = innerHeight, k = Math.max(W / w.w, H / w.h);
+      return [(W - w.w * k) / 2 + x * w.w * k, (H - w.h * k) / 2 + y * w.h * k, k];
+    }
+    function frame(t) {
+      raf = requestAnimationFrame(frame);
+      if (t - last < 33 || window.__resting) return;   // 30 a second, resting when hidden
+      last = t;
+      const w = WALLS[key], W = innerWidth, H = innerHeight;
+      cx.clearRect(0, 0, W, H);
+      // light that breathes (a lamp, LEDs, a monitor)
+      for (const [x, y, r, rgb] of w.glow || []) {
+        const [px, py, k] = at(w, x, y), R = r * w.w * k, a = 0.22 + 0.1 * Math.sin(t / 900 + x * 9);
+        const g = cx.createRadialGradient(px, py, 0, px, py, R);
+        g.addColorStop(0, `rgba(${rgb},${a})`); g.addColorStop(1, `rgba(${rgb},0)`);
+        cx.fillStyle = g; cx.beginPath(); cx.arc(px, py, R, 0, Math.PI * 2); cx.fill();
+      }
+      // sun coming through the window
+      if (w.rays) {
+        const [px, py, k] = at(w, w.rays[0], w.rays[1]);
+        cx.save(); cx.translate(px, py); cx.rotate(0.55);
+        for (let i = 0; i < 4; i++) {
+          const a = 0.05 + 0.03 * Math.sin(t / 2200 + i * 1.7), wd = (40 + i * 26) * k * 2;
+          const g = cx.createLinearGradient(0, 0, 0, H * 1.2);
+          g.addColorStop(0, `rgba(255,236,190,${a})`); g.addColorStop(1, "rgba(255,236,190,0)");
+          cx.fillStyle = g; cx.fillRect(-wd / 2 + i * 70 * k * 2 - 60, 0, wd, H * 1.2);
+        }
+        cx.restore();
+      }
+      // dust in the air
+      if (parts.length < 46 && Math.random() < 0.5) parts.push({ x: Math.random() * W, y: H * (0.2 + Math.random() * 0.8), vx: (Math.random() - 0.5) * 0.15, vy: -0.08 - Math.random() * 0.18, r: 0.6 + Math.random() * 1.6, life: 0, max: 240 + Math.random() * 300, kind: "dust" });
+      // steam off the cups and the pan
+      for (const [x, y] of w.steam || []) if (Math.random() < 0.25) { const [px, py] = at(w, x, y); parts.push({ x: px + (Math.random() - 0.5) * 8, y: py, vx: (Math.random() - 0.5) * 0.2, vy: -0.45 - Math.random() * 0.3, r: 6 + Math.random() * 6, life: 0, max: 110, kind: "steam" }); }
+      for (let i = parts.length - 1; i >= 0; i--) {
+        const p = parts[i];
+        p.life++; p.x += p.vx + Math.sin((p.life + p.r * 40) / 40) * (p.kind === "steam" ? 0.35 : 0.12); p.y += p.vy;
+        if (p.life > p.max) { parts.splice(i, 1); continue; }
+        const fade = Math.sin(Math.PI * p.life / p.max);
+        if (p.kind === "steam") {
+          const g = cx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.r * (1 + p.life / 50));
+          g.addColorStop(0, `rgba(255,255,255,${0.13 * fade})`); g.addColorStop(1, "rgba(255,255,255,0)");
+          cx.fillStyle = g; cx.beginPath(); cx.arc(p.x, p.y, p.r * (1 + p.life / 50), 0, Math.PI * 2); cx.fill();
+        } else {
+          cx.fillStyle = `rgba(${w.dust},${0.55 * fade})`; cx.beginPath(); cx.arc(p.x, p.y, p.r, 0, Math.PI * 2); cx.fill();
+        }
+      }
+      // rain on her window
+      if (w.rain) {
+        const [x0, y0] = at(w, w.rain[0], w.rain[1]), [x1, y1] = at(w, w.rain[2], w.rain[3]);
+        if (drops.length < 70) drops.push({ x: x0 + Math.random() * (x1 - x0), y: y0 + Math.random() * (y1 - y0) * 0.2, v: 4 + Math.random() * 5, l: 6 + Math.random() * 10 });
+        cx.save(); cx.beginPath(); cx.rect(x0, y0, x1 - x0, y1 - y0); cx.clip();
+        cx.strokeStyle = "rgba(190,210,255,.35)"; cx.lineWidth = 1;
+        for (let i = drops.length - 1; i >= 0; i--) {
+          const d = drops[i]; d.y += d.v;
+          if (d.y > y1) { drops.splice(i, 1); continue; }
+          cx.beginPath(); cx.moveTo(d.x, d.y); cx.lineTo(d.x - 1.5, d.y + d.l); cx.stroke();
+        }
+        cx.restore();
+      }
+    }
+    addEventListener("resize", fit);
+    return { set, key: () => key, start: () => set(pickSaved()) };
+  })();
+  // reduced motion: the picture stays, the moving bits don't
+  if (!matchMedia("(prefers-reduced-motion: reduce)").matches) setTimeout(() => wall.start(), 0);
+  else setTimeout(() => { const k = (() => { try { return localStorage.getItem(WALL_LS); } catch (e) { return null; } })(); if (WALLS[k] && WALLS[k].img) { document.getElementById("wallimg").src = WALLS[k].img; document.getElementById("wall").hidden = false; document.body.classList.add("walled"); window.__skyOff = true; } }, 0);
+
   // ================= sound engine =================
   // Everything is synthesized live: nature layers plus optional binaural tones.
   const SOUND_LS = "firefly-sound";
@@ -1689,6 +1799,7 @@ ${last}${langNote()}`;
       if (f.y > F + 4 && f.vy > 0) f.vy *= -1;
     }
     function draw(t) {
+      if (window.__skyOff) return;
       const s = t / 1000;
       if (Math.abs(F - floorTarget) > 0.5) {
         const next = F + (floorTarget - F) * 0.06;
@@ -4378,6 +4489,7 @@ Start with one face tag like [happy] [excited] [pout] [shy] [sleepy], then the m
       <div class="row split"><p class="tiny">${t("recorded", { n: num(state.history.length) })}</p><button class="text-btn" id="replay">${t("replayIntro")}</button></div>
       ${ownSite ? `<div class="row split"><p class="tiny">${t("voiceTitle2")}</p><select id="voicepick" class="ghost" style="padding:8px 12px">${VOICES.map(([n, c], i) => `<option value="${i}">${i + 1} · ${n}${c ? " ✨" : ""}</option>`).join("")}<option value="phone">${t("voicePhone")}</option></select><button class="ghost" id="voicetry" type="button" aria-label="${t("voiceTry")}" title="${t("voiceTry")}" style="padding:8px 12px">▶</button></div>` : ""}
       ${window.AndroidLuma && AndroidLuma.accessOpen ? `<div class="row split"><p class="tiny"><b>${t(desktopApp ? "accessTitlePC" : "accessTitle")}</b><br>${t(desktopApp ? "accessNotePC" : "accessNote")}</p><button class="ghost" id="hands">${t(AndroidLuma.accessOn() ? "accessOn" : "accessOff")}</button></div>` : ""}
+      <div class="row" style="flex-direction:column;align-items:stretch;gap:8px;flex:none"><p class="tiny">${t("wallTitle")}</p><div class="walls" id="walls">${Object.entries(WALLS).map(([k, w]) => `<button type="button" data-wall="${k}" aria-pressed="${wall.key() === k}" style="${w.img ? `background-image:url('${w.img.replace(".webp", "_s.webp")}')` : "background:radial-gradient(circle at 50% 30%,#2a2d6a,#0b0d2a)"}"><span>${esc(w.name)}</span></button>`).join("")}</div></div>
       ${desktopApp ? `<div class="row split"><p class="tiny" id="myvoice-note">${t("myVoiceNote")}</p><button class="ghost" id="myvoice">${t(myVoice() ? "myVoiceRedo" : "myVoiceBtn")}</button></div>` : ""}
       ${ownSite && /Android/i.test(navigator.userAgent) && !window.AndroidLuma ? `<div class="row split"><p class="tiny">${t("apkNote")}</p><a class="ghost" href="/firefly.apk" download style="text-decoration:none">${t("apkBtn")}</a></div>` : ""}
       ${appOld() && !desktopApp ? `<div class="row split"><p class="tiny">${t("appUpdate")}</p><a class="ghost" href="${APK_URL}" style="text-decoration:none">${t("apkBtn")}</a></div>` : ""}
@@ -4437,6 +4549,7 @@ Start with one face tag like [happy] [excited] [pout] [shy] [sleepy], then the m
     if ($("#voicetry")) {
       $("#voicetry").onclick = () => { if (tryAudio) { tryAudio.pause(); tryAudio = null; $("#voicetry").textContent = "▶"; } else tryVoice(); };
     }
+    $$("[data-wall]").forEach((b) => b.onclick = () => { wall.set(b.dataset.wall); $$("[data-wall]").forEach((x) => x.setAttribute("aria-pressed", String(x === b))); });
     if ($("#myvoice")) $("#myvoice").onclick = async () => {
       const b = $("#myvoice"), note = $("#myvoice-note");
       b.disabled = true; note.textContent = t("myVoiceTalk"); luma.set("chibi:listening");

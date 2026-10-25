@@ -2728,7 +2728,7 @@ ${last}${langNote()}`;
   // without them having to press anything
   const AUTOVOICE = { blocks: [], secs: 0 };
   function learnFromCall(blocks, rate) {
-    if (!desktopApp || myVoice()) return;
+    if (!ownSite || myVoice()) return;
     AUTOVOICE.blocks.push(...blocks); AUTOVOICE.secs += blocks.length * 2048 / rate;
     if (AUTOVOICE.secs >= 7) { saveMyVoice(AUTOVOICE.blocks, rate); AUTOVOICE.blocks = []; AUTOVOICE.secs = 0; }
   }
@@ -3661,17 +3661,29 @@ Start with one face tag like [happy] [excited] [pout] [shy] [sleepy], then the m
       if (heard.length < 3 || !hers.size) return false;
       return heard.filter((w) => hers.has(w)).length / heard.length >= 0.6;
     }
+    // two hearings of the same line (most of the words in common)
+    function sameWords(a, b) {
+      const w = (x) => norm(x).split(/\s+/).filter((y) => y.length > 1), A = w(a), B = new Set(w(b));
+      if (A.length < 2 || !B.size) return false;
+      return A.filter((x) => B.has(x)).length / A.length >= 0.6;
+    }
     // Whisper's usual guesses for noise or breathing, never real speech to her
     const NOISE_WORDS = /^\W*(thank you\.?|thanks for watching!?|you|bye\.?|\.+|okay\.?|uh+|um+|hmm+|mm+)\W*$/i;
     async function micSend(blocks, rate, early) {
       MIC.busy++;
       try {
+        // whether it's them is asked alongside the words (their voice sample in front of the clip), and
+        // waited for a moment after the words arrive, so a friend is never taken for them
+        const who = myVoice() ? hearClip(blocks, rate, true).catch(() => ({ me: null })) : null;
         const heard = early ? await early.catch(() => hearClip(blocks, rate)) : await hearClip(blocks, rate);
+        if (who && heard.text) heard.me = (await Promise.race([who, new Promise((r) => setTimeout(() => r({ me: null }), 1500))])).me;
         let text = heard.text;
         if (!CALL.on || CALL.state !== "listening") return;
         if (text && !(NOISE_WORDS.test(text) && blocks.length * 2048 / rate < 1.2) && !herEcho(text)) {
-          if (heard.me === false) text = t("friendSaid", { text });   // not their voice: a friend talking
-          else learnFromCall(blocks, rate);
+          // a friend through the speakers reaches the mic too: the same words just heard from the call's sound are theirs
+          const echoFriend = EAR.sysLine && Date.now() - EAR.sysLine.at < 5000 && sameWords(text, EAR.sysLine.text);
+          if (heard.me === false || echoFriend) text = t("friendSaid", { text });   // not their voice: a friend talking
+          else { learnFromCall(blocks, rate); MIC.lastLine = { text, at: Date.now() }; }
           CALL.heard = fixName(((CALL.heard || "") + " " + text).trim());
           CALL.you = CALL.heard; callPaint();
         }
@@ -4042,6 +4054,11 @@ Start with one face tag like [happy] [excited] [pout] [shy] [sleepy], then the m
       const pass = (said) => {
         said = fixName(said); EAR.lastKey = key; EAR.lastAt = Date.now();
         if (friend && CALL.on) {   // on a call with her: the friend's line joins what she's hearing
+          EAR.sysLine = { text: said, at: Date.now() };
+          const ml = MIC.lastLine;
+          if (ml && Date.now() - ml.at < 5000 && sameWords(said, ml.text) && (CALL.heard || "").includes(ml.text)) {   // the mic got it first and took it for them: it was the friend
+            CALL.heard = CALL.heard.replace(ml.text, t("friendSaid", { text: ml.text })); MIC.lastLine = null; CALL.you = CALL.heard; callPaint(); return;
+          }
           if (CALL.state === "listening" && !herEcho(said)) { CALL.heard = ((CALL.heard || "") + " " + t("friendSaid", { text: said })).trim(); CALL.you = CALL.heard; callPaint(); later.cancel(CALL.hold); CALL.hold = later(() => { if (!MIC.talking && !MIC.busy) callDoneTalking(); }, 400); }
           return;
         }
@@ -4701,7 +4718,7 @@ Start with one face tag like [happy] [excited] [pout] [shy] [sleepy], then the m
       ${ownSite ? `<div class="row split"><p class="tiny">${t("voiceTitle2")}</p><select id="voicepick" class="ghost" style="padding:8px 12px">${VOICES.map(([n, c], i) => `<option value="${i}">${i + 1} · ${n}${c ? " ✨" : ""}</option>`).join("")}<option value="phone">${t("voicePhone")}</option></select><button class="ghost" id="voicetry" type="button" aria-label="${t("voiceTry")}" title="${t("voiceTry")}" style="padding:8px 12px">▶</button></div>` : ""}
       ${window.AndroidLuma && AndroidLuma.accessOpen ? `<div class="row split"><p class="tiny"><b>${t(desktopApp ? "accessTitlePC" : "accessTitle")}</b><br>${t(desktopApp ? "accessNotePC" : "accessNote")}</p><button class="ghost" id="hands">${t(AndroidLuma.accessOn() ? "accessOn" : "accessOff")}</button></div>` : ""}
       <div class="row" style="flex-direction:column;align-items:stretch;gap:8px;flex:none"><p class="tiny">${t("wallTitle")}</p><div class="walls" id="walls">${Object.entries(WALLS).map(([k, w]) => `<button type="button" data-wall="${k}" aria-pressed="${wall.key() === k}" style="${w.img ? `background-image:url('${w.img.replace(".webp", "_s.webp")}')` : "background:radial-gradient(circle at 50% 30%,#2a2d6a,#0b0d2a)"}"><span>${esc(w.name)}</span></button>`).join("")}</div></div>
-      ${desktopApp ? `<div class="row split"><p class="tiny" id="myvoice-note">${t("myVoiceNote")}</p><button class="ghost" id="myvoice">${t(myVoice() ? "myVoiceRedo" : "myVoiceBtn")}</button></div>` : ""}
+      ${ownSite ? `<div class="row split"><p class="tiny" id="myvoice-note">${t("myVoiceNote")}</p><button class="ghost" id="myvoice">${t(myVoice() ? "myVoiceRedo" : "myVoiceBtn")}</button></div>` : ""}
       ${ownSite && /Android/i.test(navigator.userAgent) && !window.AndroidLuma ? `<div class="row split"><p class="tiny">${t("apkNote")}</p><a class="ghost" href="/firefly.apk" download style="text-decoration:none">${t("apkBtn")}</a></div>` : ""}
       ${appOld() && !desktopApp ? `<div class="row split"><p class="tiny">${t("appUpdate")}</p><a class="ghost" href="${APK_URL}" style="text-decoration:none">${t("apkBtn")}</a></div>` : ""}
       ${ownSite && !installed() && !window.AndroidLuma ? `<div class="row split"><p class="tiny" id="install-note">${t(isIOS() ? "installIOS" : "installNote")}</p>${isIOS() ? "" : `<button class="ghost" id="install">${t("installBtn")}</button>`}</div>` : ""}

@@ -689,6 +689,14 @@
   .mem-add input { padding: 10px 12px; border-radius: 12px; }
   .card .chart { margin-top: -4px; }
   .sec .grid4 { margin-top: 4px; }
+  .cp-min { position: absolute; top: calc(env(safe-area-inset-top, 0px) + 12px); inset-inline-start: 14px; width: 42px; height: 42px; border-radius: 50%; border: 1px solid rgba(255, 255, 255, .2); background: rgba(255, 255, 255, .08); color: #fff; font-size: 20px; line-height: 1; cursor: pointer; }
+  .callpane.mini { inset: auto; top: calc(env(safe-area-inset-top, 0px) + 8px); left: max(10px, env(safe-area-inset-left, 0px)); right: max(10px, env(safe-area-inset-right, 0px)); flex-direction: row; justify-content: flex-start; gap: 10px; padding: 6px 6px 6px 8px; border-radius: 20px; text-align: start; cursor: pointer; box-shadow: 0 10px 30px rgba(0, 0, 0, .45); max-width: 560px; margin: 0 auto; border: 1px solid rgba(255, 255, 255, .12); }
+  .callpane.mini .cp-min, .callpane.mini .cp-you, .callpane.mini .cp-hint, .callpane.mini .cp-share, .callpane.mini .cp-st { display: none; }
+  .callpane.mini .cp-ring { width: 40px; padding: 3px; flex: none; }
+  .callpane.mini .cp-her { flex: 1; min-width: 0; font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-height: none; min-height: 0; }
+  .callpane.mini .cp-her:empty::before { content: "📞 On a call with Luma"; opacity: .8; }
+  .callpane.mini .cp-end { margin: 0; padding: 9px 16px; font-size: 14px; }
+  body.call-mini .top { visibility: hidden; }
 </style>
 
 <canvas id="sky" aria-hidden="true"></canvas>
@@ -3631,7 +3639,10 @@ Start with one face tag like [thinking] [happy], then your help.`, Object.assign
     }
     showQuick(session.replies || []);
     if (!free) $("#next").onclick = () => show("release");
-    cleanup = () => { callEnd(); if (ctl) ctl.abort(); if (rec) rec.abort(); earStop(); stopWatch(false); dropFloat(); closeBubble(); if (free) remember(session); };
+    cleanup = () => {
+      if (CALL.on) { vcClose(); callMini(true); if (rec) rec.abort(); if (free) remember(session); return; }   // a call goes on while he uses the rest of the app
+      callEnd(); if (ctl) ctl.abort(); if (rec) rec.abort(); earStop(); stopWatch(false); dropFloat(); closeBubble(); if (free) remember(session);
+    };
     if (!session.turns.length) lumaOpen();
 
 
@@ -3678,7 +3689,7 @@ Start with one face tag like [thinking] [happy], then your help.`, Object.assign
     if (free) {
       window.__nativeBubbleSend = (txt) => { NUDGE.waiting = false; if (box.isConnected) { heard(); send(txt); } else { pendingSend = txt; show("talk-free"); } };
       window.__nudge = nudge;   // the newest chat's version; the timer below is started once
-      window.__callOn = () => CALL.on;
+      window.__callOn = () => CALL.on || !!(window.__callAlive && window.__callAlive());
       $("#more").onclick = () => { const tl = $("#tools"), open = tl.hidden; tl.hidden = !open; $("#more").setAttribute("aria-expanded", String(open)); };
       $("#games").onclick = () => GAME.menu();
       window.__speak = speakOut; window.__bubble = bubbleSay;
@@ -3691,7 +3702,7 @@ Start with one face tag like [thinking] [happy], then your help.`, Object.assign
       };
       if (!NUDGE.started) { NUDGE.started = true; later(nudgeLoop, 6 * 60000); }
       if (pendingSend) { const p0 = pendingSend; pendingSend = null; setTimeout(() => send(p0), 1800); }
-      $("#call").hidden = !canTalk();
+      $("#call").hidden = !canTalk() || !!(window.__callAlive && window.__callAlive());
       $("#call").onclick = callStart;
       $("#vcall").hidden = !ownSite;
       $("#vcall").onclick = () => {
@@ -4111,11 +4122,14 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
       if (ownSite) sysAudioOn();   // friends saying her name on the call can talk to her too
       const pane = document.createElement("div");
       pane.className = "callpane";
-      pane.innerHTML = `<div class="cp-ring" title="${t("callTap")}"><div class="cp-av"><img alt=""></div></div><div class="cp-st"></div>
+      pane.innerHTML = `<button type="button" class="cp-min" aria-label="Minimize" title="Minimize">⌄</button><div class="cp-ring" title="${t("callTap")}"><div class="cp-av"><img alt=""></div></div><div class="cp-st"></div>
         <div class="cp-you" dir="auto"></div><div class="cp-her" dir="auto"></div><button class="cp-share" type="button" aria-pressed="false"></button><button class="cp-end" type="button">${t("callEnd")}</button><div class="cp-hint">${t("callTap")}</div>`;
       document.body.appendChild(pane);
       CALL.pane = pane;
-      pane.querySelector(".cp-end").onclick = callEnd;
+      pane.querySelector(".cp-end").onclick = (e) => { e.stopPropagation(); callEnd(); };
+      pane.querySelector(".cp-min").onclick = (e) => { e.stopPropagation(); callMini(true); };
+      pane.addEventListener("click", (e) => { if (pane.classList.contains("mini") && !e.target.closest(".cp-end")) callMini(false); });
+      window.__callAlive = () => CALL.on;
       // show her the screen without leaving the call (she then sees it with everything they say)
       pane.querySelector(".cp-share").onclick = () => (W.on ? stopWatch(false) : startWatch());
       pane.querySelector(".cp-ring").onclick = () => { if (CALL.state === "speaking") { stopSpeaking(); callListen(); } };
@@ -4129,6 +4143,13 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
     window.__callNow = () => { if (!box.isConnected) return false; if (!CALL.on) callStart(); return true; };
     if (pendingCall) { pendingCall = false; setTimeout(() => { if (box.isConnected && !CALL.on) callStart(); }, 700); }
     window.__endCall = () => { if (!CALL.on) return "ok"; if (CALL.state === "speaking") CALL.endAfter = true; else callEnd(); return "ok"; };
+    // the call as a small bar at the top (he can use the whole app meanwhile); tapping it opens it again
+    function callMini(on) {
+      if (!CALL.pane) return;
+      CALL.pane.classList.toggle("mini", !!on);
+      document.body.classList.toggle("call-mini", !!on);
+    }
+    window.__callMini = (on) => callMini(on);
     function callEnd() {
       if (!CALL.on) return;
       CALL.on = false; voiceCall = false; later(stayWithMe, 500);
@@ -4137,6 +4158,8 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
       if (CALL.rec) { CALL.rec.onend = null; CALL.rec.abort(); CALL.rec = null; }
       stopSpeaking();
       if (CALL.pane) CALL.pane.remove();
+      document.body.classList.remove("call-mini");
+      { const cb = document.getElementById("call"); if (cb && canTalk()) cb.hidden = false; }   // (a newer chat screen may have hidden it)
       CALL.pane = null;
       if (CALL.earWas && box.isConnected) earStart(false);
       else { hearStop(); sysAudioOff(); }
@@ -4228,11 +4251,12 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
       el.className = "vc"; el.id = "vc";
       el.innerHTML = `<img class="vc-bg" alt="" src="luma/vcbg_${VC.room}.webp"><div class="vc-me"><video muted playsinline preload="auto"></video><video muted playsinline preload="auto"></video><video class="vc-talk" muted playsinline loop preload="auto" src="luma/vc/talk_a.webm" style="opacity:0"></video><canvas class="vc-mouth" width="540" height="720"></canvas></div><div class="vc-cap" aria-live="polite"></div><video class="vc-cam" muted playsinline hidden></video>
         <div class="vc-bar"><div class="vc-rooms">${Object.keys(WALLS).filter((k) => WALLS[k].img).map((k) => `<button type="button" data-room="${k}" aria-pressed="${k === VC.room}" style="background-image:url('${WALLS[k].img.replace(".webp", "_s.webp")}')" title="${esc(WALLS[k].name)}"></button>`).join("")}</div>
-        <button type="button" class="vc-btn" data-cam aria-pressed="false" title="Camera">📷</button><button type="button" class="vc-btn vc-end" data-end>${t("callEnd")}</button></div>`;
+        <button type="button" class="vc-btn" data-min title="Minimize" aria-label="Minimize">⌄</button><button type="button" class="vc-btn" data-cam aria-pressed="false" title="Camera">📷</button><button type="button" class="vc-btn vc-end" data-end>${t("callEnd")}</button></div>`;
       document.body.appendChild(el); document.body.classList.add("vcon");
       VC.el = el; VC.cap = el.querySelector(".vc-cap"); VC.video = el.querySelector(".vc-cam");
       VC.layers = [...el.querySelectorAll(".vc-me video:not(.vc-talk)")]; VC.talk = el.querySelector(".vc-talk"); VC.mx = el.querySelector(".vc-mouth").getContext("2d"); VC.talking = false; vcMouthLoad(); VC.top = 0; VC.clip = ""; VC.clipEnds = 0;
       el.querySelector("[data-end]").onclick = () => callEnd();
+      el.querySelector("[data-min]").onclick = () => { vcClose(); callMini(true); };
       el.querySelectorAll("[data-room]").forEach((b) => b.onclick = () => vcRoom(b.dataset.room));
       el.querySelector("[data-cam]").onclick = (e) => vcCam(!VC.cam, e.currentTarget);
       el.querySelector(".vc-me").onclick = () => { if (CALL.state === "speaking") { stopSpeaking(); callListen(); } };   // tap her to cut in

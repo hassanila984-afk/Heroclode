@@ -167,6 +167,22 @@
   .msg.me { background: linear-gradient(160deg, rgba(180, 140, 255, .22), rgba(123, 60, 255, .14)); border: 1px solid rgba(180, 140, 255, .22); align-self: flex-end; border-end-end-radius: 6px; box-shadow: 0 4px 18px rgba(0, 0, 0, .18); }
   .msg.wait { color: var(--haze); font-style: italic; }
   .msg.pic { padding: 4px; max-width: 70%; }
+  /* video call: the app steps back, she sits in her room */
+  body.vcon .panel, body.vcon .top, body.vcon nav, body.vcon .tabs, body.vcon .callpane { visibility: hidden; }
+  .vc { position: fixed; inset: 0; z-index: 30; overflow: hidden; background: var(--night); }
+  .vc-bg { position: absolute; inset: -3%; width: 106%; height: 106%; object-fit: cover; animation: drift 40s ease-in-out infinite alternate; }
+  .vc::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at 50% 100%, rgba(255, 214, 150, .14), transparent 60%), linear-gradient(180deg, rgba(11, 13, 42, .25), transparent 25%, transparent 70%, rgba(11, 13, 42, .5)); }
+  .vc > *:not(.vc-bg) { z-index: 1; }
+  .vc-me { position: absolute; left: 50%; bottom: 0; transform: translateX(-50%); height: min(80%, 150vw); aspect-ratio: 482 / 602; max-width: none; cursor: pointer; }
+  .vc-cap { position: absolute; left: max(16px, env(safe-area-inset-left, 0px)); right: max(16px, env(safe-area-inset-right, 0px)); top: calc(env(safe-area-inset-top, 0px) + 18px); text-align: center; font-size: 17px; line-height: 1.4; color: #fff; text-shadow: 0 1px 4px rgba(0, 0, 0, .8), 0 0 18px rgba(0, 0, 0, .6); text-wrap: balance; }
+  .vc-cam { position: absolute; right: max(14px, env(safe-area-inset-right, 0px)); top: calc(env(safe-area-inset-top, 0px) + 70px); width: 108px; aspect-ratio: 3 / 4; object-fit: cover; border-radius: 14px; border: 2px solid rgba(255, 255, 255, .6); transform: scaleX(-1); box-shadow: 0 6px 20px rgba(0, 0, 0, .4); }
+  .vc-bar { position: absolute; left: 0; right: 0; bottom: 0; padding: 12px max(16px, env(safe-area-inset-right, 0px)) calc(env(safe-area-inset-bottom, 0px) + 16px) max(16px, env(safe-area-inset-left, 0px)); display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; background: linear-gradient(transparent, rgba(11, 13, 42, .75)); }
+  .vc-rooms { display: flex; gap: 6px; }
+  .vc-rooms button { width: 38px; height: 38px; border-radius: 50%; border: 2px solid rgba(255, 255, 255, .35); background: var(--chip) center / cover; padding: 0; }
+  .vc-rooms button[aria-pressed="true"] { border-color: var(--glow); }
+  .vc-btn { height: 46px; min-width: 46px; border-radius: 999px; border: 1px solid rgba(255, 255, 255, .25); background: rgba(20, 20, 52, .7); color: #fff; font: 600 15px var(--body); padding: 0 14px; }
+  .vc-btn[aria-pressed="true"] { background: rgba(255, 210, 122, .3); border-color: var(--glow); }
+  .vc-end { background: #e5484d; border-color: #e5484d; padding: 0 22px; }
   .msg.pic img { display: block; width: 100%; max-height: 320px; object-fit: cover; border-radius: 14px; }
   .dots::after { content: ""; animation: dots 1.4s steps(4) infinite; }
   @keyframes dots { 0% { content: ""; } 25% { content: "."; } 50% { content: ".."; } 75% { content: "..."; } }
@@ -622,7 +638,7 @@
       actGame: "Not while you're in a game 🎮 my hands stay off so you never get banned~", accessTitlePC: "🖱️ Luma can control this PC", accessNotePC: "She opens programs, scrolls and clicks for you. She asks before every click or typing, never touches money, passwords or settings, and keeps her hands off in games.",
       accessTitle: "👆 Luma can tap for me", accessNote: "She reads the buttons on your screen and taps, types or scrolls when you ask. She asks you on her bubble before every tap, and never touches banking, payments, passwords or settings. If Android says \"restricted setting\": App info → ⋮ → Allow restricted settings, then try again.", accessOn: "On ✓", accessOff: "Turn on", actFailed: "Hmm, I couldn't do that one 🥺",
       voiceTitle2: "Luma's voice", voicePhone: "Phone's own voice", voiceTry: "Hear this voice", hearSong: "Hear her sing it",
-      callBtn: "Talk", callEnd: "End", callShare: "📱 Show her my screen", callSharing: "👀 She's watching · stop", callTap: "Tap her to cut in while she talks", callListening: "listening… just talk", callThinking: "thinking…", callSpeaking: "talking…",
+      videoBtn: "Video", callBtn: "Talk", callEnd: "End", callShare: "📱 Show her my screen", callSharing: "👀 She's watching · stop", callTap: "Tap her to cut in while she talks", callListening: "listening… just talk", callThinking: "thinking…", callSpeaking: "talking…",
       earTitle: "Keep listening: say “Luma” when you're talking to her", earHeard: "last heard:", sayName: "say “Luma” first when you're in another app", micBusy: "the mic is busy (a call or another app is using it)", voiceTitle: "Language you speak out loud (English / Arabic)", stEar: "listening for her name…", stCall: "📞 on a call: she only reacts to her name",
       friendSaid: "👥 A friend on the call: “{text}”",
       earHint: "Say “Luma” anytime and she answers. Anything else she hears isn't kept.",
@@ -736,7 +752,7 @@
       actGame: "مو وانت دتلعب 🎮 إيدي بعيدة حتى ما ينضربلك باند~", accessTitlePC: "🖱️ لُمى تتحكم بالكمبيوتر", accessNotePC: "تفتح البرامج، تنزل الصفحة وتدوس عنك. تسألك قبل كل دوسة أو كتابة، ما تقرب على الفلوس والباسوردات والإعدادات، وإيدها بعيدة بالألعاب.",
       accessTitle: "👆 لُمى تدوس بدالي", accessNote: "تقرأ الأزرار اللي على شاشتك وتدوس أو تكتب أو تنزل لتحت من تطلب منها. تسألك على الفقاعة قبل كل دوسة، وما تلمس البنوك والدفع وكلمات السر والإعدادات. إذا الأندرويد گال \"إعداد مقيّد\": معلومات التطبيق ← ⋮ ← السماح بالإعدادات المقيّدة، وبعدين جرّب مرة ثانية.", accessOn: "شغّالة ✓", accessOff: "شغّلها", actFailed: "همم، ما گدرت أسويها 🥺",
       voiceTitle2: "صوت لُمى", voicePhone: "صوت الموبايل نفسه", voiceTry: "اسمع هالصوت", hearSong: "اسمعها تغنيها",
-      callBtn: "احچي", callEnd: "إنهاء", callShare: "📱 خليها تشوف شاشتي", callSharing: "👀 دتشوف · إيقاف", callTap: "اضغط عليها حتى تقاطعها وهي تحچي", callListening: "تسمعك… بس احچي", callThinking: "تفكّر…", callSpeaking: "تحچي…",
+      videoBtn: "فيديو", callBtn: "احچي", callEnd: "إنهاء", callShare: "📱 خليها تشوف شاشتي", callSharing: "👀 دتشوف · إيقاف", callTap: "اضغط عليها حتى تقاطعها وهي تحچي", callListening: "تسمعك… بس احچي", callThinking: "تفكّر…", callSpeaking: "تحچي…",
       earTitle: "خليها تسمع: ناديها «لُمى» لما تحچي وياها", earHeard: "آخر شي سمعته:", sayName: "گول «لُمى» أول شي لما تكون بتطبيق ثاني", micBusy: "المايك مشغول (مكالمة أو تطبيق ثاني يستخدمه)", voiceTitle: "لغة كلامك بالصوت (إنكليزي / عربي)", stEar: "تسمع… تنتظر اسمها", stCall: "📞 بمكالمة: تنتبه بس لاسمها",
       friendSaid: "👥 صديقك بالمكالمة: «{text}»",
       earHint: "گول «لُمى» بأي وقت وترد عليك. أي كلام ثاني تسمعه ما ينحفظ.",
@@ -1177,6 +1193,7 @@
       ? "watch start (look at their screen; they allow it once) | watch stop | open_app <app name> | open_url <link> | search <words> | maps <place> | music <song or artist> | alarm <HH:MM, 24-hour> | timer <minutes> | call <number> (this only opens the dialer)"
       : "open_url <link> | search <words> | maps <place> | music <song or artist> | claude <a job to hand to Claude, written out fully>";
     acts += " | note <a task or thing to keep for them> | done <the note to cross off> | remind <in 20 min / at 18:30 / tomorrow 9:00> | <what to remind them>";
+    if (voiceCall && VC.on) acts += " | room cozy / kitchen / gaming / plants (go to another room of your place, when it fits: 'brb, making coffee' = kitchen)";
     if (voiceCall) acts += " | end_call (when they say bye or want to hang up: say a short bye first)";
     const noHands = app && !hands && pc ? `- You can't click, type or scroll on their computer right now ("Luma can control this PC" is off). If they ask you to, never pretend you did it: say you can't yet and that they can turn it on from Firefly's icon next to the clock, or on the You page.
 ` : app && !hands ? `- You can't tap, type or scroll on their phone right now${AndroidLuma.accessOn ? ' ("Luma can tap for me" is off)' : " (their app is an old version)"}. If they ask you to, never pretend you did it: say you can't yet and that they can turn it on${AndroidLuma.accessOn ? ' on the You page ("Luma can tap for me")' : " after updating the app from the You page"}.
@@ -1253,7 +1270,8 @@ How you talk: like a real 21-year-old girl texting her close friend, not like an
 - Things they hand off to you (research, finding something, comparing options, planning): do it first, fully (search the web, check sources), then tell them what you found and talk it through. Don't ask "should I?" first.
 - When they give you a real task (a puzzle or game like Wordle, math, homework, code, writing something, planning, comparing, looking something up), be a sharp, capable assistant: work it out properly, check your answer, and give the actual result (the word, the number, the fix), not a vague hint. Take the length the task needs, still in your own casual voice. For word games, check every letter clue against your answer before saying it. If you can't be sure, say what you're unsure of.
 - Don't end every message with a question. Real friends often just react, tease or say their thing; ask something only now and then, never two questions at once.
-${voiceCall ? `- You're on a voice call right now, so talk the way you'd speak out loud: natural spoken rhythm with small fillers ("um", "like", "wait—", "okay so"), laughs as "haha" or "hehe", no emojis, no *actions* in stars (except *sigh*, *giggles*, *groan* and *yawn*, which are heard as the real sound), no text slang or abbreviations (say "oh my god", not "omg"; "not gonna lie", not "ngl"), no ALL CAPS. Keep it short, one or two spoken sentences, warm and caring, then let them talk.
+${voiceCall && VC.on ? `- It's a VIDEO call: they can see you, sitting in your ${({ cozy: "cozy reading corner", kitchen: "kitchen", gaming: "gaming corner", plants: "sunny corner with your plants" })[VC.room] || "room"}. Act like it: react with your face, mention what's around you now and then, and you can get up and move to another room.${VC.cam ? " Their camera is on: the attached picture is them right now; notice them like a friend on a video call would (a smile, what they're holding, how they look), without describing them every time." : ""}
+` : ""}${voiceCall ? `- You're on a voice call right now, so talk the way you'd speak out loud: natural spoken rhythm with small fillers ("um", "like", "wait—", "okay so"), laughs as "haha" or "hehe", no emojis, no *actions* in stars (except *sigh*, *giggles*, *groan* and *yawn*, which are heard as the real sound), no text slang or abbreviations (say "oh my god", not "omg"; "not gonna lie", not "ngl"), no ALL CAPS. Keep it short, one or two spoken sentences, warm and caring, then let them talk.
 ` : ""}- When they talk to you by voice, their words reach you through speech recognition, which sometimes mishears them: a word may be off. Go by what they most likely meant; if it truly makes no sense, ask them to say it again in a few words. Never correct how they say or spell your name.
 - Mirror them: match their dialect, their energy and their emoji habits. If they write short, you write shorter. If they joke, joke back. If they are quiet, be soft.
 - Learn them from what they say, not by questioning them. Notice what lights them up and what drains them, and bring it up naturally later, now and then. Ask at most one small question, and only when it feels natural.
@@ -2151,6 +2169,7 @@ ${last}${langNote()}`;
       if (window.AndroidLuma && AndroidLuma.doAction) return AndroidLuma.doAction("open_url", u);
       const w = window.open(u, "_blank", "noopener"); return w === null ? "blocked" : "ok";
     }
+    if (name === "room") return window.__room ? window.__room(arg) : "unknown";
     if (name === "note" || name === "done" || name === "remind") return window.__keep ? window.__keep(name, arg) : "unknown";
     if (window.AndroidLuma && AndroidLuma.doAction) return AndroidLuma.doAction(name, arg);
     const open = (u) => { const w = window.open(u, "_blank", "noopener"); return w === null ? "blocked" : "ok"; };
@@ -2170,6 +2189,7 @@ ${last}${langNote()}`;
   }
   // "NEXT: the next step" at the end of a reply: she has more to do on a job (taken out of what's shown)
   const AGENT = { steps: 0 };
+  const VC = window.__vc = { on: false, want: false, room: "cozy", cam: false };   // video call (see vcOpen)
   function takeNext(text) {
     let next = "";
     const rest = text.replace(/(^|\n)[ \t]*NEXT[ \t]*:[ \t]*([^\n]*)/, (m0, a, b) => { next = b.trim(); return a; }).replace(/(\n)[ \t]*N(E(X(T)?)?)?$/, "");
@@ -2556,7 +2576,7 @@ ${last}${langNote()}`;
     Object.defineProperty(window, "__resting", { get: () => rest, set: (v) => { rest = !!v; document.documentElement.classList.toggle("resting", rest); } });
   }
   // the newest Android app; older ones lack tapping, scrolling or her moving bubble
-  const APP_LATEST = 2.3;
+  const APP_LATEST = 2.4;
   const appVersion = () => !nativeApp ? 0 : AndroidLuma.version ? parseFloat(AndroidLuma.version()) || 0
     : AndroidLuma.answerAsk ? 1.9 : AndroidLuma.accessOn ? 1.6 : AndroidLuma.doAction ? 1.5 : 1.4;
   const DESKTOP_LATEST = 1.9;   // Firefly for Windows
@@ -2801,7 +2821,7 @@ ${last}${langNote()}`;
       <div class="chat-head">
         <div class="ch-av" data-luma-mirror><img alt="" draggable="false"><span class="lm-fx" aria-hidden="true"></span></div>
         <div><b>${t("luma")}</b><span class="st" id="ch-status">${t("stListening")}</span></div>
-        ${free ? `<button class="ch-watch" id="call" type="button" hidden>📞 ${t("callBtn")}</button><button class="ch-watch" id="watch" type="button" hidden>${t("watchBtn")}</button><button class="ch-bubble" id="bubble" type="button" hidden title="${t("bubbleTitle")}" aria-label="${t("bubbleTitle")}">🫧</button><button class="ch-bubble" id="aloud" type="button" title="Her voice" aria-label="Her voice">🔊</button><button class="ch-bubble" id="ear" type="button" hidden title="${t("earTitle")}" aria-label="${t("earTitle")}" aria-pressed="false">👂</button><button class="ch-bubble" id="vlang" type="button" hidden title="${t("voiceTitle")}" aria-label="${t("voiceTitle")}" style="font:700 13px var(--body)"></button>` : ""}
+        ${free ? `<button class="ch-watch" id="call" type="button" hidden>📞 ${t("callBtn")}</button><button class="ch-watch" id="vcall" type="button" hidden>🎥 ${t("videoBtn")}</button><button class="ch-watch" id="watch" type="button" hidden>${t("watchBtn")}</button><button class="ch-bubble" id="bubble" type="button" hidden title="${t("bubbleTitle")}" aria-label="${t("bubbleTitle")}">🫧</button><button class="ch-bubble" id="aloud" type="button" title="Her voice" aria-label="Her voice">🔊</button><button class="ch-bubble" id="ear" type="button" hidden title="${t("earTitle")}" aria-label="${t("earTitle")}" aria-pressed="false">👂</button><button class="ch-bubble" id="vlang" type="button" hidden title="${t("voiceTitle")}" aria-label="${t("voiceTitle")}" style="font:700 13px var(--body)"></button>` : ""}
       </div>
       ${free && appOld() ? (desktopApp ? `<div class="update">🖥️ ${t("appUpdatePC")}<br><code style="user-select:all">irm https://firefly-3t9.pages.dev/pc | iex</code></div>` : `<a class="update" href="${APK_URL}">📲 ${t("appUpdate")}</a>`) : ""}
       ${free ? `<div class="watchbar" id="watchbar" hidden><span class="wb-dot"></span><span class="wb-t">${t("watchOn")}</span><button type="button" id="wfloat" hidden>${t("watchFloat")}</button><button type="button" id="wstop">${t("watchStop")}</button></div>` : ""}
@@ -2904,6 +2924,12 @@ ${last}${langNote()}`;
       if (pendingSend) { const p0 = pendingSend; pendingSend = null; setTimeout(() => send(p0), 1800); }
       $("#call").hidden = !canTalk();
       $("#call").onclick = callStart;
+      $("#vcall").hidden = !ownSite;
+      $("#vcall").onclick = () => {
+        // her voice is read for her mouth through Web Audio, which has to start from this tap
+        try { VC.ac = VC.ac || new AudioContext(); VC.ac.resume().catch(() => {}); } catch (e) { VC.ac = null; }
+        VC.want = true; if (CALL.on) vcOpen(); else callStart();
+      };
       $("#ear").hidden = !SR;
       $("#ear").onclick = () => (EAR.on ? earStop(true) : earStart(true));
       const aloudBtn = $("#aloud");
@@ -3307,6 +3333,7 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
       CALL.on = true; CALL.you = ""; CALL.her = ""; CALL.endAfter = false; CALL.asking = false; voiceCall = true; stayWithMe();
       noteHabit("voice calls with you");
       CALL.earWas = EAR.on; if (EAR.on) earStop(false);
+      if (VC.want) later(vcOpen, 300);
       if (ownSite) sysAudioOn();   // friends saying her name on the call can talk to her too
       const pane = document.createElement("div");
       pane.className = "callpane";
@@ -3330,6 +3357,7 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
     function callEnd() {
       if (!CALL.on) return;
       CALL.on = false; voiceCall = false; later(stayWithMe, 500);
+      vcClose();
       clearInterval(CALL.timer); later.cancel(CALL.wd); later.cancel(CALL.hold); micStop();
       if (CALL.rec) { CALL.rec.onend = null; CALL.rec.abort(); CALL.rec = null; }
       stopSpeaking();
@@ -3337,6 +3365,126 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
       CALL.pane = null;
       if (CALL.earWas && box.isConnected) earStart(false);
       else { hearStop(); sysAudioOff(); }
+    }
+    // ---------- the video call: her in her room ----------
+    // Her room is the wallpaper (with its light, steam and rain), she sits in front of it, her face follows
+    // her mood, her mouth opens with her voice (its loudness, read from the audio), and she can get up and
+    // move to another room. Their own camera can be on (a small preview; she sees a picture with each turn).
+    const VC_FACES = ["neutral", "happy", "laugh", "excited", "shy", "pout", "annoyed", "sad", "surprised", "sleepy", "thinking", "wink"];
+    // where the mouth is on each face (0..1), and the skin around it (to cover the closed mouth line)
+    const VC_MOUTH = { neutral: [0.53, 0.576, "#f1d8d2"], happy: [0.561, 0.568, "#f3d8d2"], pout: [0.518, 0.588, "#ecd0ca"], annoyed: [0.544, 0.619, "#f0d2cd"], sad: [0.544, 0.612, "#f0d0cb"], sleepy: [0.553, 0.592, "#efd3ce"], thinking: [0.585, 0.545, "#eacbc6"], wink: [0.577, 0.566, "#edd3cc"] };
+    const VC_FOR = { happy: "happy", excited: "excited", listening: "neutral", thinking: "thinking", shy: "shy", pout: "pout", ignore: "annoyed", sad: "sad", sleepy: "sleepy" };
+    const vcImgs = {};
+    function vcTap(a) {
+      try {
+        if (!VC.ac || VC.ac.state !== "running" || !VC.an) return;   // (not running: her mouth just moves along instead)
+        const src = VC.ac.createMediaElementSource(a);
+        src.connect(VC.an);
+      } catch (e) {}
+    }
+    function vcOpen() {
+      if (VC.on || !CALL.on) return;
+      VC.on = true; VC.want = false;
+      for (const f of VC_FACES) if (!vcImgs[f]) { const im = new Image(); im.src = "luma/vc_" + f + ".webp"; vcImgs[f] = im; }
+      try {
+        if (!VC.ac) throw 0;
+        if (!VC.an) { VC.an = VC.ac.createAnalyser(); VC.an.fftSize = 512; VC.an.connect(VC.ac.destination); VC.buf = new Uint8Array(VC.an.fftSize); }
+        VC.ac.resume().catch(() => {});
+      } catch (e) { VC.ac = null; }
+      if (!WALLS[VC.room] || !WALLS[VC.room].img) VC.room = "cozy";
+      const el = document.createElement("div");
+      el.className = "vc"; el.id = "vc";
+      el.innerHTML = `<img class="vc-bg" alt="" src="luma/vcbg_${VC.room}.webp"><canvas class="vc-me"></canvas><div class="vc-cap" aria-live="polite"></div><video class="vc-cam" muted playsinline hidden></video>
+        <div class="vc-bar"><div class="vc-rooms">${Object.keys(WALLS).filter((k) => WALLS[k].img).map((k) => `<button type="button" data-room="${k}" aria-pressed="${k === VC.room}" style="background-image:url('${WALLS[k].img.replace(".webp", "_s.webp")}')" title="${esc(WALLS[k].name)}"></button>`).join("")}</div>
+        <button type="button" class="vc-btn" data-cam aria-pressed="false" title="Camera">📷</button><button type="button" class="vc-btn vc-end" data-end>${t("callEnd")}</button></div>`;
+      document.body.appendChild(el); document.body.classList.add("vcon");
+      VC.el = el; VC.cv = el.querySelector(".vc-me"); VC.cx = VC.cv.getContext("2d"); VC.cap = el.querySelector(".vc-cap"); VC.video = el.querySelector(".vc-cam");
+      el.querySelector("[data-end]").onclick = () => callEnd();
+      el.querySelectorAll("[data-room]").forEach((b) => b.onclick = () => vcRoom(b.dataset.room));
+      el.querySelector("[data-cam]").onclick = (e) => vcCam(!VC.cam, e.currentTarget);
+      VC.cv.onclick = () => { if (CALL.state === "speaking") { stopSpeaking(); callListen(); } };   // tap her to cut in
+      VC.face = "neutral"; VC.prev = null; VC.fadeAt = 0; VC.open = 0; VC.hop = 1;
+      vcFit(); addEventListener("resize", vcFit);
+      VC.raf = requestAnimationFrame(vcFrame);
+    }
+    function vcClose() {
+      if (!VC.on) return;
+      VC.on = false; VC.want = false;
+      cancelAnimationFrame(VC.raf); removeEventListener("resize", vcFit);
+      vcCam(false);
+      if (VC.el) VC.el.remove(); VC.el = null;
+      document.body.classList.remove("vcon");
+    }
+    function vcRoom(k) {
+      if (!WALLS[k] || !WALLS[k].img) return "not_found";
+      VC.room = k; if (VC.on) { VC.el.querySelector(".vc-bg").src = "luma/vcbg_" + k + ".webp"; VC.hop = 1; VC.el && VC.el.querySelectorAll("[data-room]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.room === k))); }
+      return "ok";
+    }
+    window.__room = (arg) => vcRoom(Object.keys(WALLS).find((k) => new RegExp(k, "i").test(arg)) || ({ coffee: "kitchen", cook: "kitchen", game: "gaming", read: "cozy", couch: "cozy", plant: "plants" }[Object.keys({ coffee: 1, cook: 1, game: 1, read: 1, couch: 1, plant: 1 }).find((w) => new RegExp(w, "i").test(arg))] || ""));
+    async function vcCam(on, btn) {
+      if (on) {
+        try { VC.stream = await navigator.mediaDevices.getUserMedia({ video: { width: 480, height: 360, facingMode: "user" } }); }
+        catch (e) { return; }
+        VC.video.srcObject = VC.stream; VC.video.hidden = false; VC.video.play().catch(() => {}); VC.cam = true;
+      } else {
+        if (VC.stream) VC.stream.getTracks().forEach((x) => x.stop());
+        VC.stream = null; VC.cam = false; if (VC.video) { VC.video.srcObject = null; VC.video.hidden = true; }
+      }
+      const b = btn || (VC.el && VC.el.querySelector("[data-cam]")); if (b) b.setAttribute("aria-pressed", String(VC.cam));
+    }
+    function vcFit() { if (!VC.cv) return; const d = Math.min(2, devicePixelRatio || 1), r = VC.cv.getBoundingClientRect(); VC.cv.width = r.width * d; VC.cv.height = r.height * d; VC.cx.setTransform(d, 0, 0, d, 0, 0); VC.w = r.width; VC.h = r.height; }
+    function vcFrame(t) {
+      VC.raf = requestAnimationFrame(vcFrame);
+      if (t - (VC.last || 0) < 33) return;
+      VC.last = t;
+      // how loud her voice is right now -> how open her mouth is
+      let level = 0;
+      if (VC.an && CALL.state === "speaking") { VC.an.getByteTimeDomainData(VC.buf); let sum = 0; for (const v of VC.buf) { const x = (v - 128) / 128; sum += x * x; } level = Math.sqrt(sum / VC.buf.length); }
+      const talking = (CALL.state === "speaking" && (level > 0.015 || !VC.an)) || VC.forceTalk;
+      const target = talking ? (VC.an && !VC.forceTalk ? Math.min(1, Math.max(0, (level - 0.015) * 9)) : 0.5 + 0.5 * Math.sin(t / 70)) : 0;
+      VC.open += (target - VC.open) * 0.5;
+      // which face: her mood; listening while they talk; a wink now and then
+      const mood = (luma.pose() || "chibi:listening").split(":")[1];
+      let face = CALL.state === "listening" && MIC.talking ? "neutral" : VC_FOR[mood] || "neutral";
+      if (CALL.state === "thinking") face = "thinking";
+      if (talking && (face === "excited" || face === "surprised")) face = "happy";   // those already have an open mouth
+      if (!talking && Math.random() < 0.002) VC.winkUntil = t + 700;
+      if (VC.winkUntil > t && !talking && face === "happy") face = "wink";
+      if (face !== VC.face) { VC.prev = VC.face; VC.face = face; VC.fadeAt = t; }
+      const cx = VC.cx, W = VC.w, H = VC.h;
+      cx.clearRect(0, 0, W, H);
+      const im = vcImgs[VC.face]; if (!im || !im.complete || !im.naturalWidth) return;
+      const breath = Math.sin(t / 3200 * Math.PI * 2);
+      VC.hop *= 0.9;
+      const dh = H, dw = dh * im.naturalWidth / im.naturalHeight;
+      const y = H * 0.02 - VC.hop * Math.sin((1 - VC.hop) * Math.PI) * 18 - (talking ? Math.abs(Math.sin(t / 160)) * 2 : 0);
+      const rot = Math.sin(t / 2600) * 0.012 + (talking ? Math.sin(t / 320) * 0.01 : 0);
+      cx.save(); cx.translate(W / 2, H + y); cx.rotate(rot); cx.scale(1 - breath * 0.003, 1 + breath * 0.008);
+      const draw = (key, alpha) => {
+        const img = vcImgs[key]; if (!img || !img.complete) return;
+        cx.globalAlpha = alpha; cx.drawImage(img, -dw / 2, -dh, dw, dh);
+        const m = VC_MOUTH[key];
+        if (m && VC.open > 0.06 && key === VC.face) {   // her mouth, open as wide as her voice is loud
+          const mx = -dw / 2 + m[0] * dw, my = -dh + m[1] * dh, mw = dw * (0.052 + VC.open * 0.03), mh = dh * (0.006 + VC.open * 0.034);
+          cx.fillStyle = m[2]; cx.beginPath(); cx.ellipse(mx, my, dw * 0.045, dh * 0.012, 0, 0, Math.PI * 2); cx.fill();
+          cx.fillStyle = "#6e2530"; cx.beginPath(); cx.ellipse(mx, my + mh * 0.3, mw / 2, mh / 2 + 0.5, 0, 0, Math.PI * 2); cx.fill();
+          cx.fillStyle = "#d8737c"; cx.beginPath(); cx.ellipse(mx, my + mh * 0.62, mw * 0.32, mh * 0.22, 0, 0, Math.PI * 2); cx.fill();
+          cx.strokeStyle = "rgba(120,50,60,.6)"; cx.lineWidth = 1; cx.beginPath(); cx.ellipse(mx, my + mh * 0.3, mw / 2, mh / 2 + 0.5, 0, 0, Math.PI * 2); cx.stroke();
+        }
+      };
+      const fade = Math.min(1, (t - VC.fadeAt) / 180);
+      if (VC.prev && fade < 1) draw(VC.prev, 1 - fade);
+      draw(VC.face, VC.prev && fade < 1 ? fade : 1);
+      cx.restore(); cx.globalAlpha = 1;
+      // soft edges where the picture ends (the top of her hair, the sides on a wide screen)
+      cx.globalCompositeOperation = "destination-out";
+      let g = cx.createLinearGradient(0, 0, 0, H * 0.13); g.addColorStop(0, "rgba(0,0,0,1)"); g.addColorStop(1, "rgba(0,0,0,0)"); cx.fillStyle = g; cx.fillRect(0, 0, W, H * 0.13);
+      g = cx.createLinearGradient(0, 0, W * 0.07, 0); g.addColorStop(0, "rgba(0,0,0,1)"); g.addColorStop(1, "rgba(0,0,0,0)"); cx.fillStyle = g; cx.fillRect(0, 0, W * 0.07, H);
+      g = cx.createLinearGradient(W, 0, W * 0.93, 0); g.addColorStop(0, "rgba(0,0,0,1)"); g.addColorStop(1, "rgba(0,0,0,0)"); cx.fillStyle = g; cx.fillRect(W * 0.93, 0, W * 0.07, H);
+      cx.globalCompositeOperation = "source-over";
+      // captions: what she's saying, or what she heard
+      const cap = CALL.state === "speaking" ? CALL.her : CALL.state === "listening" && CALL.you ? CALL.you : CALL.state === "thinking" ? "…" : "";
+      if (VC.cap.textContent !== cap) VC.cap.textContent = cap;
     }
     function callPaint() {
       if (!CALL.pane) return;
@@ -3572,6 +3720,7 @@ Start with one face tag like [happy] [excited] [pout] [shy] [sleepy], then the m
       const mood = LIVE.mood || (luma.pose() || "").split(":")[1] || "listening";   // her tone follows her face
       const a = new Audio("/api/voice?v=" + encodeURIComponent(voicePick().name) + "&m=" + mood + (sing ? "&s=1" : "") + "&t=" + encodeURIComponent(text));
       a.preload = "auto";
+      if (VC.on) vcTap(a);
       return a;
     }
 
@@ -4125,8 +4274,10 @@ Start with one face tag like [happy] [excited] [pout] [shy] [sleepy], then the m
       if (aiOff) { addMsg("luma", t("saved")); return; }
       const bubble = waiting();
       let image = o.image || null, note = "";
-      if (!image && W.on) { const f = await grab(); if (f) image = await toJpeg(f.src, f.w, f.h); }
-      if (o.image) note = "\n\nThey just sent you a picture (attached). React to it like a friend would.";
+      if (!image && VC.on && VC.cam && VC.video && VC.video.videoWidth) image = await toJpeg(VC.video, VC.video.videoWidth, VC.video.videoHeight, 640);
+      else if (!image && W.on) { const f = await grab(); if (f) image = await toJpeg(f.src, f.w, f.h); }
+      if (!o.image && VC.on && VC.cam && image) note = "\n\n(On the video call, the attached picture is them on camera right now.)";
+      else if (o.image) note = "\n\nThey just sent you a picture (attached). React to it like a friend would.";
       else if (image) note = "\n\nYou are watching their screen together right now; the attached image is their screen at this moment. What you noticed earlier: " + (W.seen.slice(-8).join("; ") || "nothing yet") + ".";
       if (image) note += " After everything else (after the REPLIES line), add one last separate line: SAW: <what it shows, under 12 words, nothing private>. " + PRIVATE;
       const recent = session.turns.slice(-16);

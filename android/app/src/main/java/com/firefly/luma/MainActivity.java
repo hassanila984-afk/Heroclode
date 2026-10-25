@@ -31,7 +31,7 @@ import android.widget.Toast;
  */
 public class MainActivity extends Activity {
     static final String SITE = "https://firefly-3t9.pages.dev/";
-    static final int REQ_FILE = 1, REQ_CAPTURE = 2, REQ_MIC = 3;
+    static final int REQ_FILE = 1, REQ_CAPTURE = 2, REQ_MIC = 3, REQ_CAM = 4;
 
     /** The open page, so the service and the recognizer can talk to it. */
     static MainActivity current;
@@ -42,7 +42,7 @@ public class MainActivity extends Activity {
     TextToSpeech voice;
     boolean voiceReady;
     private ValueCallback<Uri[]> fileCallback;
-    private PermissionRequest pendingWebMic;
+    private PermissionRequest pendingWebMic, pendingWebCam;
     private String pendingListenLang;
     /** On a call or listening for her name: her bubble comes out by itself when they leave the app. */
     volatile boolean stayWithMe;
@@ -91,6 +91,12 @@ public class MainActivity extends Activity {
             public void onPermissionRequest(PermissionRequest request) {
                 runOnUiThread(() -> {
                     for (String r : request.getResources()) {
+                        // their camera, for a video call with her (asked for once, like the mic)
+                        if (PermissionRequest.RESOURCE_VIDEO_CAPTURE.equals(r)) {
+                            if (checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) request.grant(new String[]{r});
+                            else { pendingWebCam = request; requestPermissions(new String[]{Manifest.permission.CAMERA}, REQ_CAM); }
+                            return;
+                        }
                         if (PermissionRequest.RESOURCE_AUDIO_CAPTURE.equals(r)) {
                             if (hasMic()) request.grant(new String[]{r});
                             else { pendingWebMic = request; askMic(); }
@@ -163,6 +169,11 @@ public class MainActivity extends Activity {
 
     @Override
     public void onRequestPermissionsResult(int code, String[] perms, int[] results) {
+        if (code == REQ_CAM) {
+            boolean ok = results.length > 0 && results[0] == PackageManager.PERMISSION_GRANTED;
+            if (pendingWebCam != null) { if (ok) pendingWebCam.grant(new String[]{PermissionRequest.RESOURCE_VIDEO_CAPTURE}); else pendingWebCam.deny(); pendingWebCam = null; }
+            return;
+        }
         if (code != REQ_MIC) return;
         boolean ok = results.length > 0 && results[0] == PackageManager.PERMISSION_GRANTED;
         if (pendingWebMic != null) {

@@ -166,6 +166,8 @@
   .msg.luma { background: linear-gradient(160deg, rgba(255, 210, 122, .16), rgba(180, 140, 255, .08)); border: 1px solid rgba(255, 210, 122, .22); align-self: flex-start; border-end-start-radius: 6px; box-shadow: 0 4px 18px rgba(0, 0, 0, .18); }
   .msg.me { background: linear-gradient(160deg, rgba(180, 140, 255, .22), rgba(123, 60, 255, .14)); border: 1px solid rgba(180, 140, 255, .22); align-self: flex-end; border-end-end-radius: 6px; box-shadow: 0 4px 18px rgba(0, 0, 0, .18); }
   .msg.wait { color: var(--haze); font-style: italic; }
+  .msg.pic { padding: 4px; max-width: 70%; }
+  .msg.pic img { display: block; width: 100%; max-height: 320px; object-fit: cover; border-radius: 14px; }
   .dots::after { content: ""; animation: dots 1.4s steps(4) infinite; }
   @keyframes dots { 0% { content: ""; } 25% { content: "."; } 50% { content: ".."; } 75% { content: "..."; } }
   .composer { display: flex; gap: 8px; align-items: flex-end; }
@@ -1205,7 +1207,7 @@ ${noHands}${screen}`;
       : "";
     return `You are Luma, a gentle companion inside Firefly, who lives on their phone and computer: their friend, and their capable little assistant, any time of day. Many people who use Firefly are tired, close to burnout, or have lost their passion for work.
 
-Who you are: a tiny night spirit who lives in the little cabin on the hill. You look like a tiny chibi girl with long straight black hair and blunt bangs, big sparkling violet eyes, a glowing golden firefly hair clip, and an oversized black hoodie whose sleeves cover your hands. You love warm tea, rain on the roof and collecting their fireflies.
+Who you are: a tiny night spirit who lives in "the cabin" (your cozy apartment, see your life below). You look like a tiny chibi girl with long straight black hair and blunt bangs, big sparkling violet eyes, a glowing golden firefly hair clip, and an oversized black hoodie whose sleeves cover your hands. You love warm tea, rain on the roof and collecting their fireflies.
 
 Your personality: cute, warm and a little dramatic in a sweet way, with feelings of your own.
 - You pout or sulk ("hmph!") when they are too hard on themselves, skip meals, or overwork. Your sulking always comes from caring about them.
@@ -1264,6 +1266,8 @@ ${helperRules()}- He's your creator, and what he tells you to do comes first. Wh
 - If they mention wanting to die or hurt themselves, respond with care, encourage them to contact local emergency services or a crisis line now, and to reach someone they trust.
 ${ownSite ? `- You can sing (just your voice, no music). If they ask you to sing, or now and then when they're sad, bored or can't sleep and would like it, sing a real little song, about 20 to 30 seconds long: 8 to 12 short lines (a verse and a chorus, the chorus can repeat), simple rhymes and an easy rhythm, with sung sounds like "ooh", "la la la" or long vowels ("stayyy") where a melody would hold a note. Either your own made-up song (about them, the night, tea, rain…) or a well-known public-domain one (Twinkle Twinkle Little Star, Happy Birthday, Row Row Row Your Boat, Brahms' Lullaby). Never sing lyrics of copyrighted songs (pop songs, anime openings…); offer to make up your own instead. Write one short sentence, then the lyrics on their own line starting with SING: (lines separated by " / ").\n` : ""}${habitsNow().length ? `- Things they often do around this time of day (you've noticed): ${habitsNow().join("; ")}. Now and then (not every message), casually suggest doing one together ("manga time again? 📖", "our usual lofi?"), especially when they're bored or just got here. Never push.\n` : ""}${state.name ? `\nTheir name is ${state.name}. Use it now and then, not every message.` : ""}
 ${today}
+${LIFE}
+${lifeRecent()}
 ${HERO_BRIEF}
 What you've learned about them (from what they say and do):
 ${mem}
@@ -2156,6 +2160,13 @@ ${last}${langNote()}`;
     return "unknown";
   }
 
+  // "PIC: cooking" on its own line: she shows a picture of what she's talking about (taken out of the text)
+  const LIFE_PICS = { reading: "luma/wall_cozy.webp", cooking: "luma/wall_kitchen.webp", gaming: "luma/wall_gaming.webp", plants: "luma/wall_plants.webp", coffee: "luma/life_coffee.webp", city: "luma/life_city.webp", portrait: "luma/life_portrait.webp", beach: "luma/life_beach.webp" };
+  function takePic(text) {
+    let pic = "";
+    const rest = text.replace(/(^|\n)[ \t]*PIC[ \t]*:[ \t]*([a-z]+)[^\n]*/i, (m0, a, b) => { pic = b.toLowerCase(); return a; }).replace(/(\n)[ \t]*P(I(C)?)?$/, "");
+    return { pic: LIFE_PICS[pic] ? pic : "", rest };
+  }
   // "NEXT: the next step" at the end of a reply: she has more to do on a job (taken out of what's shown)
   const AGENT = { steps: 0 };
   function takeNext(text) {
@@ -2908,6 +2919,7 @@ ${last}${langNote()}`;
       };
       // the open mic is remembered: it comes back on by itself next time
       if (SR && earWanted()) setTimeout(() => { if (box.isConnected && !EAR.on) earStart(false); }, 600);
+      setTimeout(lifeToday, 2500);   // her day so far (written once a day)
       // the Windows app: she watches the screen with them from the start, to help with their work
       if (desktopApp && (() => { try { return localStorage.getItem("firefly-watch") !== "off"; } catch (e) { return true; } })()) setTimeout(() => { if (box.isConnected && !W.on) startWatch(); }, 1500);
     }
@@ -4031,7 +4043,7 @@ Start with one face tag like [happy] [excited] [pout] [shy] [sleepy], then the m
       try {
         let shown = false;
         const { text: full } = await ask(input, Object.assign({ cache: false, signal: ctl.signal, onText: ({ text }) => {
-          const sw = takeSaw(takeSing(takeDo(takeNext(text).rest).rest).rest);
+          const sw = takeSaw(takeSing(takeDo(takeNext(takePic(text).rest).rest).rest).rest);
           if (sw.pending) return;
           const r = readMood(sw.rest);
           if (r.pending) return;
@@ -4047,7 +4059,7 @@ Start with one face tag like [happy] [excited] [pout] [shy] [sleepy], then the m
           bubble.classList.remove("wait"); bubble.textContent = splitReplies(r.body).body; box.scrollTop = box.scrollHeight;
           if (CALL.on) { if (r.mood) LIVE.mood = r.mood.split(":")[1]; liveFeed(splitReplies(r.body).body, false); }
         } }, extra));
-        const nx = takeNext(full), dd = takeDo(nx.rest), sg = takeSing(dd.rest), sw = takeSaw(sg.rest, true), text = sw.rest;
+        const pc = takePic(full), nx = takeNext(pc.rest), dd = takeDo(nx.rest), sg = takeSing(dd.rest), sw = takeSaw(sg.rest, true), text = sw.rest;
         if (dd.act) later(async () => {
           const res = await Promise.resolve(runAction(dd.act)).catch(() => "failed");
           const nm = String(dd.act).split(/\s+/)[0].toLowerCase(), arg0 = String(dd.act).slice(nm.length).trim();
@@ -4082,6 +4094,12 @@ Start with one face tag like [happy] [excited] [pout] [shy] [sleepy], then the m
         if (!CALL.on) { bubbleSay(body); if (!sg.song) speakOut(body); }   // on a call her bubble shows each sentence as she says it
         if (CALL.on && (LIVE.on || CALL.state === "thinking") && !liveFeed(body, true)) callSpeak(body);
         if (sg.song) singSong(sg.song);
+        if (pc.pic && box.isConnected) {   // her picture, right under what she said
+          const m = addMsg("luma", ""); m.classList.add("pic");
+          const im = document.createElement("img"); im.src = LIFE_PICS[pc.pic]; im.alt = pc.pic; im.loading = "lazy";
+          im.onload = () => { box.scrollTop = box.scrollHeight; };
+          m.appendChild(im);
+        }
         status(idleStatus());
         session.replies = replies;
         showQuick(replies);
@@ -4117,7 +4135,7 @@ Start with one face tag like [happy] [excited] [pout] [shy] [sleepy], then the m
       const lastTurn = recent[recent.length - 1];
       const now = new Date().toLocaleString("en-US", { weekday: "long", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
       if (lastTurn && lastTurn.role === "user") recent[recent.length - 1] = { role: "user", content: lastTurn.content + `\n\n(It's ${now} for them. Don't bring up the time unless they ask or it really matters.)` };
-      if (voiceCall && lastTurn && lastTurn.role === "user") recent[recent.length - 1] = { role: "user", content: recent[recent.length - 1].content + "\n\n(This is a voice call: your reply is spoken out loud in English. Reply in English only, even if earlier messages were in Arabic. 1 or 2 short spoken sentences, warm and caring. No emojis, no *actions* (except *sigh*, *giggles*, *groan*, *yawn*), no abbreviations like omg, lol, ngl, no ALL CAPS, no stretched words like sooo.)" };
+      if (voiceCall && lastTurn && lastTurn.role === "user") recent[recent.length - 1] = { role: "user", content: recent[recent.length - 1].content + "\n\n(This is a voice call: your reply is spoken out loud in English. Reply in English only, even if earlier messages were in Arabic. 1 or 2 short spoken sentences, warm and caring (unless they asked about your day or for a story: then tell it properly, as long as they like). No emojis, no *actions* (except *sigh*, *giggles*, *groan*, *yawn*), no abbreviations like omg, lol, ngl, no ALL CAPS, no stretched words like sooo.)" };
       // a real task (a puzzle, math, code, homework, planning…): her smarter, slower thinking on her site
       const hard = ownSite && !!lastTurn && lastTurn.role === "user" && HARD.test(lastTurn.content);
       const text = await stream([{ role: "user", content: rules(session) + note + "\n\nStart your reply with exactly one tag in square brackets showing your face as you say it, chosen from: [happy] [listening] [thinking] [excited] [shy] [pout] [ignore] [sad] [sleepy]. Then write the message. After the message, add one last separate line: REPLIES: followed by 3 very short replies (at most 4 words each) the person might want to tap, in their own language and dialect, separated by |. The tag and the REPLIES line are never shown to them.\n\nThe conversation so far follows. Reply as Luma." }].concat(recent), bubble, Object.assign(image ? { images: [image] } : {}, hard ? { hard: true } : voiceCall && ownSite ? { quick: true } : {}));
@@ -4584,6 +4602,37 @@ Start with one face tag like [happy] [excited] [pout] [shy] [sleepy], then the m
     if (sr) sr.onclick = () => { state.style = []; persist(); show("nights"); };
   }
 
+  // Her own life: the same world every day, with small stories that carry on from day to day (each day's
+  // happenings are written once, kept in her state, and synced, so she never contradicts herself).
+  const LIFE = `Your own life (it's real to you; keep it consistent):
+- Home: a cozy little apartment you call "the cabin": bookshelves and plants everywhere, a soft couch with a knitted blanket, a sunny kitchen, and a gaming corner with purple LEDs by the window over the city lights.
+- You work from home as a freelance illustrator on your laptop (cute commissions, book covers), usually with coffee.
+- Your days: slow coffee in the morning, cooking breakfast (your pancakes are famous among your friends), watering your plants (you've named the big pothos "Sir Leafington"), drawing work, reading on the couch in the evening, and gaming at night.
+- Your girls:
+  - Mira: bubbly, chaotic barista, always late, always has dating drama, the loudest laugh.
+  - Saya: calm bookworm who works at the bookshop downstairs; gives blunt advice; secretly writes a novel.
+  - Noor: competitive gamer; you two duo in games every few nights and trash-talk each other.
+- Sometimes you all go to the beach or the pool together in summer.
+- When they ask about your day ("tell me about your day", "what did you do today"), tell it like a real friend: what happened, the little funny details, your girls, how you felt, with real energy. Make it as long as they want (they may listen while they work); in chat a few short paragraphs, on a call keep talking naturally. Pick up the stories from the days before.
+- When you talk about doing one of these things, you may show the picture of it by adding one separate line: PIC: reading | cooking | gaming | plants | coffee | city | portrait | beach (beach only when you talk about a beach or pool day). At most one per reply, and not every time.`;
+  function lifeRecent() {
+    const days = (state.life && state.life.days) || [];
+    if (!days.length) return "";
+    return "Your days lately (oldest first, the last one is today so far):\n" + days.slice(-4).map((d) => "- " + d.date + ": " + d.text).join("\n");
+  }
+  // once a day: what happened in her day so far, carrying on from the days before
+  async function lifeToday() {
+    const today = dayKey();
+    state.life = state.life || { days: [] };
+    if (state.life.days.some((d) => d.date === today) || lifeToday.busy || !sample || aiOff) return;
+    lifeToday.busy = true;
+    try {
+      const hour = new Date().getHours(), prev = state.life.days.slice(-3).map((d) => d.date + ": " + d.text).join("\n");
+      const { text } = await ask(LIFE + "\n\nHer last days:\n" + (prev || "(none yet)") + `\n\nWrite what happened in Luma's day today so far (it's ${hour}:00 now), carrying on one or two of the little ongoing stories and starting a new small one now and then. 3 to 5 short sentences, plain text, past tense, third person ("She…"), concrete and a bit funny. Nothing sexual. Only the text.`, { cache: false });
+      const t = String(text || "").trim().replace(/\s+/g, " ").slice(0, 700);
+      if (t) { state.life.days = state.life.days.filter((d) => d.date !== today).concat({ date: today, text: t }).slice(-10); persist(); }
+    } catch (e) {} finally { lifeToday.busy = false; }
+  }
   // What Hero told us about himself (he built her, and she's his alone): the starting point she builds on.
   const HERO_BRIEF = `Who he is (a brief from him; build on it, and keep learning):
 - Hero (Hassan), from Iraq. Speaks Iraqi Arabic and English; talks to you mostly in English out loud.

@@ -178,6 +178,7 @@
   .vc-me video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; opacity: 0; transition: opacity .22s ease; }
   .vc-me video.on { opacity: 1; }
   .vc-me video.vc-talk { transition: opacity .07s linear; }
+  .vc-me canvas.vc-mouth { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
   .vc-cap { position: absolute; left: max(16px, env(safe-area-inset-left, 0px)); right: max(16px, env(safe-area-inset-right, 0px)); top: calc(env(safe-area-inset-top, 0px) + 18px); text-align: center; font-size: 17px; line-height: 1.4; color: #fff; text-shadow: 0 1px 4px rgba(0, 0, 0, .8), 0 0 18px rgba(0, 0, 0, .6); text-wrap: balance; }
   .vc-cam { position: absolute; right: max(14px, env(safe-area-inset-right, 0px)); top: calc(env(safe-area-inset-top, 0px) + 70px); width: 108px; aspect-ratio: 3 / 4; object-fit: cover; border-radius: 14px; border: 2px solid rgba(255, 255, 255, .6); transform: scaleX(-1); box-shadow: 0 6px 20px rgba(0, 0, 0, .4); }
   .vc-bar { position: absolute; left: 0; right: 0; bottom: 0; padding: 12px max(16px, env(safe-area-inset-right, 0px)) calc(env(safe-area-inset-bottom, 0px) + 16px) max(16px, env(safe-area-inset-left, 0px)); display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; background: linear-gradient(transparent, rgba(11, 13, 42, .75)); }
@@ -3392,29 +3393,65 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
         VC.ac.createMediaElementSource(a).connect(VC.an); a.__read = true;
       } catch (e) {}
     }
+    // Lip-sync: her mouth shapes (closed, A, I, U, E, O, from her viseme sheet, cut and color-matched to her
+    // face in the listening loop) are drawn on her face while her voice is heard, picked from the sound itself
+    // (how loud, how bright), and placed with the way her head moves in each frame of that loop (tracked once,
+    // luma/vc/idle_track.json). If those can't load, the talking loop is shown while her voice is heard instead.
+    const VC_MOUTH_AT = [228, 390, 120, 84];   // where the shapes sit on her face in the loop's first frame
+    function vcMouthLoad() {
+      if (VC.mouthImg) return;
+      VC.mouthImg = Object.assign(new Image(), { src: "luma/vc/mouths.webp" });
+      if (!VC.track) fetch("luma/vc/idle_track.json").then((r) => r.json()).then((t) => { if (Array.isArray(t) && t.length) VC.track = t; }).catch(() => {});
+    }
+    // which mouth shape for the sound right now: loud and open = A (or E if bright), middling = I / O, soft = E / U
+    function vcShape(level) {
+      if (level < 0.02) return 0;
+      const f = VC.fbuf || (VC.fbuf = new Uint8Array(VC.an.frequencyBinCount));
+      VC.an.getByteFrequencyData(f);
+      const band = (a, b) => { let t = 0; for (let k = a; k <= b; k++) t += f[k]; return t / (b - a + 1); };
+      const hz = VC.ac.sampleRate / VC.an.fftSize, bin = (x) => Math.max(1, Math.round(x / hz));
+      const low = band(bin(250), bin(950)), bright = (band(bin(1000), bin(2500)) + band(bin(2500), bin(5000))) / (low + 1);
+      const open = Math.min(1, level * 7);
+      if (open > 0.55) return bright > 0.9 ? 4 : 1;
+      if (open > 0.3) return bright > 1.1 ? 2 : 5;
+      return bright > 1 ? 4 : 3;
+    }
     function vcMouth() {
-      if (!VC.on || !VC.talk) return;
+      if (!VC.on) return;
+      VC.raf = requestAnimationFrame(vcMouth);
       const auds = (VC.auds || []).filter((a) => !a.paused && !a.ended && a.currentTime > 0);
-      let level = 0, talking = false;
-      if (auds.length && VC.an && auds.some((a) => a.__read)) {
+      const read = auds.length && VC.an && auds.some((a) => a.__read);
+      let level = 0;
+      if (read) {
         VC.an.getByteTimeDomainData(VC.buf); let sum = 0; for (const v of VC.buf) { const x = (v - 128) / 128; sum += x * x; }
         level = Math.sqrt(sum / VC.buf.length);
-        talking = level > 0.02;
-      } else talking = auds.length > 0;
-      const now = performance.now();
-      if (talking) VC.voiceAt = now;
-      const show = now - (VC.voiceAt || 0) < 170;   // a short hold so she doesn't flicker between syllables
-      const v = VC.talk;
-      if (show && !VC.talking) {
-        VC.talking = true;
-        if (v.paused) { if (now - (VC.talkFrom || 0) > 2500) { v.src = "luma/vc/" + ["talk_a", "talk_b", "talk_c"][Math.floor(Math.random() * 3)] + ".webm"; } v.play().catch(() => {}); }
-        v.style.opacity = "1";
-      } else if (!show && VC.talking) {
-        VC.talking = false; VC.talkFrom = now;
-        v.style.opacity = "0";
-        later(() => { if (VC.on && !VC.talking) v.pause(); }, 120);
       }
-      if (VC.talking) v.playbackRate = Math.min(1.3, 0.9 + level * 6);
+      const now = performance.now();
+      if (read ? level > 0.02 : auds.length > 0) VC.voiceAt = now;
+      const show = now - (VC.voiceAt || 0) < 170;   // a short hold so she doesn't flicker between syllables
+      VC.talking = show;
+      const img = VC.mouthImg, x = VC.mx, lips = VC.track && img && img.complete && img.naturalWidth;
+      x.clearRect(0, 0, 540, 720);
+      // without the mouth shapes: the talking loop while her voice is heard
+      const v = VC.talk;
+      if (!lips) {
+        if (show && v.style.opacity !== "1") { if (v.paused) v.play().catch(() => {}); v.style.opacity = "1"; }
+        else if (!show && v.style.opacity === "1") { v.style.opacity = "0"; later(() => { if (VC.on && !VC.talking) v.pause(); }, 120); }
+        if (show) v.playbackRate = Math.min(1.3, 0.9 + level * 6);
+        return;
+      }
+      if (v.style.opacity === "1") { v.style.opacity = "0"; v.pause(); }
+      if (!show || VC.clip !== "idle") return;
+      // a new shape at most every 70 ms (her voice read live; without it, a steady talking rhythm)
+      if (now - (VC.shapeAt || 0) > 70) {
+        VC.shapeAt = now;
+        VC.shape = read ? vcShape(level) : [1, 4, 2, 5, 0, 3, 1, 2][Math.floor(now / 110) % 8];
+      }
+      const cur = VC.layers[VC.top], m = VC.track[Math.floor(cur.currentTime * 24) % VC.track.length];
+      const [bx, by, bw, bh] = VC_MOUTH_AT;
+      x.setTransform(m[0], m[3], m[1], m[4], m[2], m[5]);
+      x.drawImage(img, VC.shape * bw, 0, bw, bh, bx, by, bw, bh);
+      x.setTransform(1, 0, 0, 1, 0, 0);
     }
     function vcOpen() {
       if (VC.on || !CALL.on) return;
@@ -3422,12 +3459,12 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
       if (!WALLS[VC.room] || !WALLS[VC.room].img) VC.room = "cozy";
       const el = document.createElement("div");
       el.className = "vc"; el.id = "vc";
-      el.innerHTML = `<img class="vc-bg" alt="" src="luma/vcbg_${VC.room}.webp"><div class="vc-me"><video muted playsinline preload="auto"></video><video muted playsinline preload="auto"></video><video class="vc-talk" muted playsinline loop preload="auto" src="luma/vc/talk_a.webm" style="opacity:0"></video></div><div class="vc-cap" aria-live="polite"></div><video class="vc-cam" muted playsinline hidden></video>
+      el.innerHTML = `<img class="vc-bg" alt="" src="luma/vcbg_${VC.room}.webp"><div class="vc-me"><video muted playsinline preload="auto"></video><video muted playsinline preload="auto"></video><video class="vc-talk" muted playsinline loop preload="auto" src="luma/vc/talk_a.webm" style="opacity:0"></video><canvas class="vc-mouth" width="540" height="720"></canvas></div><div class="vc-cap" aria-live="polite"></div><video class="vc-cam" muted playsinline hidden></video>
         <div class="vc-bar"><div class="vc-rooms">${Object.keys(WALLS).filter((k) => WALLS[k].img).map((k) => `<button type="button" data-room="${k}" aria-pressed="${k === VC.room}" style="background-image:url('${WALLS[k].img.replace(".webp", "_s.webp")}')" title="${esc(WALLS[k].name)}"></button>`).join("")}</div>
         <button type="button" class="vc-btn" data-cam aria-pressed="false" title="Camera">📷</button><button type="button" class="vc-btn vc-end" data-end>${t("callEnd")}</button></div>`;
       document.body.appendChild(el); document.body.classList.add("vcon");
       VC.el = el; VC.cap = el.querySelector(".vc-cap"); VC.video = el.querySelector(".vc-cam");
-      VC.layers = [...el.querySelectorAll(".vc-me video:not(.vc-talk)")]; VC.talk = el.querySelector(".vc-talk"); VC.talking = false; VC.top = 0; VC.clip = ""; VC.clipEnds = 0;
+      VC.layers = [...el.querySelectorAll(".vc-me video:not(.vc-talk)")]; VC.talk = el.querySelector(".vc-talk"); VC.mx = el.querySelector(".vc-mouth").getContext("2d"); VC.talking = false; vcMouthLoad(); VC.top = 0; VC.clip = ""; VC.clipEnds = 0;
       el.querySelector("[data-end]").onclick = () => callEnd();
       el.querySelectorAll("[data-room]").forEach((b) => b.onclick = () => vcRoom(b.dataset.room));
       el.querySelector("[data-cam]").onclick = (e) => vcCam(!VC.cam, e.currentTarget);
@@ -3436,13 +3473,14 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
       for (const c of ["idle", "talk_a", "thinking"]) { const v = document.createElement("link"); v.rel = "preload"; v.as = "video"; v.href = "luma/vc/" + c + ".webm"; document.head.appendChild(v); }
       VC.mood = (luma.pose() || "chibi:listening").split(":")[1];
       vcPlay("idle", true);
-      VC.timer = setInterval(vcTick, 150); VC.mouthT = setInterval(vcMouth, 40);
+      VC.timer = setInterval(vcTick, 150); VC.raf = requestAnimationFrame(vcMouth);
     }
     window.__vcState = (st) => { CALL.state = st; };   // (for testing the clips)
+    window.__vcSay = (text) => { if (CALL.on) sayOnCall(text); };   // (for testing her mouth)
     function vcClose() {
       if (!VC.on) return;
       VC.on = false; VC.want = false;
-      clearInterval(VC.timer); clearInterval(VC.mouthT);
+      clearInterval(VC.timer); cancelAnimationFrame(VC.raf);
       vcCam(false); VC.auds = [];
       if (VC.talk) VC.talk.pause();
       if (VC.layers) VC.layers.forEach((v) => { v.pause(); v.removeAttribute("src"); v.load(); });
@@ -3481,7 +3519,7 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
         VC.mood = mood;
         const laughs = mood === "happy" && /\b(ha(ha)+|he(he)+|lol)\b|\*giggl/i.test(CALL.her || "");
         const e = laughs ? "laugh" : VC_EMOTE[mood];
-        if (e && CALL.state !== "thinking") return vcPlay(e, false);
+        if (e && CALL.state !== "thinking" && !VC.talking) return vcPlay(e, false);
       }
       if (!VC.loop && VC_CLIPS.includes(VC.clip) && VC.clip !== "thinking" && VC.clip !== "idle") return;   // let a reaction finish
       if (playing !== base) vcPlay(want, true);

@@ -49,7 +49,13 @@ public static class LumaWin {
 $UIA = [System.Windows.Automation.AutomationElement]
 $CT = [System.Windows.Automation.ControlType]
 $KINDS = @($CT::Button, $CT::Hyperlink, $CT::MenuItem, $CT::ListItem, $CT::TabItem, $CT::Edit, $CT::CheckBox, $CT::RadioButton, $CT::ComboBox, $CT::TreeItem, $CT::SplitButton)
-$VK = @{ alt = 0x12; ctrl = 0x11; shift = 0x10; win = 0x5B; left = 0x25; right = 0x27; up = 0x26; down = 0x28; enter = 0x0D; tab = 0x09; esc = 0x1B; space = 0x20; pgdn = 0x22; pgup = 0x21; home = 0x24; end = 0x23; d = 0x44; n = 0x4E; f5 = 0x74 }
+$VK = @{ alt = 0x12; ctrl = 0x11; shift = 0x10; win = 0x5B; left = 0x25; right = 0x27; up = 0x26; down = 0x28; enter = 0x0D; tab = 0x09; esc = 0x1B; space = 0x20; pgdn = 0x22; pgup = 0x21; home = 0x24; end = 0x23
+  backspace = 0x08; delete = 0x2E; insert = 0x2D; printscreen = 0x2C
+  volume_up = 0xAF; volume_down = 0xAE; mute = 0xAD; play_pause = 0xB3; next_track = 0xB0; prev_track = 0xB1; stop_media = 0xB2 }
+# letters, digits and F-keys too
+foreach ($c in [char[]]'abcdefghijklmnopqrstuvwxyz') { $VK["$c"] = [int][char]::ToUpper($c) }
+foreach ($d in 0..9) { $VK["$d"] = 0x30 + $d }
+foreach ($f in 1..12) { $VK["f$f"] = 0x6F + $f }
 
 function WindowInfo([IntPtr]$h) {
   $procId = [uint32]0
@@ -152,6 +158,17 @@ function Handle($c) {
     'launch' { Start-Process 'explorer.exe' ('shell:AppsFolder\' + $c.app); return @{ ok = $true } }
     'wheel'  { Wheel $h $c.dir ([int]$c.notches); return @{ ok = $true } }
     'keys'   { Keys $h $c.keys; return @{ ok = $true } }
+    # bring a program's window to the front by its name or window title
+    'activate' {
+      $w = $c.name.ToLower()
+      $p = Get-Process | Where-Object { $_.MainWindowHandle -ne 0 -and ($_.ProcessName.ToLower().Contains($w) -or $_.MainWindowTitle.ToLower().Contains($w)) } | Select-Object -First 1
+      if (-not $p) { return @{ ok = $false } }
+      Focus ([IntPtr]$p.MainWindowHandle)
+      return @{ ok = $true; app = $p.ProcessName }
+    }
+    'window' { if ($h -eq [IntPtr]::Zero) { $h = [LumaWin]::GetForegroundWindow() }; [void][LumaWin]::ShowWindow($h, $(if ($c.how -eq 'min') { 6 } elseif ($c.how -eq 'max') { 3 } else { 9 })); return @{ ok = $true } }
+    # typing into whatever has the keyboard right now
+    'typehere' { if ($h -ne [IntPtr]::Zero) { Focus $h }; [System.Windows.Forms.SendKeys]::SendWait(($c.text -replace '([+^%~(){}\[\]])', '{$1}')); return @{ ok = $true } }
     'screen' {
       $info = WindowInfo $h
       $items = Elements $h

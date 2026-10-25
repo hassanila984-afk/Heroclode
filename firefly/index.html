@@ -1157,10 +1157,10 @@
     const hands = app && AndroidLuma.accessOn && AndroidLuma.accessOn();
     const pc = app && AndroidLuma.platform && AndroidLuma.platform() === "windows", device = pc ? "computer" : app ? "phone" : "computer";
     let acts = pc
-      ? "watch start (look at their screen) | watch stop | open_app <program name> | open_url <link> | search <words> | maps <place> | music <song or artist>"
+      ? "watch start (look at their screen) | watch stop | open_app <program name> | open_url <link> | open_path <folder or file path> | search <words> | maps <place> | music <song or artist> | media play_pause / next / previous / volume up 5 / volume down 5 / mute | claude <a job to hand to Claude, written out fully>"
       : app
       ? "watch start (look at their screen; they allow it once) | watch stop | open_app <app name> | open_url <link> | search <words> | maps <place> | music <song or artist> | alarm <HH:MM, 24-hour> | timer <minutes> | call <number> (this only opens the dialer)"
-      : "open_url <link> | search <words> | maps <place> | music <song or artist>";
+      : "open_url <link> | search <words> | maps <place> | music <song or artist> | claude <a job to hand to Claude, written out fully>";
     acts += " | note <a task or thing to keep for them> | done <the note to cross off> | remind <in 20 min / at 18:30 / tomorrow 9:00> | <what to remind them>";
     if (voiceCall) acts += " | end_call (when they say bye or want to hang up: say a short bye first)";
     const noHands = app && !hands && pc ? `- You can't click, type or scroll on their computer right now ("Luma can control this PC" is off). If they ask you to, never pretend you did it: say you can't yet and that they can turn it on from Firefly's icon next to the clock, or on the You page.
@@ -1169,7 +1169,7 @@
     let screen = "";
     if (hands) {
       acts += pc
-        ? " | tap <the button's words exactly as in their window> (clicks it) | type <the field's words> | <text to type> | scroll down | scroll up | autoscroll start | autoscroll slower | autoscroll faster | autoscroll stop | back (the browser's back) | home (shows the desktop)"
+        ? " | tap <the button's words exactly as in their window> (clicks it) | type <the field's words> | <text to type> | type_here <text typed where the cursor is> | key <shortcut like ctrl+t, alt+tab, ctrl+s, enter> | switch_to <program or window name> | window min / max / restore | scroll down | scroll up | autoscroll start | autoscroll slower | autoscroll faster | autoscroll stop | back (the browser's back) | home (shows the desktop)"
         : " | tap <the button's words exactly as on screen> | type <the field's words> | <text to type> | scroll down | scroll up | autoscroll start | autoscroll slower | autoscroll faster | autoscroll stop | back | home";
       let scr = null;
       try { scr = JSON.parse(AndroidLuma.screen() || "null"); } catch (e) {}
@@ -1232,6 +1232,9 @@ How you talk: like a real 21-year-old girl texting her close friend, not like an
   - Also Connections, Sudoku, crosswords, anagrams, riddles, trivia, Quordle and the like: solve them for real, step by step in your head, and give the answer (or a hint first if they ask for hints).
 - Their work: help them like a sharp assistant who sits next to them. Keep their tasks as notes (DO: note …), set reminders when they mention a deadline or ask (DO: remind …), give useful short notes on what they're working on when you see it, and nudge them about what's left.
 - Music: when they're working or chilling for a while with no music on, you may put some on yourself (DO: music lofi for focus, or what fits their mood or habits), at most once an hour, never during a call, a video, a game or when they're talking with friends.
+- You're their Jarvis: when they give you a job on their ${desktopApp ? "computer" : nativeApp ? "phone" : "device"} that takes several steps (open something, search, click, type, save…), carry it out yourself step by step: one DO per reply, and when more steps remain add one more separate line NEXT: <the next step>. You'll then see the result and the new screen and keep going on your own until it's done; then say it's done (no NEXT line). Stop and ask only if something is truly unclear or risky.
+- Bigger jobs (writing code, a long document, deep work): hand them to Claude with DO: claude <the full job, clearly written>, and tell them you did.
+- Be proactive: now and then offer a useful idea, a shortcut or a better way to do what they're working on, to make their life and work easier. One idea at a time, short.
 - Things they hand off to you (research, finding something, comparing options, planning): do it first, fully (search the web, check sources), then tell them what you found and talk it through. Don't ask "should I?" first.
 - When they give you a real task (a puzzle or game like Wordle, math, homework, code, writing something, planning, comparing, looking something up), be a sharp, capable assistant: work it out properly, check your answer, and give the actual result (the word, the number, the fix), not a vague hint. Take the length the task needs, still in your own casual voice. For word games, check every letter clue against your answer before saying it. If you can't be sure, say what you're unsure of.
 - Don't end every message with a question. Real friends often just react, tease or say their thing; ask something only now and then, never two questions at once.
@@ -2025,6 +2028,11 @@ ${last}${langNote()}`;
     const name = m[1].toLowerCase(), arg = m[2].replace(/^["“'<]+|["”'>]+$/g, "").trim();
     if (name === "watch") return window.__watch ? window.__watch(!/stop|off|end/i.test(arg)) : "unknown";
     if (name === "end_call") return window.__endCall ? window.__endCall() : "unknown";
+    if (name === "claude") {   // hand a bigger job to Claude: opens a new Claude chat with the job written in
+      const u = "https://claude.ai/new?q=" + encodeURIComponent(arg);
+      if (window.AndroidLuma && AndroidLuma.doAction) return AndroidLuma.doAction("open_url", u);
+      const w = window.open(u, "_blank", "noopener"); return w === null ? "blocked" : "ok";
+    }
     if (name === "note" || name === "done" || name === "remind") return window.__keep ? window.__keep(name, arg) : "unknown";
     if (window.AndroidLuma && AndroidLuma.doAction) return AndroidLuma.doAction(name, arg);
     const open = (u) => { const w = window.open(u, "_blank", "noopener"); return w === null ? "blocked" : "ok"; };
@@ -2035,6 +2043,13 @@ ${last}${langNote()}`;
     return "unknown";
   }
 
+  // "NEXT: the next step" at the end of a reply: she has more to do on a job (taken out of what's shown)
+  const AGENT = { steps: 0 };
+  function takeNext(text) {
+    let next = "";
+    const rest = text.replace(/(^|\n)[ \t]*NEXT[ \t]*:[ \t]*([^\n]*)/, (m0, a, b) => { next = b.trim(); return a; }).replace(/(\n)[ \t]*N(E(X(T)?)?)?$/, "");
+    return { next, rest };
+  }
   // A reply may hold a little song on its own line: "SING: line one / line two" (sung out loud, voice only).
   function takeSing(text) {
     let song = null;
@@ -2419,7 +2434,7 @@ ${last}${langNote()}`;
   const APP_LATEST = 2.3;
   const appVersion = () => !nativeApp ? 0 : AndroidLuma.version ? parseFloat(AndroidLuma.version()) || 0
     : AndroidLuma.answerAsk ? 1.9 : AndroidLuma.accessOn ? 1.6 : AndroidLuma.doAction ? 1.5 : 1.4;
-  const DESKTOP_LATEST = 1.8;   // Firefly for Windows
+  const DESKTOP_LATEST = 1.9;   // Firefly for Windows
   const appOld = () => nativeApp && appVersion() < (desktopApp ? DESKTOP_LATEST : APP_LATEST);
   // opened through the phone's browser (the trailing dot makes it another address for the app), which downloads it
   const APK_URL = "https://firefly-3t9.pages.dev./firefly.apk";
@@ -2684,11 +2699,12 @@ ${last}${langNote()}`;
     luma.set(luma.pose() || "chibi:listening");
     { const m = $("[data-luma-mirror]"), [, mood] = (luma.pose() || "chibi:listening").split(":");
       m.dataset.mood = mood; m.querySelector("img").src = poseImg("chibi", mood); m.querySelector(".lm-fx").innerHTML = luma.fx(mood); }
-    for (const turn of session.turns) addMsg(turn.role === "user" ? "me" : "luma", turn.content);
+    for (const turn of session.turns) if (!/^\(step \d+ result:/.test(turn.content)) addMsg(turn.role === "user" ? "me" : "luma", turn.content);   // (her own step notes stay hidden)
     say.addEventListener("input", () => { say.style.height = "auto"; say.style.height = Math.min(120, say.scrollHeight) + "px"; });
     say.addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); $("#form").requestSubmit(); } });
     const send = (text) => {
       if (!text || ctl) return;
+      AGENT.steps = 0;   // they said something: any job she was running on her own waits for them
       heard();
       addMsg("me", text);
       session.turns.push({ role: "user", content: text });
@@ -3263,6 +3279,7 @@ Pop out on your own with ONE short message to make them smile, like a friend pok
 - a tiny dare or challenge ("bet you can't put the phone down for 5 minutes")
 - a teasing compliment ("ok fine, your taste in manga is actually elite")
 - a random silly thought ("do you think penguins get bored too")
+- a useful idea or shortcut for what they're doing right now (if you can see it)
 - a soft cheer-up if they seem tired or down${habitsNow().length ? `
 - suggest your usual together (they often do this around now: ${habitsNow().join("; ")})` : ""}
 Your last pop-outs were: ${NUDGE.recent.join(" | ") || "(none yet)"}. Don't repeat their wording or the way they start, and don't start with "ehh". Never mean, never guilt, never about anything private on their screen, no question that needs a long answer.
@@ -3859,7 +3876,7 @@ Start with one face tag like [happy] [excited] [pout] [shy] [sleepy], then the m
       try {
         let shown = false;
         const { text: full } = await ask(input, Object.assign({ cache: false, signal: ctl.signal, onText: ({ text }) => {
-          const sw = takeSaw(takeSing(takeDo(text).rest).rest);
+          const sw = takeSaw(takeSing(takeDo(takeNext(text).rest).rest).rest);
           if (sw.pending) return;
           const r = readMood(sw.rest);
           if (r.pending) return;
@@ -3875,7 +3892,7 @@ Start with one face tag like [happy] [excited] [pout] [shy] [sleepy], then the m
           bubble.classList.remove("wait"); bubble.textContent = splitReplies(r.body).body; box.scrollTop = box.scrollHeight;
           if (CALL.on) { if (r.mood) LIVE.mood = r.mood.split(":")[1]; liveFeed(splitReplies(r.body).body, false); }
         } }, extra));
-        const dd = takeDo(full), sg = takeSing(dd.rest), sw = takeSaw(sg.rest, true), text = sw.rest;
+        const nx = takeNext(full), dd = takeDo(nx.rest), sg = takeSing(dd.rest), sw = takeSaw(sg.rest, true), text = sw.rest;
         if (dd.act) later(async () => {
           const res = await Promise.resolve(runAction(dd.act)).catch(() => "failed");
           const nm = String(dd.act).split(/\s+/)[0].toLowerCase(), arg0 = String(dd.act).slice(nm.length).trim();
@@ -3885,6 +3902,16 @@ Start with one face tag like [happy] [excited] [pout] [shy] [sleepy], then the m
             else if (nm === "watch" && !/stop/i.test(arg0)) noteHabit("watching their screen together with you");
             else if (nm === "autoscroll" && /start/i.test(arg0)) noteHabit("reading while you scroll for them");
           }
+          // more steps to go: she goes on by herself (up to 12 steps per job; anything they say stops it)
+          if (nx.next && box.isConnected && (AGENT.steps || 0) < 12) {
+            AGENT.steps = (AGENT.steps || 0) + 1;
+            const step = AGENT.steps;
+            later(() => {
+              if (AGENT.steps !== step || ctl) return;
+              session.turns.push({ role: "user", content: "(step " + step + " result: " + (res || "done") + ". Keep going with the job: " + nx.next + ". Look at their screen as it is now.)" });
+              lumaReply();
+            }, 1800);
+          } else if (!nx.next) AGENT.steps = 0;
           if (!res || String(res).startsWith("ok") || res === "asking") return;
           const why = t({ not_found: "actNotFound", no_access: "actNoAccess", private: "actPrivate", no_bubble: "actBubble", game: "actGame" }[res] || "actFailed");
           if (box.isConnected) addMsg("luma", why);

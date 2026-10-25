@@ -7,7 +7,7 @@ const path = require("path");
 
 const WIN = process.platform === "win32";
 // her hands only work with "Luma can control this PC" on; opening programs and links always does (like on the phone)
-const NEEDS_CONTROL = new Set(["tap", "type", "scroll", "autoscroll", "back", "home", "notifications"]);
+const NEEDS_CONTROL = new Set(["tap", "type", "type_here", "scroll", "autoscroll", "back", "home", "notifications", "key", "switch_to", "window"]);
 // never touched: money, passwords, system settings, terminals, and Firefly itself
 const OFF_LIMITS = /bank|pay|wallet|money|cash|crypto|coin|binance|trade|finance|password|passkey|authenticator|keepass|bitwarden|1password|lastpass|vault|SystemSettings|SecHealthUI|Windows Security|regedit|\bmmc\b|\bcmd\b|powershell|pwsh|WindowsTerminal|Firefly|electron/i;
 
@@ -158,6 +158,15 @@ async function act(name, arg, askFirst) {
       return r && r.ok ? "ok:" + best.n : "failed";
     }
     case "open_url": { const u = /^https?:\/\//i.test(arg) ? arg : "https://" + arg; if (!/^https?:\/\//i.test(u)) return "failed"; await shell.openExternal(u); return "ok"; }
+    case "claude": await shell.openExternal("https://claude.ai/new?q=" + encodeURIComponent(arg)); return "ok";   // hand a job to Claude
+    case "open_path": { const r = await shell.openPath(arg.replace(/^~(?=[\\/])/, require("os").homedir())); return r ? "not_found" : "ok"; }
+    case "media": {   // play/pause, next, previous, volume: works for whatever is playing (never in games)
+      if (gaming) return "game";
+      const k = /next/i.test(arg) ? "next_track" : /prev|back/i.test(arg) ? "prev_track" : /mute/i.test(arg) ? "mute" : /up|louder|raise/i.test(arg) ? "volume_up" : /down|quieter|lower/i.test(arg) ? "volume_down" : "play_pause";
+      const times = /volume/.test(k) ? Math.min(10, parseInt(arg.match(/\d+/) || [5], 10)) : 1;
+      for (let i = 0; i < times; i++) await ask("keys", { hwnd: 0, keys: k });
+      return "ok";
+    }
     case "search": await shell.openExternal("https://www.google.com/search?q=" + encodeURIComponent(arg)); return "ok";
     case "maps": await shell.openExternal("https://www.google.com/maps/search/" + encodeURIComponent(arg)); return "ok";
     case "music":
@@ -165,6 +174,12 @@ async function act(name, arg, askFirst) {
       if (/lo-?fi|focus|study|chill|work|relax/i.test(arg)) await shell.openExternal("https://www.youtube.com/watch?v=jfKfPfyJRdk");
       else await shell.openExternal("https://www.youtube.com/results?search_query=" + encodeURIComponent(arg));
       return "ok";
+  }
+  if (name === "switch_to") {
+    if (gaming) return "game";
+    const r = await ask("activate", { name: arg });
+    if (r && r.ok) { target = null; await pollForeground(); return "ok:" + r.app; }
+    return "not_found";
   }
   if (!target) await pollForeground();
   if (gaming) return "game";   // never anything inside a game
@@ -182,6 +197,9 @@ async function act(name, arg, askFirst) {
       scroll = { every, hwnd, timer: setInterval(() => { if (!gaming) ask("wheel", { hwnd, dir: "down", notches: 2 }); }, every) };
       return "ok";
     }
+    case "key": { const r = await ask("keys", { hwnd, keys: arg.toLowerCase().replace(/\s+/g, "") }); return r && r.ok ? "ok" : "failed"; }
+    case "type_here": { const r = await ask("typehere", { hwnd, text: arg }); return r && r.ok ? "ok" : "failed"; }
+    case "window": { const r = await ask("window", { hwnd, how: /min/i.test(arg) ? "min" : /max/i.test(arg) ? "max" : "restore" }); return r && r.ok ? "ok" : "failed"; }
     case "back": { const r = await ask("keys", { hwnd, keys: "alt+left" }); return r && r.ok ? "ok" : "failed"; }
     case "home": { const r = await ask("keys", { hwnd: 0, keys: "win+d" }); return r && r.ok ? "ok" : "failed"; }
     case "notifications": { const r = await ask("keys", { hwnd: 0, keys: "win+n" }); return r && r.ok ? "ok" : "failed"; }

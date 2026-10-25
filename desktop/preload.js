@@ -25,7 +25,7 @@ contextBridge.exposeInMainWorld("AndroidLuma", {
   // signing in with the access code
   askCode: (text) => ipcRenderer.invoke("luma:askCode", String(text || "")),
   // reaching out on her own: a message or a call; how long he's been away from the keyboard
-  notify: (text, call) => send("notify", String(text || ""), !!call), pendingCall: () => get("pendingCall") || "", idleSecs: () => get("idleSecs"),
+  notify: (text, call) => send("notify", String(text || ""), !!call), showMain: () => send("showMain"), pendingCall: () => get("pendingCall") || "", idleSecs: () => get("idleSecs"),
 });
 // The built-in speech recognizer doesn't work in desktop apps; without it the page hears through the mic (Whisper).
 webFrame.executeJavaScript("try { delete window.webkitSpeechRecognition; delete window.SpeechRecognition; } catch (e) {}");

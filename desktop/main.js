@@ -71,6 +71,7 @@ function refreshTray() {
   tray.setContextMenu(Menu.buildFromTemplate([
     { label: "Open Firefly", click: showWindow },
     { label: "Talk to Luma\tCtrl+Shift+L", click: startCall },
+    { label: "Help with my screen\tCtrl+Shift+H", click: () => js("window.__screenHelp && __screenHelp()") },
     { type: "separator" },
     { label: "Luma's bubble on the desktop", type: "checkbox", checked: settings.bubble, click: (i) => { settings.bubble = i.checked; save(); syncBubble(); } },
     { label: "Luma can control this PC", type: "checkbox", checked: settings.control, click: (i) => setControl(i.checked) },
@@ -184,6 +185,7 @@ ipcMain.on("luma:do", (e, name, ...a) => {
     case "answerAsk": answerAsk(!!a[0]); break;
     case "accessOpen": setControl(!settings.control); break;
     case "notify": ping(String(a[0] || ""), !!a[1]); break;
+    case "showMain": showWindow(); break;
   }
 });
 ipcMain.handle("luma:act", (e, name, arg) => (settings.control || !hands.NEEDS_CONTROL.has(name) ? hands.act(name, String(arg || ""), askFirst) : "no_access"));
@@ -234,6 +236,7 @@ app.whenReady().then(() => {
   createTray();
   applyAutostart();
   globalShortcut.register("CommandOrControl+Shift+L", startCall);
+  globalShortcut.register("CommandOrControl+Shift+H", () => js("window.__screenHelp && __screenHelp()"));   // "help me with what's on my screen"
   hands.init({
     onAutoScrollStop: () => toBubble("say", { text: "Okay, stopped scrolling~", mood: "happy" }),
     onGame: (on) => { toBubble("game", on); if (on) toBubble("say", { text: "Game time! 🎮 My hands are off while you play, so no ban worries~", mood: "excited" }); },

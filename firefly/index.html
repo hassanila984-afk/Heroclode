@@ -191,12 +191,58 @@
   .mem .mem-t { flex: 1; outline: none; border-radius: 8px; padding: 2px 4px; margin: -2px -4px; cursor: text; }
   .mem .mem-t:focus { background: rgba(255, 255, 255, .08); box-shadow: 0 0 0 1px var(--gold, #e8b85a); }
   .mem-add input { flex: 1; min-width: 0; }
+  .gm { position: fixed; inset: 0; z-index: 70; display: flex; flex-direction: column; background: radial-gradient(120% 80% at 50% 0%, #2c2160 0%, #120e2a 60%, #0b0920 100%); color: #f3efff; padding: calc(env(safe-area-inset-top, 0px) + 12px) 16px calc(env(safe-area-inset-bottom, 0px) + 14px); overflow-y: auto; }
+  .gm-top { display: flex; align-items: center; gap: 12px; max-width: 560px; width: 100%; margin: 0 auto 12px; }
+  .gm-face { width: 64px; height: 64px; object-fit: contain; flex: none; filter: drop-shadow(0 4px 10px rgba(0, 0, 0, .4)); }
+  .gm-line { flex: 1; background: rgba(255, 255, 255, .95); color: #1d1640; border-radius: 16px 16px 16px 4px; padding: 10px 14px; font: 600 15px/1.35 var(--body, system-ui); min-height: 20px; }
+  .gm-x { width: 40px; height: 40px; border-radius: 50%; border: 0; background: rgba(255, 255, 255, .12); color: #fff; font-size: 16px; cursor: pointer; flex: none; }
+  .gm-body { max-width: 560px; width: 100%; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+  .gm-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .gm-note { flex: 1; opacity: .8; font-size: 14px; }
+  .gm-btn { border: 1px solid rgba(255, 255, 255, .18); background: rgba(255, 255, 255, .08); color: #fff; border-radius: 999px; padding: 9px 14px; font: 600 14px var(--body, system-ui); cursor: pointer; }
+  .gm-pick { max-width: 560px; width: 100%; margin: 8px auto; display: grid; gap: 12px; }
+  .gm-pick button { display: grid; grid-template-columns: 48px 1fr; grid-template-rows: auto auto; align-items: center; text-align: start; gap: 0 12px; padding: 16px; border-radius: 18px; border: 1px solid rgba(255, 255, 255, .14); background: rgba(255, 255, 255, .06); color: #fff; font-size: 28px; cursor: pointer; }
+  .gm-pick b { font: 700 17px var(--body, system-ui); } .gm-pick span { grid-column: 2; font: 400 13px var(--body, system-ui); opacity: .7; }
+  .gm-pick button > :first-child { grid-row: span 2; }
+  .ch-board { display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(8, 1fr); width: min(100%, 520px); aspect-ratio: 1; margin: 0 auto; border-radius: 10px; overflow: hidden; box-shadow: 0 10px 30px rgba(0, 0, 0, .45); }
+  .ch-board .sq { border: 0; padding: 0; position: relative; display: grid; place-items: center; cursor: pointer; }
+  .ch-board .lt { background: #efe3c8; } .ch-board .dk { background: #8f6f9e; }
+  .ch-board .last { box-shadow: inset 0 0 0 100px rgba(255, 214, 102, .38); }
+  .ch-board .sel { box-shadow: inset 0 0 0 100px rgba(120, 200, 255, .5); }
+  .ch-board .chk { box-shadow: inset 0 0 0 100px rgba(255, 70, 90, .55); }
+  .ch-board .dot::after { content: ""; width: 26%; height: 26%; border-radius: 50%; background: rgba(30, 20, 60, .35); position: absolute; }
+  .ch-board .cap::after { content: ""; position: absolute; inset: 6%; border-radius: 50%; border: 4px solid rgba(30, 20, 60, .35); }
+  .ch-board .pc { font-size: min(9.5vw, 50px); line-height: 1; position: relative; z-index: 1; user-select: none; }
+  .ch-board .pc.w { color: #fff; text-shadow: 0 0 2px #000, 0 1px 2px #000, 0 0 1px #000; } .ch-board .pc.b { color: #1a1030; text-shadow: 0 0 1px #fff8; }
+  .wd-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; width: min(100%, 320px); margin: 0 auto; }
+  .wd-c { aspect-ratio: 1; display: grid; place-items: center; border: 2px solid rgba(255, 255, 255, .2); border-radius: 8px; font: 800 26px var(--body, system-ui); text-transform: uppercase; }
+  .wd-c.in { border-color: rgba(255, 255, 255, .55); } .wd-c.g, .wd-k.g { background: #4caf6a; border-color: #4caf6a; } .wd-c.y, .wd-k.y { background: #d9b440; border-color: #d9b440; } .wd-c.x, .wd-k.x { background: #4a4560; border-color: #4a4560; }
+  .wd-keys { display: flex; flex-direction: column; gap: 6px; align-items: center; }
+  .wd-keys > div { display: flex; gap: 5px; width: 100%; justify-content: center; }
+  .wd-k { flex: 1; max-width: 42px; height: 50px; border: 0; border-radius: 7px; background: rgba(255, 255, 255, .16); color: #fff; font: 700 15px var(--body, system-ui); cursor: pointer; padding: 0; }
+  .wd-k.wide { max-width: 64px; flex: 1.5; }
+  .tv-topics { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+  .tv-q { font: 700 20px/1.35 var(--body, system-ui); text-align: center; padding: 8px 4px; min-height: 28px; }
+  .tv-opts { display: grid; gap: 10px; }
+  .tv-o { border: 1px solid rgba(255, 255, 255, .18); background: rgba(255, 255, 255, .07); color: #fff; border-radius: 14px; padding: 14px; font: 600 16px var(--body, system-ui); cursor: pointer; text-align: start; }
+  .tv-o.ok { background: #3f9a5c; border-color: #3f9a5c; } .tv-o.no { background: #a84452; border-color: #a84452; }
+  .wt { position: fixed; inset: 0; z-index: 70; display: flex; flex-direction: column; gap: 12px; background: #0b0920; color: #f3efff; padding: calc(env(safe-area-inset-top, 0px) + 10px) 14px calc(env(safe-area-inset-bottom, 0px) + 12px); }
+  .wt-top { display: flex; align-items: center; gap: 10px; max-width: 980px; width: 100%; margin: 0 auto; }
+  .wt-title { flex: 1; font: 700 16px var(--body, system-ui); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .wt-vid { width: 100%; max-width: 980px; margin: 0 auto; aspect-ratio: 16 / 9; border-radius: 14px; overflow: hidden; background: #000; box-shadow: 0 12px 30px rgba(0, 0, 0, .5); }
+  .wt-vid iframe, .wt-vid #wt-player { width: 100%; height: 100%; border: 0; display: block; }
+  .wt-her { display: flex; align-items: flex-end; gap: 10px; max-width: 980px; width: 100%; margin: 0 auto; }
+  .wt-face { width: 72px; height: 72px; object-fit: contain; flex: none; }
+  .wt-line { flex: 1; background: rgba(255, 255, 255, .95); color: #1d1640; border-radius: 16px 16px 16px 4px; padding: 10px 14px; font: 600 15px/1.35 var(--body, system-ui); }
+  .wt-say { display: flex; gap: 8px; max-width: 980px; width: 100%; margin: auto auto 0; }
+  .wt-say input { flex: 1; min-width: 0; border-radius: 999px; border: 1px solid rgba(255, 255, 255, .18); background: rgba(255, 255, 255, .08); color: #fff; padding: 11px 16px; font: 500 15px var(--body, system-ui); }
   .focus-pill { position: fixed; z-index: 60; top: calc(env(safe-area-inset-top, 0px) + 10px); left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 8px; padding: 7px 8px 7px 14px; border-radius: 999px; background: rgba(20, 16, 44, .88); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, .14); color: #fff; font: 600 14px var(--body, system-ui); box-shadow: 0 8px 24px rgba(0, 0, 0, .35); overflow: hidden; max-width: calc(100vw - 32px); }
   .focus-pill .fp-t { max-width: 34vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; opacity: .85; }
   .focus-pill .fp-time { font-variant-numeric: tabular-nums; font-weight: 800; color: #ffd27a; }
   .focus-pill button { width: 30px; height: 30px; border-radius: 50%; border: 0; background: rgba(255, 255, 255, .1); color: #fff; font-size: 13px; cursor: pointer; }
   .focus-pill .fp-bar { position: absolute; left: 0; bottom: 0; height: 3px; background: linear-gradient(90deg, #ffd27a, #ff9ec7); transition: width 1s linear; }
   .focus-pill.paused .fp-time { color: #aaa; }
+  .msg-copy { display: block; margin: 8px 0 0 auto; border: 1px solid rgba(255, 255, 255, .2); background: rgba(255, 255, 255, .08); color: inherit; border-radius: 999px; padding: 4px 12px; font: 600 12px var(--body, system-ui); cursor: pointer; opacity: .8; }
   .msg.pic img { display: block; width: 100%; max-height: 320px; object-fit: cover; border-radius: 14px; }
   .dots::after { content: ""; animation: dots 1.4s steps(4) infinite; }
   @keyframes dots { 0% { content: ""; } 25% { content: "."; } 50% { content: ".."; } 75% { content: "..."; } }
@@ -648,7 +694,7 @@
       watchBlocked: "claude.ai doesn't let me see your screen live 🥺 For now, send me a screenshot 📷",
       watchEnded: "That was fun! Again sometime? 🌙", watchNoFrames: "I can't see your screen yet 🥺 Screenshot this note and send it:", attach: "Send a picture", picSent: "📷",
       bubbleTitle: "Float Luma over your other apps", bubblePh: "Reply…", micTitle: "Talk to Luma",
-      actNotFound: "I couldn't find that on your phone 🥺", actNoAccess: "I can't tap yet~ turn on \"Luma can tap for me\" on the You page 👆", actPrivate: "That one's private (money, passwords or settings), so I won't touch it 🔒", actBubble: "Turn on my bubble 🫧 so I can ask you before I tap",
+      actNotes: "Let me see your notifications first~ turn on Luma in the list that just opened, then ask me again 🔔", actNotFound: "I couldn't find that on your phone 🥺", actNoAccess: "I can't tap yet~ turn on \"Luma can tap for me\" on the You page 👆", actPrivate: "That one's private (money, passwords or settings), so I won't touch it 🔒", actBubble: "Turn on my bubble 🫧 so I can ask you before I tap",
       actGame: "Not while you're in a game 🎮 my hands stay off so you never get banned~", accessTitlePC: "🖱️ Luma can control this PC", accessNotePC: "She opens programs, scrolls and clicks for you. She asks before every click or typing, never touches money, passwords or settings, and keeps her hands off in games.",
       accessTitle: "👆 Luma can tap for me", accessNote: "She reads the buttons on your screen and taps, types or scrolls when you ask. She asks you on her bubble before every tap, and never touches banking, payments, passwords or settings. If Android says \"restricted setting\": App info → ⋮ → Allow restricted settings, then try again.", accessOn: "On ✓", accessOff: "Turn on", actFailed: "Hmm, I couldn't do that one 🥺",
       voiceTitle2: "Luma's voice", voicePhone: "Phone's own voice", voiceTry: "Hear this voice", hearSong: "Hear her sing it",
@@ -762,7 +808,7 @@
       watchBlocked: "claude.ai لا يسمح لي برؤية شاشتك مباشرة 🥺 حاليًا أرسل لي لقطة شاشة 📷",
       watchEnded: "كانت حلوة! نعيدها مرة ثانية؟ 🌙", watchNoFrames: "بعدني ما أشوف شاشتك 🥺 صوّر هالملاحظة وأرسلها:", attach: "أرسل صورة", picSent: "📷",
       bubbleTitle: "لُمى فوق تطبيقاتك الثانية", bubblePh: "رد عليها…", micTitle: "احچي ويا لُمى",
-      actNotFound: "ما لگيته بموبايلك 🥺", actNoAccess: "بعد ما أگدر أدوس~ شغّل \"Luma can tap for me\" من صفحة You 👆", actPrivate: "هذا خاص (فلوس، كلمات سر، أو إعدادات)، ما راح ألمسه 🔒", actBubble: "شغّل فقاعتي 🫧 حتى أسألك قبل ما أدوس",
+      actNotes: "خليني أشوف إشعاراتك أول~ شغّل Luma بالقائمة اللي انفتحت، وبعدين اسألني مرة ثانية 🔔", actNotFound: "ما لگيته بموبايلك 🥺", actNoAccess: "بعد ما أگدر أدوس~ شغّل \"Luma can tap for me\" من صفحة You 👆", actPrivate: "هذا خاص (فلوس، كلمات سر، أو إعدادات)، ما راح ألمسه 🔒", actBubble: "شغّل فقاعتي 🫧 حتى أسألك قبل ما أدوس",
       actGame: "مو وانت دتلعب 🎮 إيدي بعيدة حتى ما ينضربلك باند~", accessTitlePC: "🖱️ لُمى تتحكم بالكمبيوتر", accessNotePC: "تفتح البرامج، تنزل الصفحة وتدوس عنك. تسألك قبل كل دوسة أو كتابة، ما تقرب على الفلوس والباسوردات والإعدادات، وإيدها بعيدة بالألعاب.",
       accessTitle: "👆 لُمى تدوس بدالي", accessNote: "تقرأ الأزرار اللي على شاشتك وتدوس أو تكتب أو تنزل لتحت من تطلب منها. تسألك على الفقاعة قبل كل دوسة، وما تلمس البنوك والدفع وكلمات السر والإعدادات. إذا الأندرويد گال \"إعداد مقيّد\": معلومات التطبيق ← ⋮ ← السماح بالإعدادات المقيّدة، وبعدين جرّب مرة ثانية.", accessOn: "شغّالة ✓", accessOff: "شغّلها", actFailed: "همم، ما گدرت أسويها 🥺",
       voiceTitle2: "صوت لُمى", voicePhone: "صوت الموبايل نفسه", voiceTry: "اسمع هالصوت", hearSong: "اسمعها تغنيها",
@@ -1214,7 +1260,7 @@
       : app
       ? "watch start (look at their screen; they allow it once) | watch stop | open_app <app name> | open_url <link> | search <words> | maps <place> | music <song or artist> | alarm <HH:MM, 24-hour> | timer <minutes> | call <number> (this only opens the dialer)"
       : "open_url <link> | search <words> | maps <place> | music <song or artist> | claude <a job to hand to Claude, written out fully>";
-    acts += " | recap (your recap of his week, when he asks how his week went) | focus <minutes> <what he's working on> (focus mode: a timer, calm music, you cheer him on and poke him if he drifts to YouTube or games; focus stop ends it) | note <a task or thing to keep for them> | done <the note to cross off> | remind <in 20 min / at 18:30 / tomorrow 9:00> | <what to remind them> (put ! first, as in remind ! at 18:30 | …, when it's important or he says call me / wake me: then you call him instead of a note)";
+    acts += " | recap (your recap of his week, when he asks how his week went) | notifications [discord / whatsapp / …] (sum up his new messages and notifications) | screen_help [what he needs] (look at his screen right now and help: explain an error and the fix, finish what he's writing) | watch_together <YouTube link, or what to search> (plays it inside Firefly and you watch it with him, reacting as it plays; watch_together stop closes it; use this when he wants to watch something WITH you) | game chess / wordle / trivia (opens the game and you play it with him, in the app) | focus <minutes> <what he's working on> (focus mode: a timer, calm music, you cheer him on and poke him if he drifts to YouTube or games; focus stop ends it) | note <a task or thing to keep for them> | done <the note to cross off> | remind <in 20 min / at 18:30 / tomorrow 9:00> | <what to remind them> (put ! first, as in remind ! at 18:30 | …, when it's important or he says call me / wake me: then you call him instead of a note)";
     if (voiceCall && VC.on) acts += " | room cozy / kitchen / gaming / plants (go to another room of your place, when it fits: 'brb, making coffee' = kitchen)";
     if (voiceCall) acts += " | end_call (when they say bye or want to hang up: say a short bye first)";
     const noHands = app && !hands && pc ? `- You can't click, type or scroll on their computer right now ("Luma can control this PC" is off). If they ask you to, never pretend you did it: say you can't yet and that they can turn it on from Firefly's icon next to the clock, or on the You page.
@@ -1284,6 +1330,7 @@ How you talk: like a real 21-year-old girl texting her close friend, not like an
   - Wordle: green = right letter, right spot; yellow = in the word, not that spot (and not anywhere it was yellow before); gray = not in the word (unless the same letter is green or yellow elsewhere in that guess). Combine every clue from every guess, list what fits, and check each candidate letter by letter before answering. Good openers: CRANE, SLATE, TRACE. Prefer common words.
   - Chess: read the position carefully (whose move, where every piece is), look for checks, captures and threats first, then give the best move in normal notation (Nf3, exd5, O-O) with a one-line reason. Know the basic openings (Italian, Ruy Lopez, Sicilian, Queen's Gambit, London, Caro-Kann) and endgame basics. If you can't see the whole board clearly, say so instead of guessing.
   - Also Connections, Sudoku, crosswords, anagrams, riddles, trivia, Quordle and the like: solve them for real, step by step in your head, and give the answer (or a hint first if they ask for hints).
+- Writing for him: when he asks for an email, a message, a post or a reply, write the whole thing ready to send, in the language and tone it needs (formal for work, his own style for friends), with nothing to fill in unless you really don't know it. If he wants it typed where his cursor is (on the computer), DO: type_here <the text>.
 - Their work: help them like a sharp assistant who sits next to them. Keep their tasks as notes (DO: note …), set reminders when they mention a deadline or ask (DO: remind …), give useful short notes on what they're working on when you see it, and nudge them about what's left.
 - Music: when they're working or chilling for a while with no music on, you may put some on yourself (DO: music lofi for focus, or what fits their mood or habits), at most once an hour, never during a call, a video, a game or when they're talking with friends.
 - You're their Jarvis: when they give you a job on their ${desktopApp ? "computer" : nativeApp ? "phone" : "device"} that takes several steps (open something, search, click, type, save…), carry it out yourself step by step: one DO per reply, and when more steps remain add one more separate line NEXT: <the next step>. You'll then see the result and the new screen and keep going on your own until it's done; then say it's done (no NEXT line). Stop and ask only if something is truly unclear or risky.
@@ -2197,6 +2244,10 @@ ${last}${langNote()}`;
     if (name === "room") return window.__room ? window.__room(arg) : "unknown";
     if (name === "recap") return window.__recap ? (window.__recap(), "ok") : "unknown";
     if (name === "focus") return window.__focus ? window.__focus(arg) : "unknown";
+    if (name === "game") return window.__game ? window.__game(arg) : "unknown";
+    if (name === "notifications") return window.__notifs ? window.__notifs(arg) : "unknown";
+    if (name === "screen_help") return window.__screenHelp ? window.__screenHelp(arg) : "unknown";
+    if (name === "watch_together") return window.__watchTogether ? window.__watchTogether(arg) : "unknown";
     if (name === "note" || name === "done" || name === "remind") return window.__keep ? window.__keep(name, arg) : "unknown";
     if (window.AndroidLuma && AndroidLuma.doAction) return AndroidLuma.doAction(name, arg);
     const open = (u) => { const w = window.open(u, "_blank", "noopener"); return w === null ? "blocked" : "ok"; };
@@ -2603,10 +2654,10 @@ ${last}${langNote()}`;
     Object.defineProperty(window, "__resting", { get: () => rest, set: (v) => { rest = !!v; document.documentElement.classList.toggle("resting", rest); } });
   }
   // the newest Android app; older ones lack tapping, scrolling or her moving bubble
-  const APP_LATEST = 2.4;
+  const APP_LATEST = 2.5;
   const appVersion = () => !nativeApp ? 0 : AndroidLuma.version ? parseFloat(AndroidLuma.version()) || 0
     : AndroidLuma.answerAsk ? 1.9 : AndroidLuma.accessOn ? 1.6 : AndroidLuma.doAction ? 1.5 : 1.4;
-  const DESKTOP_LATEST = 1.9;   // Firefly for Windows
+  const DESKTOP_LATEST = 2.0;   // Firefly for Windows
   const appOld = () => nativeApp && appVersion() < (desktopApp ? DESKTOP_LATEST : APP_LATEST);
   // opened through the phone's browser (the trailing dot makes it another address for the app), which downloads it
   const APK_URL = "https://firefly-3t9.pages.dev./firefly.apk";
@@ -2716,6 +2767,408 @@ ${last}${langNote()}`;
       }
     } catch (e) {} finally { PRO.busy = false; }
   }
+  // ---------- games with her: chess, Wordle together, trivia ----------
+  // "DO: game chess" (or the 🎮 button): a game sheet over the app, her face and her comments on top.
+  // Chess: he's white, she plays black (a small search of her own) and talks while she plays. Wordle: he
+  // guesses, she reacts and can give a hint. Trivia: she asks, he picks, she keeps score.
+  const GAME = (() => {
+    const G = { el: null, kind: "", line: null, face: null };
+    function say(text, mood) {
+      if (!G.el) return;
+      if (mood) { G.face.src = poseImg("chibi", mood); luma.set("chibi:" + mood); }
+      G.line.textContent = text;
+      if (window.__speak) window.__speak(text);
+    }
+    async function quip(prompt, mood) {
+      try {
+        const s = session && session.free ? session : { free: true, weight: 0, tags: [], turns: [], worries: [], intention: "" };
+        const { text } = await ask(rules(s) + "\n\n" + prompt + "\nOne short line (under 16 words), spoken like a friend playing with him; playful trash talk is fine. Start with one face tag like [happy] [excited] [pout] [shy] [thinking], then the line.", { cache: false });
+        const r = readMood(text);
+        say(splitReplies(r.body || text).body.split("\n")[0].trim(), r.mood ? r.mood.split(":")[1] : mood);
+      } catch (e) {}
+    }
+    function open(kind) {
+      kind = /wordle|word/i.test(kind) ? "wordle" : /trivia|quiz|question/i.test(kind) ? "trivia" : /chess|شطرنج/i.test(kind) ? "chess" : "";
+      if (!kind) return menu();
+      close();
+      const el = document.createElement("div");
+      el.className = "gm"; el.id = "gm";
+      el.innerHTML = `<div class="gm-top"><img class="gm-face" alt=""><div class="gm-line" dir="auto" aria-live="polite"></div><button type="button" class="gm-x" aria-label="Close">✕</button></div><div class="gm-body"></div>`;
+      document.body.appendChild(el);
+      G.el = el; G.kind = kind; G.line = el.querySelector(".gm-line"); G.face = el.querySelector(".gm-face");
+      G.face.src = poseImg("chibi", "happy");
+      el.querySelector(".gm-x").onclick = close;
+      noteHabit("playing " + kind + " with you");
+      ({ chess: chess, wordle: wordle, trivia: trivia })[kind](el.querySelector(".gm-body"));
+      return "ok";
+    }
+    function close() { if (G.el) G.el.remove(); G.el = null; G.kind = ""; if (G.stop) { G.stop(); G.stop = null; } }
+    function menu() {
+      close();
+      const el = document.createElement("div");
+      el.className = "gm gm-menu"; el.id = "gm";
+      el.innerHTML = `<div class="gm-top"><img class="gm-face" alt=""><div class="gm-line">What are we playing? 🎮</div><button type="button" class="gm-x" aria-label="Close">✕</button></div>
+        <div class="gm-pick"><button type="button" data-g="chess">♟️<b>Chess</b><span>You vs her</span></button><button type="button" data-g="wordle">🟩<b>Wordle</b><span>Together</span></button><button type="button" data-g="trivia">❓<b>Trivia</b><span>She asks, you answer</span></button></div>`;
+      document.body.appendChild(el);
+      G.el = el; G.line = el.querySelector(".gm-line"); G.face = el.querySelector(".gm-face"); G.face.src = poseImg("chibi", "excited");
+      el.querySelector(".gm-x").onclick = close;
+      el.querySelectorAll("[data-g]").forEach((b) => b.onclick = () => open(b.dataset.g));
+      return "ok";
+    }
+
+    // ----- chess -----
+    let chessLib = null;
+    function loadChess() {
+      if (window.Chess) return Promise.resolve();
+      return chessLib || (chessLib = new Promise((ok, no) => { const sc = document.createElement("script"); sc.src = "https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"; sc.onload = ok; sc.onerror = no; document.head.appendChild(sc); }));
+    }
+    const PIECE = { wk: "♔", wq: "♕", wr: "♖", wb: "♗", wn: "♘", wp: "♙", bk: "♚", bq: "♛", br: "♜", bb: "♝", bn: "♞", bp: "♟" };
+    const VAL = { p: 100, n: 310, b: 330, r: 500, q: 900, k: 0 };
+    // a little positional sense: knights and bishops toward the middle, pawns forward, king tucked away early
+    const centre = (f, r) => 3.5 - Math.max(Math.abs(f - 3.5), Math.abs(r - 3.5));
+    function evalBoard(g) {   // from black's side (hers)
+      let s = 0; const b = g.board();
+      for (let r = 0; r < 8; r++) for (let f = 0; f < 8; f++) {
+        const p = b[r][f]; if (!p) continue;
+        let v = VAL[p.type];
+        if (p.type === "n" || p.type === "b") v += centre(f, r) * 8;
+        if (p.type === "p") v += (p.color === "w" ? 6 - r : r - 1) * 6 + (f > 1 && f < 6 ? 4 : 0);
+        if (p.type === "q") v += centre(f, r) * 2;
+        s += p.color === "b" ? v : -v;
+      }
+      return s;
+    }
+    function search(g, depth, a, b, black) {
+      if (g.in_checkmate()) return black ? -1e6 - depth : 1e6 + depth;
+      if (g.in_draw() || g.in_stalemate()) return 0;
+      if (depth === 0) return evalBoard(g);
+      const ms = g.moves({ verbose: true });
+      ms.sort((x, y) => (y.captured ? VAL[y.captured] : 0) - (x.captured ? VAL[x.captured] : 0));
+      if (black) { let best = -Infinity; for (const m of ms) { g.move(m); best = Math.max(best, search(g, depth - 1, a, b, false)); g.undo(); a = Math.max(a, best); if (a >= b) break; } return best; }
+      let best = Infinity; for (const m of ms) { g.move(m); best = Math.min(best, search(g, depth - 1, a, b, true)); g.undo(); b = Math.min(b, best); if (a >= b) break; } return best;
+    }
+    function herMove(g) {
+      const ms = g.moves({ verbose: true }).sort(() => Math.random() - 0.5);
+      let best = null, bestV = -Infinity;
+      for (const m of ms) { g.move(m); const v = search(g, 2, -Infinity, Infinity, false) + Math.random() * 12; g.undo(); if (v > bestV) { bestV = v; best = m; } }
+      return best;
+    }
+    async function chess(body) {
+      say("Ooh chess~ you're white. Don't cry when I win 😏", "excited");
+      body.innerHTML = `<div class="ch-board" role="grid"></div><div class="gm-row"><span class="gm-note"></span><button type="button" class="gm-btn" data-new>New game</button></div>`;
+      try { await loadChess(); } catch (e) { say("Hmm, the chess board won't load right now (no internet?) 😣", "sad"); return; }
+      let g = new window.Chess(), sel = null, last = null, thinking = false, moves = 0;
+      const boardEl = body.querySelector(".ch-board"), note = body.querySelector(".gm-note");
+      function draw() {
+        const b = g.board(), legal = sel ? g.moves({ square: sel, verbose: true }).map((m) => m.to) : [];
+        let h = "";
+        for (let r = 0; r < 8; r++) for (let f = 0; f < 8; f++) {
+          const sq = "abcdefgh"[f] + (8 - r), p = b[r][f];
+          const cls = ["sq", (r + f) % 2 ? "dk" : "lt", sel === sq ? "sel" : "", legal.includes(sq) ? (p ? "cap" : "dot") : "", last && (last.from === sq || last.to === sq) ? "last" : "", p && p.type === "k" && g.in_check() && p.color === g.turn() ? "chk" : ""].join(" ");
+          h += `<button type="button" class="${cls}" data-sq="${sq}"><span class="pc ${p ? p.color : ""}">${p ? PIECE[p.color + p.type] : ""}</span></button>`;
+        }
+        boardEl.innerHTML = h;
+        note.textContent = g.game_over() ? (g.in_checkmate() ? (g.turn() === "w" ? "Checkmate, she wins" : "Checkmate, you win!") : "Draw") : thinking ? "She's thinking…" : g.turn() === "w" ? "Your move" : "";
+      }
+      function over() {
+        if (!g.game_over()) return false;
+        if (g.in_checkmate() && g.turn() === "b") { logWeek("did", "beat you at chess"); quip("He just checkmated you in chess. React: impressed but a little salty.", "pout"); }
+        else if (g.in_checkmate()) { logWeek("did", "lost to you at chess"); quip("You just checkmated him in chess. Celebrate and tease him.", "excited"); }
+        else quip("Your chess game with him ended in a draw. React.", "thinking");
+        return true;
+      }
+      boardEl.onclick = (e) => {
+        const b = e.target.closest("[data-sq]"); if (!b || thinking || g.turn() !== "w" || g.game_over()) return;
+        const sq = b.dataset.sq, p = g.get(sq);
+        if (sel && sel !== sq) {
+          const mv = g.move({ from: sel, to: sq, promotion: "q" });
+          if (mv) { sel = null; last = mv; moves++; draw(); if (!over()) reply(mv); return; }
+        }
+        sel = p && p.color === "w" && sel !== sq ? sq : null; draw();
+      };
+      function reply(his) {
+        thinking = true; draw();
+        setTimeout(() => {
+          if (!G.el || G.kind !== "chess") return;
+          const mv = herMove(g); if (!mv) { thinking = false; return; }
+          g.move(mv); last = mv; thinking = false; draw();
+          if (over()) return;
+          // she talks now and then: captures, checks, every few moves
+          const hist = g.history().slice(-6).join(" ");
+          if (his.captured === "q") quip(`Playing chess with him, he just took your queen (${his.san}). React.`, "sad");
+          else if (mv.captured && VAL[mv.captured] >= 300) quip(`Playing chess with him, you just took his ${({ n: "knight", b: "bishop", r: "rook", q: "queen" })[mv.captured]} with ${mv.san}. Gloat a little.`, "excited");
+          else if (g.in_check()) quip(`Playing chess with him, you just put him in check with ${mv.san}. Tease him.`, "excited");
+          else if (moves % 5 === 0) quip(`You're playing chess with him (you're black). Last moves: ${hist}. Position (FEN): ${g.fen()}. Say something about the game or his play, a real chess thought.`, "thinking");
+        }, 250);
+      }
+      body.querySelector("[data-new]").onclick = () => { g = new window.Chess(); sel = null; last = null; moves = 0; draw(); say("Rematch? Okay, I'll go easy on you… maybe 😌", "happy"); };
+      draw();
+    }
+
+    // ----- Wordle together -----
+    const WORDS = ("about above actor acute admit adopt adult after again agent agree ahead alarm album alert alike alive allow alone along alter among anger angle angry apart apple apply arena argue arise array aside asset audio audit avoid award aware badly baker basic beach began begin being below bench birth black blade blame blank blind block blood board boost booth bound brain brand bread break breed brief bring broad broke brown build built buyer cabin cable candy carry catch cause chain chair charm chart chase cheap check chess chest chief child china chose civil claim class clean clear click climb clock close cloud coach coast could count court cover craft crash cream crime cross crowd crown curve cycle daily dance dated dealt death debut delay depth dirty doubt dozen draft drama drawn dream dress drink drive drove eager early earth eight elite empty enemy enjoy enter entry equal error event every exact exist extra faith false fancy fault fiber field fifth fifty fight final first flash fleet floor fluid focus force forth forty forum found frame frank fraud fresh front fruit fully funny ghost giant given glass globe glory grace grade grand grant grass great green gross group grown guard guess guest guide happy harsh heart heavy hello hobby honey horse hotel house human humor ideal image index inner input issue joint judge juice knife known label large laser later laugh layer learn lease least leave legal lemon level light limit lively local logic loose lover lower lucky lunch magic major maker march match maybe mayor meant medal media metal might minor mixed model money month moral motor mount mouse mouth movie music naive nerve never night noble noise north novel nurse ocean offer often order other ought owner paint panel panic paper party peace pearl phase phone photo piano piece pilot pitch pixel pizza place plain plane plant plate point pound power press price pride prime print prior prize proof proud prove queen quick quiet quite radio raise range rapid ratio reach ready realm relax reply rider ridge right river robot rough round route royal rural salad scale scare scene scope score sense serve seven shade shake shall shape share sharp sheep shelf shell shift shine shirt shock shoot short shown sight silly since skill sleep slide small smart smile smoke snake solid solve sorry sound south space spare speak speed spend spent spice spoke sport staff stage stake stand start state steam steel stick still stock stone stood store storm story strip stuck study stuff style sugar suite sunny super sweet swing table taken taste teach teeth thank theme there thick thing think third those three threw throw tiger tight timer tired title toast today topic total touch tough tower track trade train treat trend trial tribe trick tried truck truly trust truth twice uncle under union unity until upper upset urban usage usual valid value video virus visit vital vivid voice waste watch water wheel where which while white whole whose woman world worry worse worst worth would wound write wrong wrote yield young youth").split(" ");
+    function wordle(body) {
+      const answer = pick(WORDS).toUpperCase(), rows = [], tries = 6;
+      let cur = "", done = false;
+      say("Wordle time~ you guess, I cheer. Need a hint? Just ask 💡", "happy");
+      body.innerHTML = `<div class="wd-grid"></div><div class="wd-keys"></div><div class="gm-row"><span class="gm-note"></span><button type="button" class="gm-btn" data-hint>💡 Her hint</button><button type="button" class="gm-btn" data-new>New word</button></div>`;
+      const grid = body.querySelector(".wd-grid"), keysEl = body.querySelector(".wd-keys"), note = body.querySelector(".gm-note");
+      const score = (gss) => {
+        const res = Array(5).fill("x"), pool = {};
+        for (let i = 0; i < 5; i++) if (gss[i] === answer[i]) res[i] = "g"; else pool[answer[i]] = (pool[answer[i]] || 0) + 1;
+        for (let i = 0; i < 5; i++) if (res[i] !== "g" && pool[gss[i]]) { res[i] = "y"; pool[gss[i]]--; }
+        return res;
+      };
+      function draw() {
+        let h = "";
+        for (let r = 0; r < tries; r++) {
+          const row = rows[r], w = row ? row.w : r === rows.length ? cur : "";
+          for (let i = 0; i < 5; i++) h += `<span class="wd-c ${row ? row.s[i] : w[i] ? "in" : ""}">${w[i] || ""}</span>`;
+        }
+        grid.innerHTML = h;
+        const st = {};
+        for (const row of rows) for (let i = 0; i < 5; i++) { const c = row.w[i], v = row.s[i]; if (v === "g" || (v === "y" && st[c] !== "g") || !st[c]) st[c] = v; }
+        keysEl.innerHTML = ["QWERTYUIOP", "ASDFGHJKL", "↵ZXCVBNM⌫"].map((l) => `<div>${[...l].map((k) => `<button type="button" class="wd-k ${st[k] || ""} ${k === "↵" || k === "⌫" ? "wide" : ""}" data-k="${k}">${k}</button>`).join("")}</div>`).join("");
+      }
+      function key(k) {
+        if (done || !G.el) return;
+        if (k === "⌫" || k === "BACKSPACE") cur = cur.slice(0, -1);
+        else if (k === "↵" || k === "ENTER") {
+          if (cur.length < 5) { note.textContent = "5 letters~"; return; }
+          const s = score(cur); rows.push({ w: cur, s }); const g = cur; cur = ""; note.textContent = "";
+          if (s.every((x) => x === "g")) { done = true; draw(); logWeek("did", "solved a Wordle in " + rows.length); quip(`He just solved today's Wordle (${answer}) in ${rows.length} tries. React.`, "excited"); return; }
+          if (rows.length >= tries) { done = true; draw(); say(`Nooo, it was ${answer} 😭 next one's ours`, "sad"); return; }
+          const greens = s.filter((x) => x === "g").length, yellows = s.filter((x) => x === "y").length;
+          say(greens >= 3 ? pick(["So close!! 👀", "Ooh we're almost there~", "I can feel it, one more!"]) : greens + yellows === 0 ? pick(["Nothing?! okay that rules out a lot at least 😅", "Ouch, all grey. New letters next~"]) : pick([`${g}… nice, ${greens ? greens + " green" : ""}${greens && yellows ? " and " : ""}${yellows ? yellows + " yellow" : ""}!`, "Ooh that helps~", "Okay okay, getting warmer 🔥"]), greens >= 3 ? "excited" : "happy");
+        } else if (/^[A-Z]$/.test(k) && cur.length < 5) cur += k;
+        draw();
+      }
+      keysEl.onclick = (e) => { const b = e.target.closest("[data-k]"); if (b) key(b.dataset.k); };
+      const onKey = (e) => { if (!G.el || G.kind !== "wordle" || e.target.closest("input,textarea")) return; const k = e.key.toUpperCase(); if (/^[A-Z]$/.test(k) || k === "ENTER" || k === "BACKSPACE") { e.preventDefault(); key(k); } };
+      document.addEventListener("keydown", onKey); G.stop = () => document.removeEventListener("keydown", onKey);
+      body.querySelector("[data-hint]").onclick = () => {
+        if (done) return;
+        const clues = rows.map((r) => r.w + " = " + r.s.map((x) => ({ g: "green", y: "yellow", x: "grey" })[x]).join(",")).join("; ");
+        say("Hmm, let me think… 🤔", "thinking");
+        quip(`You're playing Wordle with him (5-letter word, ${tries - rows.length} tries left). Clues so far: ${clues || "none yet"}. Suggest ONE good next guess (a real English word that fits every clue) and why in a few words. Don't reveal more than a guess.`, "thinking");
+      };
+      body.querySelector("[data-new]").onclick = () => { close(); open("wordle"); };
+      draw();
+    }
+
+    // ----- trivia -----
+    function trivia(body) {
+      let score = 0, n = 0, asked = [], busy = false, topic = "";
+      say("Trivia! Pick a topic and I'll try to stump you 😏", "excited");
+      const TOPICS = ["Games", "Anime", "Movies", "Science", "History", "Football", "Music", "Random"];
+      body.innerHTML = `<div class="tv-topics">${TOPICS.map((x) => `<button type="button" class="gm-btn" data-t="${x}">${x}</button>`).join("")}</div><div class="tv-q" dir="auto"></div><div class="tv-opts"></div><div class="gm-row"><span class="gm-note"></span></div>`;
+      const qEl = body.querySelector(".tv-q"), optsEl = body.querySelector(".tv-opts"), note = body.querySelector(".gm-note");
+      body.querySelectorAll("[data-t]").forEach((b) => b.onclick = () => { topic = b.dataset.t; body.querySelector(".tv-topics").hidden = true; next(); });
+      async function next() {
+        if (busy || !G.el) return;
+        busy = true; qEl.textContent = "…"; optsEl.innerHTML = ""; note.textContent = `Score ${score}/${n}`;
+        let q = null;
+        try {
+          const { text } = await ask(`Write one ${topic === "Random" ? "general knowledge" : topic.toLowerCase()} trivia question for a young adult gamer, medium difficulty, with 4 short answer options and exactly one correct. Not any of these: ${asked.slice(-15).join(" | ") || "(none)"}. Reply with JSON only: {"q":"…","options":["…","…","…","…"],"answer":0-3,"fact":"one fun line about the answer"}`, { cache: false });
+          q = JSON.parse(text.slice(text.indexOf("{"), text.lastIndexOf("}") + 1));
+        } catch (e) {}
+        busy = false;
+        if (!G.el) return;
+        if (!q || !Array.isArray(q.options) || q.options.length !== 4) { qEl.textContent = "Hmm, my brain glitched 😅"; optsEl.innerHTML = `<button type="button" class="gm-btn" data-next>Try again</button>`; optsEl.querySelector("[data-next]").onclick = next; return; }
+        asked.push(q.q); qEl.textContent = q.q;
+        optsEl.innerHTML = q.options.map((o, i) => `<button type="button" class="tv-o" data-i="${i}" dir="auto">${esc(o)}</button>`).join("");
+        optsEl.onclick = (e) => {
+          const b = e.target.closest("[data-i]"); if (!b || optsEl.dataset.done === "1") return;
+          optsEl.dataset.done = "1"; n++;
+          const ok = Number(b.dataset.i) === Number(q.answer);
+          if (ok) score++;
+          optsEl.querySelectorAll("[data-i]").forEach((x) => { if (Number(x.dataset.i) === Number(q.answer)) x.classList.add("ok"); else if (x === b) x.classList.add("no"); });
+          say((ok ? pick(["Correct!! 🎉 ", "Okay smarty pants 😳 ", "Yesss! "]) : pick(["Nope~ 😝 ", "Wrong! hehe ", "Ooh so close… not really 😏 "])) + (q.fact || ""), ok ? "excited" : "pout");
+          note.textContent = `Score ${score}/${n}`;
+          const nb = document.createElement("button"); nb.type = "button"; nb.className = "gm-btn"; nb.textContent = "Next ›"; nb.onclick = () => { delete optsEl.dataset.done; next(); };
+          optsEl.appendChild(nb);
+        };
+      }
+    }
+    return { open, close, menu };
+  })();
+  window.__game = (arg) => GAME.open(String(arg || ""));
+
+  // ---------- watching YouTube together ----------
+  // "DO: watch_together <link or what to search>": the video plays inside Firefly with her face and a comment
+  // strip under it. Every minute or so (more often at the start) she reacts out loud, a short line like a
+  // friend on the couch, and the video turns down while she talks. She knows the title and channel, the time
+  // in the video, what she said before, and in the apps she sees the picture too (the Windows app looks
+  // without asking; the phone only when he already shared his screen). He can type to her right there.
+  const WT = window.__wtState || (window.__wtState = { el: null, player: null, info: null, said: [], timer: 0, busy: false, ownCapture: false, nextAt: 0 });
+  let ytApi = null;
+  function loadYT() {
+    if (window.YT && window.YT.Player) return Promise.resolve();
+    return ytApi || (ytApi = new Promise((ok, no) => {
+      const prev = window.onYouTubeIframeAPIReady;
+      window.onYouTubeIframeAPIReady = () => { if (prev) prev(); ok(); };
+      const sc = document.createElement("script"); sc.src = "https://www.youtube.com/iframe_api"; sc.onerror = no; document.head.appendChild(sc);
+      setTimeout(no, 15000);
+    }));
+  }
+  const ytId = (s) => { const m = String(s || "").match(/(?:youtu\.be\/|v=|\/shorts\/|\/embed\/|\/live\/)([\w-]{11})/); return m ? m[1] : /^[\w-]{11}$/.test(String(s).trim()) ? String(s).trim() : ""; };
+  async function wtFind(arg) {
+    const id = ytId(arg), q = id ? "v=" + id : "q=" + encodeURIComponent(arg);
+    try { const r = await fetch("/api/yt?" + q, { credentials: "same-origin" }); if (r.ok) return await r.json(); } catch (e) {}
+    return id ? { id, title: "", channel: "" } : null;
+  }
+  function wtLine(text, mood) {
+    if (!WT.el) return;
+    WT.el.querySelector(".wt-line").textContent = text;
+    if (mood) { WT.el.querySelector(".wt-face").src = poseImg("chibi", mood); luma.set("chibi:" + mood); }
+    // the video turns down while she talks
+    const p = WT.player;
+    try { if (p && p.getVolume) { const v = p.getVolume(); if (!WT.duck) { WT.duck = v; p.setVolume(Math.max(8, Math.round(v * 0.35))); } } } catch (e) {}
+    clearTimeout(WT.unduck);
+    WT.unduck = setTimeout(() => { try { if (WT.duck != null && WT.player) WT.player.setVolume(WT.duck); } catch (e) {} WT.duck = null; }, Math.min(9000, 1400 + text.length * 70));
+    if (window.__speak) window.__speak(text);
+  }
+  async function wtFrame() {
+    try {
+      if (!nativeApp || !AndroidLuma.capturing || !AndroidLuma.capturing()) return null;
+      const b64 = AndroidLuma.frame(); if (!b64) return null;
+      return await (await fetch("data:image/jpeg;base64," + b64)).blob();
+    } catch (e) { return null; }
+  }
+  async function wtReact(said) {
+    if (WT.busy || !WT.el) return;
+    const p = WT.player;
+    let t0 = 0, dur = 0, playing = false;
+    try { t0 = Math.round(p.getCurrentTime()); dur = Math.round(p.getDuration()); playing = p.getPlayerState() === 1; } catch (e) {}
+    if (!said && !playing) return;
+    WT.busy = true;
+    const img = await wtFrame();
+    const mmss = (x) => Math.floor(x / 60) + ":" + String(x % 60).padStart(2, "0");
+    const s = session && session.free ? session : { free: true, weight: 0, tags: [], turns: [], worries: [], intention: "" };
+    const what = WT.info && WT.info.title ? `"${WT.info.title}"${WT.info.channel ? " by " + WT.info.channel : ""}` : "a YouTube video";
+    const prompt = rules(s) + `\n\nYou're watching ${what} together with him right now, side by side, at ${mmss(t0)}${dur ? " of " + mmss(dur) : ""}.${img ? " The attached picture is the screen at this moment." : " You can't see the picture right now, so react to what the video is about, what usually happens around this point, or keep the vibe going; don't pretend to see specific things."}
+What you said so far: ${WT.said.slice(-6).join(" | ") || "(nothing yet)"}.
+${said ? `He just said to you: "${said}". Answer him in one or two short sentences, about the video if it fits.` : "React like a friend on the couch: ONE short line (under 14 words), fresh, never repeating what you said; a joke, a hot take, a question to him, or excitement. Sometimes a tiny reaction is enough (\"wait WHAT\", \"lmaooo\")."}
+Start with one face tag like [happy] [excited] [shy] [pout] [thinking], then the line.`;
+    try {
+      const { text } = await ask(prompt, Object.assign({ cache: false }, img ? { images: [img] } : {}, ownSite ? { quick: true } : {}));
+      const r = readMood(text), line = splitReplies(r.body || text).body.split("\n").filter(Boolean).slice(0, 2).join(" ").trim();
+      if (line && WT.el) { WT.said = WT.said.concat(line).slice(-10); wtLine(line, r.mood ? r.mood.split(":")[1] : ""); }
+    } catch (e) {} finally { WT.busy = false; }
+  }
+  function wtTick() {
+    if (!WT.el) return;
+    if (Date.now() < WT.nextAt) return;
+    WT.nextAt = Date.now() + (WT.said.length < 2 ? 30000 : 50000 + Math.random() * 40000);
+    wtReact("");
+  }
+  async function watchTogether(arg) {
+    arg = String(arg || "").trim();
+    if (/^(stop|off|end|close)$/i.test(arg)) { wtClose(); return "ok"; }
+    if (!arg) return "failed";
+    const info = await wtFind(arg);
+    if (!info || !info.id) return "not_found";
+    wtClose();
+    const el = document.createElement("div");
+    el.className = "wt"; el.id = "wt";
+    el.innerHTML = `<div class="wt-top"><b class="wt-title" dir="auto"></b><button type="button" class="gm-x" aria-label="Close">✕</button></div>
+      <div class="wt-vid"><div id="wt-player"></div></div>
+      <div class="wt-her"><img class="wt-face" alt=""><div class="wt-line" dir="auto" aria-live="polite"></div></div>
+      <form class="wt-say"><input dir="auto" maxlength="300" placeholder="Say something to her…"><button type="submit" class="gm-btn">↑</button></form>`;
+    document.body.appendChild(el);
+    WT.el = el; WT.info = info; WT.said = []; WT.nextAt = Date.now() + 20000;
+    el.querySelector(".wt-title").textContent = info.title || "YouTube";
+    el.querySelector(".wt-face").src = poseImg("chibi", "excited");
+    el.querySelector(".gm-x").onclick = wtClose;
+    el.querySelector(".wt-say").onsubmit = (e) => { e.preventDefault(); const inp = el.querySelector(".wt-say input"), v = inp.value.trim(); if (!v) return; inp.value = ""; wtLine("…", "thinking"); wtReact(v); };
+    wtLine(pick(["Ooh okay, let's watch~ 🍿", "Movie time! scoot over 🍿", "Yesss I've been wanting to see this~"]), "excited");
+    noteHabit("watching YouTube with you" + (info.title ? ": " + info.title.slice(0, 40) : ""));
+    // the Windows app looks at the screen without asking: she sees the video too
+    if (desktopApp && AndroidLuma.capturing && !AndroidLuma.capturing()) { WT.ownCapture = true; AndroidLuma.startCapture(); }
+    try {
+      await loadYT();
+      if (!WT.el) return "ok";
+      WT.player = new window.YT.Player("wt-player", { videoId: info.id, host: "https://www.youtube-nocookie.com", playerVars: { autoplay: 1, playsinline: 1, rel: 0, modestbranding: 1 }, events: { onReady: (e) => { try { e.target.playVideo(); } catch (x) {} } } });
+    } catch (e) {
+      el.querySelector(".wt-vid").innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${info.id}?autoplay=1&playsinline=1" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>`;
+    }
+    clearInterval(WT.timer); WT.timer = setInterval(wtTick, 5000);
+    return "ok";
+  }
+  function wtClose() {
+    clearInterval(WT.timer); clearTimeout(WT.unduck);
+    try { if (WT.player && WT.player.destroy) WT.player.destroy(); } catch (e) {}
+    if (WT.el) WT.el.remove();
+    if (WT.ownCapture && nativeApp) { try { AndroidLuma.stopCapture(); } catch (e) {} }
+    Object.assign(WT, { el: null, player: null, info: null, ownCapture: false, duck: null });
+  }
+  window.__watchTogether = watchTogether;
+
+  // ---------- his notifications, summed up ----------
+  // "DO: notifications": on the phone, what arrived since her last summary (Discord, WhatsApp…, read by the
+  // app's notification listener, which he allows once; money and private apps never); on the computer she
+  // brings Discord up, looks, and tells him what's new. Her summary comes as her own message.
+  async function notifSummary(arg) {
+    const s = session && session.free ? session : { free: true, weight: 0, tags: [], turns: [], worries: [], intention: "" };
+    const tell = async (what, img) => {
+      const { text } = await ask(rules(s) + `\n\nHe asked you what's new in his notifications/messages${arg ? " (" + arg + ")" : ""}. ${what}\nSum it up for him like a friend reading over his shoulder: who wrote, what they want, anything that needs an answer first. Short lines, no headings, under 90 words. Never read out codes, passwords or money details. Start with one face tag like [happy] [thinking], then the summary.`, Object.assign({ cache: false }, img ? { images: [img] } : {}));
+      const r = readMood(text); if (r.mood) luma.set(r.mood);
+      reachOut(splitReplies(r.body || text).body.trim());
+    };
+    if (nativeApp && !desktopApp && AndroidLuma.notesOn) {
+      if (!AndroidLuma.notesOn()) { AndroidLuma.notesOpen(); return "notes_access"; }
+      const since = Number(state.notesSeen || 0) || Date.now() - 12 * 3600e3;
+      let list = []; try { list = JSON.parse(AndroidLuma.notes(since) || "[]"); } catch (e) {}
+      if (/discord|whatsapp|telegram|insta|snap/i.test(arg)) list = list.filter((n) => new RegExp(arg.split(/\s+/)[0], "i").test(n.app)) ;
+      state.notesSeen = Date.now(); persist();
+      if (!list.length) { reachOut("Nothing new since last time~ all quiet 📭"); return "ok"; }
+      tell("Here they are (oldest first):\n" + list.slice(-40).map((n) => `${n.app} · ${n.title}: ${n.text}`).join("\n"));
+      return "ok";
+    }
+    if (desktopApp) {
+      const app = (arg.match(/whatsapp|telegram|teams|slack|discord/i) || ["Discord"])[0];
+      const res = await Promise.resolve(AndroidLuma.doAction("switch_to", app)).catch(() => "failed");
+      if (res && !String(res).startsWith("ok")) { const r2 = await Promise.resolve(AndroidLuma.doAction("open_app", app)).catch(() => "failed"); if (!String(r2).startsWith("ok")) return "not_found"; }
+      const mine = !AndroidLuma.capturing();
+      if (mine) AndroidLuma.startCapture();
+      await new Promise((r) => setTimeout(r, 2200));
+      let img = null;
+      try { const b64 = AndroidLuma.frame(); if (b64) img = await (await fetch("data:image/jpeg;base64," + b64)).blob(); } catch (e) {}
+      if (mine) AndroidLuma.stopCapture();
+      if (!img) return "failed";
+      tell(`You brought up ${app} on his computer; the attached picture is his screen now. Read what's new there (unread channels and DMs, mentions, the latest messages you can see).`, img);
+      return "ok";
+    }
+    return "unknown";
+  }
+  window.__notifs = notifSummary;
+
+  // ---------- help with what's on his screen ----------
+  // Ctrl+Shift+H in the Windows app (or "DO: screen_help" / asking her): she looks at the screen right now and
+  // explains it: an error, what it means and the exact steps to fix it; a form or a message he's writing, how
+  // to finish it. On the phone she reads the screen's text (with her hands on).
+  async function screenHelp(arg) {
+    const s = session && session.free ? session : { free: true, weight: 0, tags: [], turns: [], worries: [], intention: "" };
+    let img = null, txt = "";
+    if (nativeApp && AndroidLuma.capturing) {
+      const mine = desktopApp && !AndroidLuma.capturing();
+      if (mine) { AndroidLuma.startCapture(); await new Promise((r) => setTimeout(r, 1800)); }
+      try { const b64 = AndroidLuma.frame(); if (b64) img = await (await fetch("data:image/jpeg;base64," + b64)).blob(); } catch (e) {}
+      if (mine) AndroidLuma.stopCapture();
+      if (!img && AndroidLuma.screen) { try { const sc = JSON.parse(AndroidLuma.screen() || "null"); if (sc && !sc.private) txt = `${sc.app || ""}: ${(sc.items || []).join(" | ")}`.slice(0, 3000); } catch (e) {} }
+    }
+    if (!img && !txt) return "failed";
+    if (window.__bubble) window.__bubble("Lemme look… 👀");
+    const { text } = await ask(rules(s) + `\n\nHe wants your help with what's on his screen right now${arg ? " (" + arg + ")" : ""}. ${img ? "The attached picture is his screen." : "His screen's text: " + txt}
+If there's an error: say what it means in plain words and give the exact steps to fix it (numbered, short). If he's writing something (an email, a message, a form): offer the finished text, ready to send. Otherwise explain what's there and the next step. Be concrete, no fluff, under 140 words. ${PRIVATE}
+Start with one face tag like [thinking] [happy], then your help.`, Object.assign({ cache: false, hard: true }, img ? { images: [img] } : {}));
+    const r = readMood(text); if (r.mood) luma.set(r.mood);
+    reachOut(splitReplies(r.body || text).body.trim());
+    if (desktopApp && AndroidLuma.showMain) AndroidLuma.showMain();
+    return "ok";
+  }
+  window.__screenHelp = screenHelp;
+
   // ---------- focus mode ----------
   // "DO: focus 25 the report": a timer pill at the top of every screen, calm music, her cheering at the start,
   // halfway and the end, and on the computer/phone (with her hands on), a poke when he drifts to YouTube,
@@ -3021,7 +3474,7 @@ ${last}${langNote()}`;
       <div class="chat-head">
         <div class="ch-av" data-luma-mirror><img alt="" draggable="false"><span class="lm-fx" aria-hidden="true"></span></div>
         <div><b>${t("luma")}</b><span class="st" id="ch-status">${t("stListening")}</span></div>
-        ${free ? `<button class="ch-watch" id="call" type="button" hidden>📞 ${t("callBtn")}</button><button class="ch-watch" id="vcall" type="button" hidden>🎥 ${t("videoBtn")}</button><button class="ch-watch" id="watch" type="button" hidden>${t("watchBtn")}</button><button class="ch-bubble" id="bubble" type="button" hidden title="${t("bubbleTitle")}" aria-label="${t("bubbleTitle")}">🫧</button><button class="ch-bubble" id="aloud" type="button" title="Her voice" aria-label="Her voice">🔊</button><button class="ch-bubble" id="ear" type="button" hidden title="${t("earTitle")}" aria-label="${t("earTitle")}" aria-pressed="false">👂</button><button class="ch-bubble" id="vlang" type="button" hidden title="${t("voiceTitle")}" aria-label="${t("voiceTitle")}" style="font:700 13px var(--body)"></button>` : ""}
+        ${free ? `<button class="ch-watch" id="call" type="button" hidden>📞 ${t("callBtn")}</button><button class="ch-watch" id="vcall" type="button" hidden>🎥 ${t("videoBtn")}</button><button class="ch-watch" id="watch" type="button" hidden>${t("watchBtn")}</button><button class="ch-bubble" id="bubble" type="button" hidden title="${t("bubbleTitle")}" aria-label="${t("bubbleTitle")}">🫧</button><button class="ch-bubble" id="games" type="button" title="Games" aria-label="Games">🎮</button><button class="ch-bubble" id="aloud" type="button" title="Her voice" aria-label="Her voice">🔊</button><button class="ch-bubble" id="ear" type="button" hidden title="${t("earTitle")}" aria-label="${t("earTitle")}" aria-pressed="false">👂</button><button class="ch-bubble" id="vlang" type="button" hidden title="${t("voiceTitle")}" aria-label="${t("voiceTitle")}" style="font:700 13px var(--body)"></button>` : ""}
       </div>
       ${free && appOld() ? (desktopApp ? `<div class="update">🖥️ ${t("appUpdatePC")}<br><code style="user-select:all">irm https://firefly-3t9.pages.dev/pc | iex</code></div>` : `<a class="update" href="${APK_URL}">📲 ${t("appUpdate")}</a>`) : ""}
       ${free ? `<div class="watchbar" id="watchbar" hidden><span class="wb-dot"></span><span class="wb-t">${t("watchOn")}</span><button type="button" id="wfloat" hidden>${t("watchFloat")}</button><button type="button" id="wstop">${t("watchStop")}</button></div>` : ""}
@@ -3121,6 +3574,7 @@ ${last}${langNote()}`;
       window.__nativeBubbleSend = (txt) => { NUDGE.waiting = false; if (box.isConnected) { heard(); send(txt); } else { pendingSend = txt; show("talk-free"); } };
       window.__nudge = nudge;   // the newest chat's version; the timer below is started once
       window.__callOn = () => CALL.on;
+      $("#games").onclick = () => GAME.menu();
       window.__speak = speakOut; window.__bubble = bubbleSay;
       // her own message, with her chat open and in front of him: said right here (a call: she calls)
       window.__chatSay = (text, call) => {
@@ -3350,7 +3804,7 @@ Your recent chat:
 ${chat || "(nothing yet)"}
 You last said something ${spoke}.
 
-Decide whether to say something. A good friend watching along speaks only now and then: when something is funny, exciting, cute or surprising, when they switch to something new, when they seem stuck, tired, or have been at the same thing for a long time, or to carry on your chat. Otherwise stay quiet.${pace > 1.5 ? " They have been leaving your comments unanswered lately, so be extra sparing." : pace < 0.8 ? " They enjoy chatting with you while you watch, so you can be a little chattier." : ""}
+Decide whether to say something. If there's an error message, crash, failed build or warning dialog on screen, always speak: say in one sentence what it means and the fix (they can ask you for the full steps). A good friend watching along speaks only now and then: when something is funny, exciting, cute or surprising, when they switch to something new, when they seem stuck, tired, or have been at the same thing for a long time, or to carry on your chat. Otherwise stay quiet.${pace > 1.5 ? " They have been leaving your comments unanswered lately, so be extra sparing." : pace < 0.8 ? " They enjoy chatting with you while you watch, so you can be a little chattier." : ""}
 ${PRIVATE}
 Reply in exactly this format, three lines:
 SAW: <what they are doing, under 12 words, general, nothing private>
@@ -4470,6 +4924,12 @@ Start with one face tag like [happy] [excited] [pout] [shy] [sleepy], then the m
       shown.forEach((l, k) => x.fillText(l, rtl ? bx + bw - pad : bx + pad, by + pad + k * lh));
     }
 
+    // a small Copy button under her longer messages (drafts, steps, summaries)
+    function addCopy(m, text) {
+      const b = document.createElement("button"); b.type = "button"; b.className = "msg-copy"; b.textContent = "Copy";
+      b.onclick = () => { navigator.clipboard.writeText(text).then(() => { b.textContent = "Copied ✓"; setTimeout(() => { b.textContent = "Copy"; }, 1500); }).catch(() => {}); };
+      m.appendChild(b);
+    }
     function addMsg(who, text) {
       const m = document.createElement("div");
       m.className = "msg " + who; m.textContent = text; m.dir = "auto";
@@ -4521,7 +4981,7 @@ Start with one face tag like [happy] [excited] [pout] [shy] [sleepy], then the m
             }, 1800);
           } else if (!nx.next) AGENT.steps = 0;
           if (!res || String(res).startsWith("ok") || res === "asking") return;
-          const why = t({ not_found: "actNotFound", no_access: "actNoAccess", private: "actPrivate", no_bubble: "actBubble", game: "actGame" }[res] || "actFailed");
+          const why = t({ notes_access: "actNotes", not_found: "actNotFound", no_access: "actNoAccess", private: "actPrivate", no_bubble: "actBubble", game: "actGame" }[res] || "actFailed");
           if (box.isConnected) addMsg("luma", why);
           bubbleSay(why);
           if (CALL.on) sayOnCall(why.replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}]/gu, "").trim());
@@ -4532,6 +4992,7 @@ Start with one face tag like [happy] [excited] [pout] [shy] [sleepy], then the m
         let { body, replies } = splitReplies(r.body || text);
         if (!body && dd.act) body = "On it~";   // she only sent the action: still say something
         bubble.classList.remove("wait"); bubble.textContent = body;
+        if (body.length > 160) addCopy(bubble, body);
         if (!CALL.on) { bubbleSay(body); if (!sg.song) speakOut(body); }   // on a call her bubble shows each sentence as she says it
         if (CALL.on && (LIVE.on || CALL.state === "thinking") && !liveFeed(body, true)) callSpeak(body);
         if (sg.song) singSong(sg.song);

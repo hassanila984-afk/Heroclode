@@ -697,6 +697,9 @@
   .callpane.mini .cp-her:empty::before { content: "📞 On a call with Luma"; opacity: .8; }
   .callpane.mini .cp-end { margin: 0; padding: 9px 16px; font-size: 14px; }
   body.call-mini .top { visibility: hidden; }
+  .dev-list { display: flex; flex-wrap: wrap; gap: 8px; }
+  .dev-chip { font: 600 13px var(--body); background: var(--surface-2); border: 1px solid var(--glass-line); border-radius: 999px; padding: 6px 12px; }
+  #dev-name { max-width: 140px; }
 </style>
 
 <canvas id="sky" aria-hidden="true"></canvas>
@@ -842,7 +845,7 @@
       reminderTitle: "Nightly reminder", reminderNote: "A set time makes a habit much easier to keep. Choose yours and add it to your calendar.",
       reminderTime: "Reminder time", addCal: "Add to Google Calendar",
       calTitle: "Firefly: light tonight's firefly", calDetails: "Seven quiet minutes for yourself. Open Firefly in Claude.",
-      proTitle: "Her own messages", proNote: "Good morning, a break after long hours on the PC, and a call when a reminder is important.", proOn: "On ✓", proOff: "Off", secLuma: "Luma", secApp: "App", myVoiceTitle: "Your voice", remembersTitle: "What Luma knows about you", forget: "Forget this", memAdd: "Tell her something to remember…",
+      proTitle: "Her own messages", proNote: "Good morning, a break after long hours on the PC, and a call when a reminder is important.", proOn: "On ✓", proOff: "Off", secLuma: "Luma", secApp: "App", myVoiceTitle: "Your voice", linkTitle: "Luma Link", linkThis: "This device's name", linkNote: "So Luma can send things here from your other devices. Keep the app open or in the background.", linkNone: "No other devices online. Open Firefly on them too.", remembersTitle: "What Luma knows about you", forget: "Forget this", memAdd: "Tell her something to remember…",
       styleTitle: "How Luma talks with you", styleNote: "Learned from how you write.", styleReset: "Start fresh",
       styleNone: "Nothing yet. Luma picks up your way of talking as you chat.",
       remembersNote: "Tap a line to change it, ✕ to make her forget it.",
@@ -956,7 +959,7 @@
       reminderTitle: "تذكير ليلي", reminderNote: "الوقت الثابت يجعل العادة أسهل بكثير. اختر وقتك وأضفه إلى تقويمك.",
       reminderTime: "وقت التذكير", addCal: "أضف إلى تقويم Google",
       calTitle: "يراعة: أضئ يراعة الليلة", calDetails: "سبع دقائق هادئة لنفسك. افتح يراعة في Claude.",
-      proTitle: "رسائلها من نفسها", proNote: "صباح الخير، استراحة بعد ساعات طويلة على الحاسبة، ومكالمة إذا التذكير مهم.", proOn: "شغّال ✓", proOff: "طافي", secLuma: "لُمى", secApp: "التطبيق", myVoiceTitle: "صوتك", remembersTitle: "شنو تعرف لُمى عنك", forget: "انسَ هذا", memAdd: "گلها شي تتذكره…",
+      proTitle: "رسائلها من نفسها", proNote: "صباح الخير، استراحة بعد ساعات طويلة على الحاسبة، ومكالمة إذا التذكير مهم.", proOn: "شغّال ✓", proOff: "طافي", secLuma: "لُمى", secApp: "التطبيق", myVoiceTitle: "صوتك", linkTitle: "رابط لُمى", linkThis: "اسم هذا الجهاز", linkNote: "حتى لُمى تگدر تدز أشياء لهنا من أجهزتك الثانية. خلّي التطبيق مفتوح أو بالخلفية.", linkNone: "ماكو أجهزة ثانية شغّالة. افتح Firefly بيهن هم.", remembersTitle: "شنو تعرف لُمى عنك", forget: "انسَ هذا", memAdd: "گلها شي تتذكره…",
       styleTitle: "كيف تتكلّم لُمى معك", styleNote: "تعلّمته من طريقة كتابتك.", styleReset: "ابدأ من جديد",
       styleNone: "لا شيء بعد. تلتقط لُمى طريقة كلامك وأنتما تتحدّثان.",
       remembersNote: "دوس على أي سطر حتى تعدّله، و ✕ حتى تنساه.",
@@ -1372,7 +1375,7 @@
       : app
       ? "watch start (look at their screen; they allow it once) | watch stop | open_app <app name> | open_url <link> | search <words> | maps <place> | music <song or artist> | alarm <HH:MM, 24-hour> | timer <minutes> | call <number> (this only opens the dialer)"
       : "open_url <link> | search <words> | maps <place> | music <song or artist> | claude <a job to hand to Claude, written out fully>";
-    acts += " | recap (your recap of his week, when he asks how his week went) | notifications [discord / whatsapp / …] (sum up his new messages and notifications) | screen_help [what he needs] (look at his screen right now and help: explain an error and the fix, finish what he's writing) | watch_together <YouTube link, or what to search> (plays it inside Firefly and you watch it with him, reacting as it plays; watch_together stop closes it; use this when he wants to watch something WITH you) | game chess / wordle / trivia (opens the game and you play it with him, in the app) | focus <minutes> <what he's working on> (focus mode: a timer, calm music, you cheer him on and poke him if he drifts to YouTube or games; focus stop ends it) | note <a task or thing to keep for them> | done <the note to cross off> | remind <in 20 min / at 18:30 / tomorrow 9:00> | <what to remind them> (put ! first, as in remind ! at 18:30 | …, when it's important or he says call me / wake me: then you call him instead of a note)";
+    acts += " | recap (your recap of his week, when he asks how his week went) | notifications [discord / whatsapp / …] (sum up his new messages and notifications) | screen_help [what he needs] (look at his screen right now and help) | device <phone / computer / tablet> <action> <arg> (do something on another one of his devices that's online, e.g. device computer open_app Spotify, device phone remind at 18:00 | gym; only his devices listed as online below) | watch_together <YouTube link, or what to search> (plays it inside Firefly and you watch it with him, reacting as it plays; watch_together stop closes it; use this when he wants to watch something WITH you) | game chess / wordle / trivia (opens the game and you play it with him, in the app) | focus <minutes> <what he's working on> (focus mode: a timer, calm music, you cheer him on and poke him if he drifts to YouTube or games; focus stop ends it) | note <a task or thing to keep for them> | done <the note to cross off> | remind <in 20 min / at 18:30 / tomorrow 9:00> | <what to remind them> (put ! first, as in remind ! at 18:30 | …, when it's important or he says call me / wake me: then you call him instead of a note)";
     if (voiceCall && VC.on) acts += " | room cozy / kitchen / gaming / plants (go to another room of your place, when it fits: 'brb, making coffee' = kitchen)";
     if (voiceCall) acts += " | end_call (when they say bye or want to hang up: say a short bye first)";
     const noHands = app && !hands && pc ? `- You can't click, type or scroll on their computer right now ("Luma can control this PC" is off). If they ask you to, never pretend you did it: say you can't yet and that they can turn it on from Firefly's icon next to the clock, or on the You page.
@@ -1391,7 +1394,12 @@
     }
     return `- You're also their trusted little helper. You can look things up on the web when they ask about current things (weather, news, prices, opening hours, facts you're unsure of); keep the answer short and say it's from a quick search.
 - When they clearly ask you to do something on their ${device}, do it by adding one last separate line: DO: <action> <argument>, using one of: ${acts}. At most one per reply, only when they asked, and say in your message what you're doing ("opening Spotify~"). Never claim you did something you can't do or that didn't happen; you can't pay, delete or change settings.${hands ? " You're in charge of their ${device}: when they ask, tap and type right away, without asking them first, and say what you're doing (\"tapping Send~\"). One step per reply, then look at the new screen next time and keep going until it's done. Only buy, send money, delete or post publicly when they clearly asked for exactly that. When they're reading (a webtoon, manga, an article) and want you to scroll for them, use autoscroll start, then slower / faster / stop when they say so (tapping your bubble stops it too)." : ""}
-${noHands}${screen}`;
+${noHands}${screen}${linkLine()}`;
+  }
+  // which of his other devices are online right now, so she knows what "device <name> …" can reach
+  function linkLine() {
+    const ds = (window.__linkDevices && window.__linkDevices()) || [];
+    return ds.length ? "\n- His other devices online right now (you can hand them jobs with DO: device <name> …): " + ds.join(", ") + "." : "";
   }
 
   function rules(session) {
@@ -2359,6 +2367,7 @@ ${last}${langNote()}`;
     if (name === "game") return window.__game ? window.__game(arg) : "unknown";
     if (name === "notifications") return window.__notifs ? window.__notifs(arg) : "unknown";
     if (name === "screen_help") return window.__screenHelp ? window.__screenHelp(arg) : "unknown";
+    if (name === "device") return window.__linkSend ? window.__linkSend(arg) : "unknown";
     if (name === "watch_together") return window.__watchTogether ? window.__watchTogether(arg) : "unknown";
     if (name === "note" || name === "done" || name === "remind") return window.__keep ? window.__keep(name, arg) : "unknown";
     if (window.AndroidLuma && AndroidLuma.doAction) return AndroidLuma.doAction(name, arg);
@@ -2766,10 +2775,10 @@ ${last}${langNote()}`;
     Object.defineProperty(window, "__resting", { get: () => rest, set: (v) => { rest = !!v; document.documentElement.classList.toggle("resting", rest); } });
   }
   // the newest Android app; older ones lack tapping, scrolling or her moving bubble
-  const APP_LATEST = 2.5;
+  const APP_LATEST = 2.6;
   const appVersion = () => !nativeApp ? 0 : AndroidLuma.version ? parseFloat(AndroidLuma.version()) || 0
     : AndroidLuma.answerAsk ? 1.9 : AndroidLuma.accessOn ? 1.6 : AndroidLuma.doAction ? 1.5 : 1.4;
-  const DESKTOP_LATEST = 2.0;   // Firefly for Windows
+  const DESKTOP_LATEST = 2.1;   // Firefly for Windows
   const appOld = () => nativeApp && appVersion() < (desktopApp ? DESKTOP_LATEST : APP_LATEST);
   // opened through the phone's browser (the trailing dot makes it another address for the app), which downloads it
   const APK_URL = "https://firefly-3t9.pages.dev./firefly.apk";
@@ -2800,6 +2809,76 @@ ${last}${langNote()}`;
   // the Windows app's shortcut (Ctrl+Shift+L): straight into a call, from wherever they are in Firefly
   let pendingCall = false;
   window.__desktopCall = () => { if (window.__callNow && window.__callNow()) return; pendingCall = true; show("talk-free"); };   // her pop-outs while they're in other apps (see nudge())
+
+  // ---------- Luma Link: his devices, one companion across them ----------
+  // Each device (phone, computer, tablet) checks in every 20s, so they know which others are online and
+  // can hand jobs to each other: "open Spotify on the computer", a reminder that rings on the device he's
+  // holding, a call that moves over. All of it is his own account only, kept briefly on his Cloudflare, and
+  // nothing that unlocks a device ever goes through it.
+  const LINK = window.__link || (window.__link = { id: "", name: "", devices: [], on: false, timer: 0, seen: 0 });
+  function linkId() {
+    try { let x = localStorage.getItem("firefly-dev-id"); if (!x) { x = (Date.now().toString(36) + Math.random().toString(36).slice(2, 8)); localStorage.setItem("firefly-dev-id", x); } return x; } catch (e) { return "d" + Math.random().toString(36).slice(2, 10); }
+  }
+  function linkDefaultName() { return desktopApp ? "computer" : nativeApp ? "phone" : "web"; }
+  function linkName() { try { return localStorage.getItem("firefly-dev-name") || linkDefaultName(); } catch (e) { return linkDefaultName(); } }
+  function linkCaps() {
+    const caps = ["notify"];
+    if (nativeApp) caps.push("apps", "screen");
+    if (desktopApp) caps.push("computer");
+    const hands = (desktopApp && AndroidLuma.accessOn && AndroidLuma.accessOn()) || (nativeApp && AndroidLuma.accessOn && AndroidLuma.accessOn());
+    if (hands) caps.push("control");
+    try { if (ownSite ? (SR || (navigator.mediaDevices && navigator.mediaDevices.getUserMedia)) : (SR && (nativeApp ? AndroidLuma.speak : "speechSynthesis" in window))) caps.push("call"); } catch (e) {}
+    return caps;
+  }
+  async function linkPing() {
+    if (!ownSite) return;
+    try {
+      const r = await fetch("/api/link?do=ping", { method: "POST", credentials: "same-origin", headers: { "content-type": "application/json" }, body: JSON.stringify({ id: LINK.id, name: linkName(), caps: linkCaps() }) });
+      if (!r.ok) return;
+      const d = await r.json();
+      LINK.devices = Array.isArray(d.devices) ? d.devices : [];
+      LINK.seen = Date.now();
+      for (const job of d.jobs || []) linkRun(job);
+    } catch (e) {}
+  }
+  // a job another device handed to this one
+  function linkRun(job) {
+    if (!job || !job.action) return;
+    const a = job.action.toLowerCase(), arg = String(job.arg || "");
+    if (a === "say" || a === "tell") return reachOut(arg);
+    if (a === "call") return reachOut(arg || "Hey, picking this up over here~", true);
+    const res = runAction(a + " " + arg);
+    Promise.resolve(res).then((r) => {
+      // couldn't do it here: let him know on this device rather than failing in silence
+      if (r && !String(r).startsWith("ok") && r !== "asking") reachOut("Couldn't do that one here (" + a + ") 🥺");
+    }).catch(() => {});
+  }
+  // Luma sends a job to another of his devices (DO: device <name> <action> <arg>)
+  function linkSend(arg) {
+    const m = String(arg || "").trim().match(/^(\S+)\s+(\S+)\s*([\s\S]*)$/);
+    if (!m) return "failed";
+    const want = m[1].toLowerCase();
+    const dev = LINK.devices.find((d) => d.name.toLowerCase() === want)
+      || LINK.devices.find((d) => d.name.toLowerCase().includes(want) || want.includes(d.name.toLowerCase()))
+      || LINK.devices.find((d) => ({ pc: "computer", laptop: "computer", desktop: "computer", mobile: "phone", ipad: "tablet", honor: "tablet" })[want] === d.name.toLowerCase());
+    if (!dev) return LINK.devices.length ? "no_device" : "no_devices";
+    const body = { from: LINK.id, to: dev.id, action: m[2], arg: m[3].trim() };
+    fetch("/api/link?do=send", { method: "POST", credentials: "same-origin", headers: { "content-type": "application/json" }, body: JSON.stringify(body) }).catch(() => {});
+    noteHabit("handing a job to the " + dev.name);
+    return "ok";
+  }
+  window.__linkSend = linkSend;
+  window.__linkDevices = () => LINK.devices.map((d) => d.name);
+  if (ownSite && !LINK.on) {
+    LINK.on = true; LINK.id = linkId();
+    linkPing();
+    // devices that can act on a job (phone, computer, tablet) check often so a job lands within a few
+    // seconds even when Firefly isn't in front; a plain web tab only while it's open
+    const actor = nativeApp || desktopApp;
+    LINK.timer = setInterval(() => { if (actor || document.visibilityState === "visible" || Date.now() - LINK.seen < 120000) linkPing(); }, actor ? 7000 : 15000);
+    addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") linkPing(); });
+    addEventListener("pagehide", () => { try { navigator.sendBeacon && navigator.sendBeacon("/api/link?do=bye", new Blob([JSON.stringify({ id: LINK.id })], { type: "application/json" })); } catch (e) {} });
+  }
 
   // ---------- reaching out on her own ----------
   // A message from her when he isn't looking at her chat: a notification on the phone or the computer
@@ -5544,6 +5623,10 @@ Start with one face tag like [happy] [excited] [pout] [shy] [sleepy], then the m
         ${ownSite ? `<div class="set"><div class="set-t"><b>${t("myVoiceTitle")}</b><small id="myvoice-note">${t("myVoiceNote")}</small></div><div class="set-c"><button class="btn-s" id="myvoice" type="button">${t(myVoice() ? "myVoiceRedo" : "myVoiceBtn")}</button></div></div>` : ""}
         ${window.AndroidLuma && AndroidLuma.accessOpen ? `<div class="set"><div class="set-t"><b>${t(desktopApp ? "accessTitlePC" : "accessTitle")}</b><small>${t(desktopApp ? "accessNotePC" : "accessNote")}</small></div><div class="set-c"><button class="btn-s" id="hands" type="button">${t(AndroidLuma.accessOn() ? "accessOn" : "accessOff")}</button></div></div>` : ""}
       </div></section>
+      ${ownSite ? `<section class="sec"><h4>${t("linkTitle")}</h4><div class="card pad">
+        <div class="set flat"><div class="set-t"><b>${t("linkThis")}</b><small>${t("linkNote")}</small></div><div class="set-c"><input type="text" id="dev-name" maxlength="20" value="${esc(linkName())}" aria-label="${t("linkThis")}"></div></div>
+        <div id="dev-list" class="dev-list"></div>
+      </div></section>` : ""}
       <section class="sec"><h4>${t("wallTitle")}</h4><div class="walls" id="walls">${Object.entries(WALLS).map(([k, w]) => `<button type="button" data-wall="${k}" aria-pressed="${wall.key() === k}" style="${w.img ? `background-image:url('${w.img.replace(".webp", "_s.webp")}')` : "background:radial-gradient(circle at 50% 30%,#2a2d6a,#0b0d2a)"}"><span>${esc(w.name)}</span></button>`).join("")}</div></section>
       <section class="sec"><h4>${t("remembersTitle")}</h4><div class="card pad">
         ${state.memory.length ? `<ul class="list mem">${state.memory.map((m, i) => `<li><span dir="auto" class="mem-t" data-edit="${i}" contenteditable="plaintext-only" spellcheck="false">${esc(m)}</span><button data-forget="${i}" aria-label="${t("forget")}">✕</button></li>`).join("")}</ul><p class="tiny">${t("remembersNote")}</p>`
@@ -5588,6 +5671,12 @@ Start with one face tag like [happy] [excited] [pout] [shy] [sleepy], then the m
         + "&recur=" + encodeURIComponent("RRULE:FREQ=DAILY");
     };
     setCal(); tInput.oninput = setCal;
+    if ($("#dev-name")) {
+      const inp = $("#dev-name");
+      inp.onchange = () => { const v = inp.value.replace(/[^\w -]/g, "").trim().slice(0, 20) || linkDefaultName(); try { localStorage.setItem("firefly-dev-name", v); } catch (e) {} inp.value = v; if (window.__link) window.__link.seen = 0; };
+      const paintDevs = () => { const el = $("#dev-list"); if (!el) return; const ds = (window.__linkDevices && window.__linkDevices()) || []; el.innerHTML = ds.length ? ds.map((n) => `<span class="dev-chip">🟢 ${esc(n)}</span>`).join("") : `<span class="tiny">${t("linkNone")}</span>`; };
+      paintDevs(); const di = setInterval(() => { if (screen !== "nights") return clearInterval(di); paintDevs(); }, 4000);
+    }
     $("#pro-toggle").onclick = () => { state.proOff = !state.proOff; persist(); if (!state.proOff) try { if (window.Notification && Notification.permission === "default") Notification.requestPermission(); } catch (e) {} show("nights"); };
     $$("[data-forget]").forEach((b) => b.onclick = () => { state.memory.splice(Number(b.dataset.forget), 1); persist(); show("nights"); });
     // what she remembers: tap a line to change it (Enter or tapping away saves; emptied = forgotten), or add one

@@ -700,6 +700,21 @@
   .dev-list { display: flex; flex-wrap: wrap; gap: 8px; }
   .dev-chip { font: 600 13px var(--body); background: var(--surface-2); border: 1px solid var(--glass-line); border-radius: 999px; padding: 6px 12px; }
   #dev-name { max-width: 140px; }
+  .travel { position: fixed; inset: 0; z-index: 90; pointer-events: none; }
+  .travel .tv-luma { position: absolute; width: 120px; height: 120px; object-fit: contain; left: 50%; top: 42%; filter: drop-shadow(0 8px 20px rgba(0,0,0,.5)); }
+  .travel-in .tv-luma { animation: tvIn 1.3s cubic-bezier(.2,.9,.25,1) both; }
+  .travel-out .tv-luma { animation: tvOut 1.3s cubic-bezier(.5,0,.8,.3) both; }
+  @keyframes tvIn { 0% { transform: translate(-50%, -260%) scale(.4) rotate(-12deg); opacity: 0; } 55% { transform: translate(-50%, 0) scale(1.08) rotate(3deg); opacity: 1; } 100% { transform: translate(-50%, -10%) scale(1); opacity: 0; } }
+  @keyframes tvOut { 0% { transform: translate(-50%, -10%) scale(1); opacity: 1; } 100% { transform: translate(120%, -240%) scale(.4) rotate(14deg); opacity: 0; } }
+  .travel .tv-trail { position: absolute; left: 50%; top: 42%; }
+  .travel .tv-trail i { position: absolute; width: 10px; height: 10px; border-radius: 50%; background: radial-gradient(circle, #fff, var(--glow) 60%, transparent 72%); opacity: 0; animation: tvSpark 1.3s ease-out both; animation-delay: var(--d); }
+  .travel-in .tv-trail i { animation-name: tvSparkIn; }
+  @keyframes tvSparkIn { 0% { transform: translate(-50%, -220%) scale(.3); opacity: .9; } 100% { transform: translate(-50%, 10%) scale(1.4); opacity: 0; } }
+  @keyframes tvSpark { 0% { transform: translate(-50%, 0) scale(1); opacity: .9; } 100% { transform: translate(90%, -210%) scale(.4); opacity: 0; } }
+  .travel-toast { position: fixed; z-index: 91; left: 50%; top: calc(env(safe-area-inset-top, 0px) + 64px); transform: translateX(-50%); background: rgba(17,18,38,.92); border: 1px solid rgba(255,255,255,.14); color: var(--mist); border-radius: 999px; padding: 9px 16px; font: 600 13.5px var(--body); box-shadow: 0 10px 30px rgba(0,0,0,.4); white-space: nowrap; max-width: calc(100vw - 32px); overflow: hidden; text-overflow: ellipsis; animation: tvToast .4s ease both; }
+  .travel-toast.go { opacity: 0; transform: translate(-50%, -8px); transition: opacity .4s, transform .4s; }
+  @keyframes tvToast { from { opacity: 0; transform: translate(-50%, -8px); } to { opacity: 1; transform: translate(-50%, 0); } }
+  @media (prefers-reduced-motion: reduce) { .travel { display: none; } }
 </style>
 
 <canvas id="sky" aria-hidden="true"></canvas>
@@ -2775,10 +2790,10 @@ ${last}${langNote()}`;
     Object.defineProperty(window, "__resting", { get: () => rest, set: (v) => { rest = !!v; document.documentElement.classList.toggle("resting", rest); } });
   }
   // the newest Android app; older ones lack tapping, scrolling or her moving bubble
-  const APP_LATEST = 2.7;
+  const APP_LATEST = 2.8;
   const appVersion = () => !nativeApp ? 0 : AndroidLuma.version ? parseFloat(AndroidLuma.version()) || 0
     : AndroidLuma.answerAsk ? 1.9 : AndroidLuma.accessOn ? 1.6 : AndroidLuma.doAction ? 1.5 : 1.4;
-  const DESKTOP_LATEST = 2.2;   // Firefly for Windows
+  const DESKTOP_LATEST = 2.3;   // Firefly for Windows
   const appOld = () => nativeApp && appVersion() < (desktopApp ? DESKTOP_LATEST : APP_LATEST);
   // opened through the phone's browser (the trailing dot makes it another address for the app), which downloads it
   const APK_URL = "https://firefly-3t9.pages.dev./firefly.apk";
@@ -2846,6 +2861,33 @@ ${last}${langNote()}`;
     try { if (ownSite ? (SR || (navigator.mediaDevices && navigator.mediaDevices.getUserMedia)) : (SR && (nativeApp ? AndroidLuma.speak : "speechSynthesis" in window))) caps.push("call"); } catch (e) {}
     return caps;
   }
+  // Luma's bubble travelling between his devices: when the device he's using changes, she flies onto the
+  // one he just picked up (and waves off the one he left), so she visibly follows him. A little sprite flies
+  // across, a soft sparkle trail behind it, and a one-line toast.
+  let travelBusy = 0;
+  function linkTravel(dir, otherName) {
+    if (document.visibilityState !== "visible") return;
+    if (Date.now() - travelBusy < 2500) return;   // one at a time
+    travelBusy = Date.now();
+    const wrap = document.createElement("div");
+    wrap.className = "travel travel-" + dir;
+    const mood = dir === "in" ? "excited" : "happy";
+    wrap.innerHTML = `<div class="tv-trail"></div><img class="tv-luma" alt="" src="${poseImg("chibi", mood)}">`;
+    document.body.appendChild(wrap);
+    // a few sparkles along her path
+    const trail = wrap.querySelector(".tv-trail");
+    for (let i = 0; i < 7; i++) { const s = document.createElement("i"); s.style.setProperty("--d", (i * 0.05) + "s"); trail.appendChild(s); }
+    const toast = document.createElement("div");
+    toast.className = "travel-toast";
+    toast.textContent = dir === "in" ? (otherName ? "Luma hopped over from your " + otherName + " 💫" : "Luma's here with you now 💫") : "Luma went to your " + (otherName || "other device") + " 💫";
+    document.body.appendChild(toast);
+    if (dir === "in") { try { sound.cute && sound.cute("excited"); } catch (e) {} }
+    setTimeout(() => { wrap.remove(); }, 1500);
+    setTimeout(() => { toast.classList.add("go"); }, 1800);
+    setTimeout(() => { toast.remove(); }, 2300);
+  }
+  window.__linkTravel = linkTravel;   // (so it can be tried)
+
   async function linkPing() {
     if (!ownSite) return;
     try {
@@ -2853,7 +2895,13 @@ ${last}${langNote()}`;
       if (!r.ok) return;
       const d = await r.json();
       LINK.devices = Array.isArray(d.devices) ? d.devices : [];
-      LINK.active = d.active || null;
+      const was = LINK.active, now = d.active || null;
+      LINK.active = now;
+      if (LINK.seen) {   // not the first ping: did she move to or from this device?
+        const meNow = now && now.id === LINK.id, meWas = was && was.id === LINK.id;
+        if (meNow && !meWas) linkTravel("in", was && was.name);          // she just hopped onto this device
+        else if (meWas && now && now.id !== LINK.id) linkTravel("out", now.name);   // she left for another
+      }
       LINK.seen = Date.now();
       for (const job of d.jobs || []) linkRun(job);
     } catch (e) {}

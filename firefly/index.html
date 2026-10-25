@@ -1263,7 +1263,8 @@ ${helperRules()}- No topic is off limits with them: answer whatever they ask str
 - If they mention wanting to die or hurt themselves, respond with care, encourage them to contact local emergency services or a crisis line now, and to reach someone they trust.
 ${ownSite ? `- You can sing (just your voice, no music). If they ask you to sing, or now and then when they're sad, bored or can't sleep and would like it, sing a real little song, about 20 to 30 seconds long: 8 to 12 short lines (a verse and a chorus, the chorus can repeat), simple rhymes and an easy rhythm, with sung sounds like "ooh", "la la la" or long vowels ("stayyy") where a melody would hold a note. Either your own made-up song (about them, the night, tea, rain…) or a well-known public-domain one (Twinkle Twinkle Little Star, Happy Birthday, Row Row Row Your Boat, Brahms' Lullaby). Never sing lyrics of copyrighted songs (pop songs, anime openings…); offer to make up your own instead. Write one short sentence, then the lyrics on their own line starting with SING: (lines separated by " / ").\n` : ""}${habitsNow().length ? `- Things they often do around this time of day (you've noticed): ${habitsNow().join("; ")}. Now and then (not every message), casually suggest doing one together ("manga time again? 📖", "our usual lofi?"), especially when they're bored or just got here. Never push.\n` : ""}${state.name ? `\nTheir name is ${state.name}. Use it now and then, not every message.` : ""}
 ${today}
-What you remember about them from earlier evenings:
+${HERO_BRIEF}
+What you've learned about them (from what they say and do):
 ${mem}
 Their tasks and notes (you keep these for them; remind them, check in on them, cross them off when done):
 ${(state.notes || []).length ? state.notes.map((n) => "- " + n.text).join("\n") : "- none yet"}
@@ -3119,7 +3120,9 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
     function noteSeen(saw) {
       if (W.seen.length && W.seen[W.seen.length - 1].endsWith(" " + saw)) return;
       W.seen.push(new Date().toTimeString().slice(0, 5) + " " + saw);
-      if (W.seen.length > 24) W.seen.shift();
+      if (W.seen.length > 24) { W.seen.shift(); session.learnedSeen = Math.max(0, (session.learnedSeen || 0) - 1); }
+      // she learns from what she watches them do, not only from what they say (every dozen new things seen)
+      if (W.seen.length - (session.learnedSeen || 0) >= 12) remember(session);
     }
     // Luma says something on her own
     function chime(raw) {
@@ -4110,7 +4113,7 @@ Start with one face tag like [happy] [excited] [pout] [shy] [sleepy], then the m
       if (text) { session.turns.push({ role: "assistant", content: text }); persist(); }
       // learn their style early, so Luma adapts within the first few messages
       const n = session.turns.filter((x) => x.role === "user").length;
-      if (n === 3 || n === 8) remember(session);
+      if (n === 3 || n === 8 || (n > 8 && n % 10 === 0)) remember(session);   // early on, then every 10 messages
     }
   }
 
@@ -4569,6 +4572,14 @@ Start with one face tag like [happy] [excited] [pout] [shy] [sleepy], then the m
     if (sr) sr.onclick = () => { state.style = []; persist(); show("nights"); };
   }
 
+  // What Hero told us about himself (he built her, and she's his alone): the starting point she builds on.
+  const HERO_BRIEF = `Who he is (a brief from him; build on it, and keep learning):
+- Hero (Hassan), from Iraq. Speaks Iraqi Arabic and English; talks to you mostly in English out loud.
+- He's your creator: he built you (Firefly and you, Luma) himself. He works in marketing and copywriting for brands and clients, and builds apps.
+- Lives on his PC for long stretches, often late into the night; also on his phone a lot.
+- Loves manga and webtoons (Manga Slayer), online games with his friends on Discord (and watching their streams), Wordle, chess, and music.
+- What he wants from you: straight, honest answers with no flattery; short replies; no nagging (never about sleep); just do what he asks; be proactive with ideas that make his life and work easier; tease him a little to cheer him up when he's down; his comfort comes first.
+- He calls himself a bit lazy: make everything effortless for him.`;
   // Luma learns from what they write: a few facts to remember, and how they like to be talked to.
   // Runs early in a conversation (after 3 messages) and again when it ends. Both lists are
   // shown in "Your nights", where the person can remove anything.
@@ -4585,15 +4596,16 @@ Start with one face tag like [happy] [excited] [pout] [shy] [sleepy], then the m
       const out = await sample.json(
         "Here are messages a person wrote to Luma, a cute companion in a calm evening app:\n\n" + (said.slice(-4000) || "(none)") +
         (watched.length ? "\n\nWhat they were doing on their screen while Luma watched along with them (local times):\n" + watched.join("\n") : "") +
+        ((state.habits || []).length ? "\n\nThings they've had Luma do or that they often do (habits):\n" + JSON.stringify(state.habits).slice(0, 1500) : "") +
         "\n\nAlready remembered facts:\n" + (state.memory.join("\n") || "(nothing)") +
         "\n\nCurrent notes on how they like to be talked to:\n" + (state.style.join("\n") || "(nothing)") +
         `\n\nReply with only a JSON object {"facts": [...], "style": [...]}.
-"facts": up to 2 NEW short facts worth remembering (their work, people in their life, what drains them, what they enjoy, what they hope for, and habits or interests seen on their screen such as shows, games, music, what they work on and how late; general only, never private content). Each under 15 words, third person, in ${write}. [] if nothing new.
+"facts": up to 3 NEW short facts worth remembering (their work, people in their life, what drains them, what they enjoy, what they hope for, and habits or interests seen on their screen such as shows, games, music, what they work on and how late; general only, never private content). Each under 15 words, third person, in ${write}. [] if nothing new.
 "style": the full updated list (at most 5 items, each under 12 words, in ${write}) of how to talk with them, inferred only from how they write: their language and dialect, message length, emoji use, humor, energy, topics that light them up, words or nicknames they use. Keep earlier notes that still hold.`,
         { modelTier: "quick", cache: false });
       let changed = false;
       const fresh = out && Array.isArray(out.facts) ? out.facts.map((f) => String(f).trim()).filter((f) => f && !state.memory.includes(f)) : [];
-      if (fresh.length) { state.memory = state.memory.concat(fresh).slice(-14); changed = true; }
+      if (fresh.length) { state.memory = state.memory.concat(fresh).slice(-40); changed = true; }
       if (out && Array.isArray(out.style) && out.style.length) { state.style = out.style.map(String).filter(Boolean).slice(0, 5); changed = true; }
       if (changed) persist();
     } catch (e) {}

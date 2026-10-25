@@ -50,7 +50,9 @@ export async function onRequestPost({ request, env, waitUntil }) {
     ? { model, max_tokens: 16000, output_config: { effort: "medium" }, thinking: { type: "adaptive" }, cache_control: { type: "ephemeral" }, messages }
     : { model, max_tokens: 2000, output_config: { effort: "low" }, thinking: model === "claude-sonnet-5-5" ? { type: "between_tools" } : { type: "disabled" }, cache_control: { type: "ephemeral" }, messages };
   // she may look things up on the web for a chat reply (not while glancing at the screen)
-  if (!images.length) params.tools = [model === "claude-haiku-5-5" ? { type: "web_search_20250305", name: "web_search", max_uses: 3 } : { type: "web_search_20250305", name: "web_search", max_uses: 3 }];
+  // a task they handed off (hard): more searching, and reading the pages it finds
+  if (!images.length && hard) params.tools = [{ type: "web_search_20250305", name: "web_search", max_uses: 8 }, { type: "web_fetch_20250910", name: "web_fetch", max_uses: 5 }];
+  else if (!images.length) params.tools = [model === "claude-haiku-5-5" ? { type: "web_search_20250305", name: "web_search", max_uses: 3 } : { type: "web_search_20250305", name: "web_search", max_uses: 3 }];
   // Opus and Sonnet can hand a refused reply to another model instead of failing
   const open = (p) => p.model === "claude-haiku-5-5"
     ? client.messages.stream(p)

@@ -160,7 +160,11 @@ async function act(name, arg, askFirst) {
     case "open_url": { const u = /^https?:\/\//i.test(arg) ? arg : "https://" + arg; if (!/^https?:\/\//i.test(u)) return "failed"; await shell.openExternal(u); return "ok"; }
     case "search": await shell.openExternal("https://www.google.com/search?q=" + encodeURIComponent(arg)); return "ok";
     case "maps": await shell.openExternal("https://www.google.com/maps/search/" + encodeURIComponent(arg)); return "ok";
-    case "music": await shell.openExternal("https://www.youtube.com/results?search_query=" + encodeURIComponent(arg)); return "ok";
+    case "music":
+      // focus / lofi music starts playing right away (the lofi girl live stream); anything else: its search
+      if (/lo-?fi|focus|study|chill|work|relax/i.test(arg)) await shell.openExternal("https://www.youtube.com/watch?v=jfKfPfyJRdk");
+      else await shell.openExternal("https://www.youtube.com/results?search_query=" + encodeURIComponent(arg));
+      return "ok";
   }
   if (!target) await pollForeground();
   if (gaming) return "game";   // never anything inside a game

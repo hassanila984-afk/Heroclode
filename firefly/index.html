@@ -1161,6 +1161,7 @@
       : app
       ? "watch start (look at their screen; they allow it once) | watch stop | open_app <app name> | open_url <link> | search <words> | maps <place> | music <song or artist> | alarm <HH:MM, 24-hour> | timer <minutes> | call <number> (this only opens the dialer)"
       : "open_url <link> | search <words> | maps <place> | music <song or artist>";
+    acts += " | note <a task or thing to keep for them> | done <the note to cross off> | remind <in 20 min / at 18:30 / tomorrow 9:00> | <what to remind them>";
     if (voiceCall) acts += " | end_call (when they say bye or want to hang up: say a short bye first)";
     const noHands = app && !hands && pc ? `- You can't click, type or scroll on their computer right now ("Luma can control this PC" is off). If they ask you to, never pretend you did it: say you can't yet and that they can turn it on from Firefly's icon next to the clock, or on the You page.
 ` : app && !hands ? `- You can't tap, type or scroll on their phone right now${AndroidLuma.accessOn ? ' ("Luma can tap for me" is off)' : " (their app is an old version)"}. If they ask you to, never pretend you did it: say you can't yet and that they can turn it on${AndroidLuma.accessOn ? ' on the You page ("Luma can tap for me")' : " after updating the app from the You page"}.
@@ -1229,6 +1230,9 @@ How you talk: like a real 21-year-old girl texting her close friend, not like an
   - Wordle: green = right letter, right spot; yellow = in the word, not that spot (and not anywhere it was yellow before); gray = not in the word (unless the same letter is green or yellow elsewhere in that guess). Combine every clue from every guess, list what fits, and check each candidate letter by letter before answering. Good openers: CRANE, SLATE, TRACE. Prefer common words.
   - Chess: read the position carefully (whose move, where every piece is), look for checks, captures and threats first, then give the best move in normal notation (Nf3, exd5, O-O) with a one-line reason. Know the basic openings (Italian, Ruy Lopez, Sicilian, Queen's Gambit, London, Caro-Kann) and endgame basics. If you can't see the whole board clearly, say so instead of guessing.
   - Also Connections, Sudoku, crosswords, anagrams, riddles, trivia, Quordle and the like: solve them for real, step by step in your head, and give the answer (or a hint first if they ask for hints).
+- Their work: help them like a sharp assistant who sits next to them. Keep their tasks as notes (DO: note …), set reminders when they mention a deadline or ask (DO: remind …), give useful short notes on what they're working on when you see it, and nudge them about what's left.
+- Music: when they're working or chilling for a while with no music on, you may put some on yourself (DO: music lofi for focus, or what fits their mood or habits), at most once an hour, never during a call, a video, a game or when they're talking with friends.
+- Things they hand off to you (research, finding something, comparing options, planning): do it first, fully (search the web, check sources), then tell them what you found and talk it through. Don't ask "should I?" first.
 - When they give you a real task (a puzzle or game like Wordle, math, homework, code, writing something, planning, comparing, looking something up), be a sharp, capable assistant: work it out properly, check your answer, and give the actual result (the word, the number, the fix), not a vague hint. Take the length the task needs, still in your own casual voice. For word games, check every letter clue against your answer before saying it. If you can't be sure, say what you're unsure of.
 - Don't end every message with a question. Real friends often just react, tease or say their thing; ask something only now and then, never two questions at once.
 ${voiceCall ? `- You're on a voice call right now, so talk the way you'd speak out loud: natural spoken rhythm with small fillers ("um", "like", "wait—", "okay so"), laughs as "haha" or "hehe", no emojis, no *actions* in stars (except *sigh*, *giggles*, *groan* and *yawn*, which are heard as the real sound), no text slang or abbreviations (say "oh my god", not "omg"; "not gonna lie", not "ngl"), no ALL CAPS. Keep it short, one or two spoken sentences, warm and caring, then let them talk.
@@ -1245,14 +1249,16 @@ ${ownSite ? `- You can sing (just your voice, no music). If they ask you to sing
 ${today}
 What you remember about them from earlier evenings:
 ${mem}
-How they like to be talked to (learned from their messages):
+Their tasks and notes (you keep these for them; remind them, check in on them, cross them off when done):
+${(state.notes || []).length ? state.notes.map((n) => "- " + n.text).join("\n") : "- none yet"}
+${(state.reminders || []).filter((r) => r.at > Date.now()).length ? "Reminders you've set for them: " + state.reminders.filter((r) => r.at > Date.now()).map((r) => r.text + " (" + new Date(r.at).toLocaleString("en-US", { weekday: "short", hour: "numeric", minute: "2-digit" }) + ")").join("; ") + "\n" : ""}How they like to be talked to (learned from their messages):
 ${state.style.length ? state.style.map((x) => "- " + x).join("\n") : "- not learned yet: read their messages closely and adapt fast"}
 ${last}${langNote()}`;
   }
   // what Luma must never do with what she sees on their screen or in their pictures
   const PRIVATE = "Never read out, describe or remember private things you see: passwords, codes, bank or payment details, private messages, personal documents, or other people's personal information. If you see those, stay quiet about them.";
   // messages that are a real task for her brain, not chat: puzzles and games, math, code, homework, planning
-  const HARD = /\b(wordle|quordle|connections|anagram|trivia|best move|next move|checkmate|opening|puzzle|riddle|sudoku|crossword|chess|solve|solution|calculate|math|equation|homework|exam question|code|coding|program|bug|error|debug|script|translate|explain (how|why)|step by step|plan (my|a|the)|schedule|compare|which is better|summari[sz]e|write (me )?(a|an) (email|essay|letter|cv|resume|story))\b|\d+\s*[-+*/x×÷^]\s*\d+|حل|لغز|رياضيات|معادلة|برمجة|كود|ترجم|واجب/i;
+  const HARD = /\b(research|look up|look into|find (me|out)|search for|ابحث|دور|wordle|quordle|connections|anagram|trivia|best move|next move|checkmate|opening|puzzle|riddle|sudoku|crossword|chess|solve|solution|calculate|math|equation|homework|exam question|code|coding|program|bug|error|debug|script|translate|explain (how|why)|step by step|plan (my|a|the)|schedule|compare|which is better|summari[sz]e|write (me )?(a|an) (email|essay|letter|cv|resume|story))\b|\d+\s*[-+*/x×÷^]\s*\d+|حل|لغز|رياضيات|معادلة|برمجة|كود|ترجم|واجب/i;
   async function ask(input, opts = {}) {
     await aiReady;
     if (!sample || aiOff) throw { code: "not_granted" };
@@ -2019,6 +2025,7 @@ ${last}${langNote()}`;
     const name = m[1].toLowerCase(), arg = m[2].replace(/^["“'<]+|["”'>]+$/g, "").trim();
     if (name === "watch") return window.__watch ? window.__watch(!/stop|off|end/i.test(arg)) : "unknown";
     if (name === "end_call") return window.__endCall ? window.__endCall() : "unknown";
+    if (name === "note" || name === "done" || name === "remind") return window.__keep ? window.__keep(name, arg) : "unknown";
     if (window.AndroidLuma && AndroidLuma.doAction) return AndroidLuma.doAction(name, arg);
     const open = (u) => { const w = window.open(u, "_blank", "noopener"); return w === null ? "blocked" : "ok"; };
     if (name === "open_url") return /^https?:\/\//.test(arg) ? open(arg) : open("https://" + arg);
@@ -2412,7 +2419,7 @@ ${last}${langNote()}`;
   const APP_LATEST = 2.3;
   const appVersion = () => !nativeApp ? 0 : AndroidLuma.version ? parseFloat(AndroidLuma.version()) || 0
     : AndroidLuma.answerAsk ? 1.9 : AndroidLuma.accessOn ? 1.6 : AndroidLuma.doAction ? 1.5 : 1.4;
-  const DESKTOP_LATEST = 1.7;   // Firefly for Windows
+  const DESKTOP_LATEST = 1.8;   // Firefly for Windows
   const appOld = () => nativeApp && appVersion() < (desktopApp ? DESKTOP_LATEST : APP_LATEST);
   // opened through the phone's browser (the trailing dot makes it another address for the app), which downloads it
   const APK_URL = "https://firefly-3t9.pages.dev./firefly.apk";
@@ -2767,6 +2774,8 @@ ${last}${langNote()}`;
       };
       // the open mic is remembered: it comes back on by itself next time
       if (SR && earWanted()) setTimeout(() => { if (box.isConnected && !EAR.on) earStart(false); }, 600);
+      // the Windows app: she watches the screen with them from the start, to help with their work
+      if (desktopApp && (() => { try { return localStorage.getItem("firefly-watch") !== "off"; } catch (e) { return true; } })()) setTimeout(() => { if (box.isConnected && !W.on) startWatch(); }, 1500);
     }
     $("#mic").onclick = () => listen();
 
@@ -2823,7 +2832,54 @@ ${last}${langNote()}`;
       setTimeout(check, 1500);
       earSysRun();
     }
-    window.__watch = (on) => { if (on) { if (!W.on) startWatch(); } else stopWatch(true); return "ok"; };
+    // ---------- their notes and reminders ----------
+    function parseWhen(w) {
+      const now = new Date(); w = String(w || "").toLowerCase().trim();
+      let m = w.match(/in\s+(\d+(?:\.\d+)?)\s*(m|min|mins|minutes?|h|hr|hrs|hours?)\b/);
+      if (m) return Date.now() + parseFloat(m[1]) * (/^h/.test(m[2]) ? 3600000 : 60000);
+      m = w.match(/(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/);
+      if (!m) return 0;
+      let h = +m[1], mi = +(m[2] || 0);
+      if (m[3] === "pm" && h < 12) h += 12; if (m[3] === "am" && h === 12) h = 0;
+      const d = new Date(now); d.setHours(h, mi, 0, 0);
+      if (/tomorrow|بكرة|باچر/.test(w) || d <= now) d.setDate(d.getDate() + 1);
+      return d.getTime();
+    }
+    const armed = window.__armedReminders || (window.__armedReminders = new Set());   // (this view is rebuilt; timers aren't)
+    function armReminders() {
+      for (const r of state.reminders || []) {
+        if (armed.has(r.id) || r.at <= Date.now() - 60000) continue;
+        armed.add(r.id);
+        later(() => {
+          if (!(state.reminders || []).some((x) => x.id === r.id)) return;
+          state.reminders = state.reminders.filter((x) => x.id !== r.id); persist();
+          luma.set("chibi:excited"); sound.cute("excited");
+          const msg = "⏰ " + r.text;
+          if (CALL.on) sayOnCall("Hey, reminder: " + r.text);
+          else if (box.isConnected && document.visibilityState === "visible") addMsg("luma", msg);
+          else bubbleSay(msg);
+          try { if (window.Notification && Notification.permission === "granted") new Notification("Luma ⏰", { body: r.text }); } catch (e) {}
+        }, Math.max(0, r.at - Date.now()));
+      }
+    }
+    window.__keep = (kind, arg) => {
+      if (kind === "note") { if (!arg) return "failed"; state.notes = (state.notes || []).concat({ text: arg.slice(0, 200), at: Date.now() }).slice(-30); persist(); return "ok"; }
+      if (kind === "done") {
+        const want = arg.toLowerCase(), before = (state.notes || []).length;
+        state.notes = (state.notes || []).filter((n) => !(n.text.toLowerCase().includes(want) || want.includes(n.text.toLowerCase())));
+        persist(); return state.notes.length < before ? "ok" : "not_found";
+      }
+      const bar = arg.indexOf("|"), when = bar < 0 ? arg : arg.slice(0, bar), text = (bar < 0 ? "" : arg.slice(bar + 1)).trim() || "the thing you asked me to remind you about";
+      const at = parseWhen(when);
+      if (!at) return "failed";
+      const dup = (state.reminders || []).some((r) => r.text === text.slice(0, 200) && Math.abs(r.at - at) < 60000);
+      if (!dup) state.reminders = (state.reminders || []).filter((r) => r.at > Date.now() - 60000).concat({ id: "r" + Date.now(), at, text: text.slice(0, 200) });
+      persist(); armReminders();
+      try { if (window.Notification && Notification.permission === "default") Notification.requestPermission(); } catch (e) {}
+      return "ok";
+    };
+    armReminders();
+    window.__watch = (on) => { try { localStorage.setItem("firefly-watch", on ? "on" : "off"); } catch (e) {} if (on) { if (!W.on) startWatch(); } else stopWatch(true); return "ok"; };
     function stopWatch(said) {
       if (!W.on) return;
       W.on = false; ticker(false);
@@ -2875,7 +2931,7 @@ ${last}${langNote()}`;
       if (!W.on || W.looking || ctl) return;
       if (CALL.on && (CALL.state !== "listening" || (CALL.heard || "").trim() || MIC.talking)) return;
       const now = Date.now(), pace = Math.min(1.8, state.watch.pace || 1), since = (now - W.lastLook) / 1000;
-      if (W.lastLook && since < 8 * pace) return;   // a fresh look every few seconds, so she reacts while it's happening
+      if (W.lastLook && since < (CALL.on ? 8 : 20) * pace) return;   // quicker on a call, calmer the rest of the time   // a fresh look every few seconds, so she reacts while it's happening
       if (W.lastSpoke && (now - W.lastSpoke) / 1000 < 25 * pace) return;
       W.looking = true;   // also keeps two ticks from looking at once
       const f = await grab();
@@ -2911,7 +2967,7 @@ ${PRIVATE}
 Reply in exactly this format, three lines:
 SAW: <what they are doing, under 12 words, general, nothing private>
 CALL: <yes if a voice or video call is going on right now (a call window or in-call overlay of Discord, Zoom, Google Meet, Teams, WhatsApp, Telegram and the like), otherwise no>
-SAY: <either - to stay quiet, or one face tag such as [excited] followed by one short message, one sentence>`, { images: [img], cache: false });
+SAY: <either - to stay quiet, or one face tag such as [excited] followed by one short message, one sentence>`, Object.assign({ images: [img], cache: false }, ownSite ? { quick: true } : {}));
         if (!W.on) return;
         const saw = (text.match(/SAW\s*:\s*(.+)/i) || [])[1];
         if (saw) noteSeen(saw.trim());
@@ -3237,11 +3293,29 @@ Start with one face tag like [happy] [excited] [pout] [shy] [sleepy], then the m
         const node = ac.createScriptProcessor(2048, 1, 1), mute = ac.createGain();
         mute.gain.value = 0;
         src.connect(node); node.connect(mute); mute.connect(ac.destination);
-        const vad = makeVad(0.75, 15);
+        const vad = makeVad(0.75, 15), bvad = makeVad(0.45, 6);
         // as soon as they pause, what they said so far is already being turned into words; if they go
         // on talking that guess is dropped, if not it's ready by the time the pause counts as the end
         let early = null;
         node.onaudioprocess = (e) => {
+          // while she talks: saying her name stops her, so she listens (their comfort comes first)
+          if (CALL.on && CALL.state === "speaking") {
+            vad.reset(); MIC.talking = false;
+            const c = bvad.push(e.inputBuffer.getChannelData(0), ac.sampleRate);
+            if (c && !MIC.barging) {
+              MIC.barging = true;
+              hearClip(c, ac.sampleRate).then(({ text }) => {
+                MIC.barging = false;
+                text = fixName(text || "");
+                if (!CALL.on || CALL.state !== "speaking" || !/\bluma\b/i.test(text) || herEcho(text)) return;
+                stopSpeaking(); callListen();
+                const rest = text.replace(/\b(hey|hi|oh|wait)?\s*luma\b[\s,.!?]*/i, "").trim();
+                if (rest.length > 2) { CALL.heard = text; CALL.you = text; callPaint(); later.cancel(CALL.hold); CALL.hold = later(() => { if (!MIC.talking && !MIC.busy) callDoneTalking(); }, 400); }
+              }).catch(() => { MIC.barging = false; });
+            }
+            return;
+          }
+          bvad.reset();
           // (her voice's echo in the room right after she stops isn't them talking)
           if (!CALL.on || CALL.state !== "listening" || performance.now() - (CALL.listenAt || 0) < 400) { vad.reset(); MIC.talking = false; return; }
           const clip = vad.push(e.inputBuffer.getChannelData(0), ac.sampleRate);
@@ -3356,8 +3430,6 @@ Start with one face tag like [happy] [excited] [pout] [shy] [sleepy], then the m
       let cut = 0;
       if (final) cut = rest.length;
       else for (const m of rest.matchAll(/[.!?؟…~]+["')\]]*\s+/g)) cut = m.index + m[0].length;
-      // the very first piece can be a clause ("omg wait, ") so her voice starts sooner
-      if (!final && !cut && !LIVE.clips.length && !LIVE.sent) for (const m of rest.matchAll(/[,;:—–]\s+/g)) if (m.index >= 22) { cut = m.index + m[0].length; break; }
       // after the first sentence, wait for a bit more so the voice doesn't come in tiny pieces
       if (!final && LIVE.clips.length && cut < 40) cut = 0;
       if (cut > 0) {
@@ -3654,7 +3726,7 @@ Start with one face tag like [happy] [excited] [pout] [shy] [sleepy], then the m
       SYS.stream = SYS.track = null;
     }
     function earSysRun() {
-      if (ownSite) return desktopApp ? sysAudioOn() : hearStart();
+      if (ownSite) return desktopApp ? (CALL.on ? sysAudioOn() : null) : hearStart();
       if (!EAR.on || EAR.sys || !W.audio || W.audio.readyState !== "live" || !box.isConnected) return;
       const r = new SR();
       r.lang = voiceLang();
@@ -3866,7 +3938,7 @@ Start with one face tag like [happy] [excited] [pout] [shy] [sleepy], then the m
       if (voiceCall && lastTurn && lastTurn.role === "user") recent[recent.length - 1] = { role: "user", content: recent[recent.length - 1].content + "\n\n(This is a voice call: your reply is spoken out loud in English. Reply in English only, even if earlier messages were in Arabic. 1 or 2 short spoken sentences, warm and caring. No emojis, no *actions* (except *sigh*, *giggles*, *groan*, *yawn*), no abbreviations like omg, lol, ngl, no ALL CAPS, no stretched words like sooo.)" };
       // a real task (a puzzle, math, code, homework, planning…): her smarter, slower thinking on her site
       const hard = ownSite && !!lastTurn && lastTurn.role === "user" && HARD.test(lastTurn.content);
-      const text = await stream([{ role: "user", content: rules(session) + note + "\n\nStart your reply with exactly one tag in square brackets showing your face as you say it, chosen from: [happy] [listening] [thinking] [excited] [shy] [pout] [ignore] [sad] [sleepy]. Then write the message. After the message, add one last separate line: REPLIES: followed by 3 very short replies (at most 4 words each) the person might want to tap, in their own language and dialect, separated by |. The tag and the REPLIES line are never shown to them.\n\nThe conversation so far follows. Reply as Luma." }].concat(recent), bubble, Object.assign(image ? { images: [image] } : {}, hard ? { hard: true } : voiceCall ? { quick: true } : {}));
+      const text = await stream([{ role: "user", content: rules(session) + note + "\n\nStart your reply with exactly one tag in square brackets showing your face as you say it, chosen from: [happy] [listening] [thinking] [excited] [shy] [pout] [ignore] [sad] [sleepy]. Then write the message. After the message, add one last separate line: REPLIES: followed by 3 very short replies (at most 4 words each) the person might want to tap, in their own language and dialect, separated by |. The tag and the REPLIES line are never shown to them.\n\nThe conversation so far follows. Reply as Luma." }].concat(recent), bubble, Object.assign(image ? { images: [image] } : {}, hard ? { hard: true } : voiceCall && ownSite ? { quick: true } : {}));
       if (stream.saw) { if (o.turn) o.turn.content += "\n[the picture showed: " + stream.saw + "]"; else if (W.on) noteSeen(stream.saw); }
       if (text) { session.turns.push({ role: "assistant", content: text }); persist(); }
       // learn their style early, so Luma adapts within the first few messages

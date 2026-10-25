@@ -173,7 +173,10 @@
   .vc-bg { position: absolute; inset: -3%; width: 106%; height: 106%; object-fit: cover; animation: drift 40s ease-in-out infinite alternate; }
   .vc::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at 50% 100%, rgba(255, 214, 150, .14), transparent 60%), linear-gradient(180deg, rgba(11, 13, 42, .25), transparent 25%, transparent 70%, rgba(11, 13, 42, .5)); }
   .vc > *:not(.vc-bg) { z-index: 1; }
-  .vc-me { position: absolute; left: 50%; bottom: 0; transform: translateX(-50%); height: min(80%, 150vw); aspect-ratio: 482 / 602; max-width: none; cursor: pointer; }
+  .vc-me { position: absolute; left: 50%; bottom: 0; transform: translateX(-50%); height: min(84%, 160vw); aspect-ratio: 540 / 720; max-width: none; cursor: pointer;
+    -webkit-mask-image: linear-gradient(180deg, transparent 0%, transparent 5%, #000 20%); mask-image: linear-gradient(180deg, transparent 0%, transparent 5%, #000 20%); }
+  .vc-me video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; opacity: 0; transition: opacity .22s ease; }
+  .vc-me video.on { opacity: 1; }
   .vc-cap { position: absolute; left: max(16px, env(safe-area-inset-left, 0px)); right: max(16px, env(safe-area-inset-right, 0px)); top: calc(env(safe-area-inset-top, 0px) + 18px); text-align: center; font-size: 17px; line-height: 1.4; color: #fff; text-shadow: 0 1px 4px rgba(0, 0, 0, .8), 0 0 18px rgba(0, 0, 0, .6); text-wrap: balance; }
   .vc-cam { position: absolute; right: max(14px, env(safe-area-inset-right, 0px)); top: calc(env(safe-area-inset-top, 0px) + 70px); width: 108px; aspect-ratio: 3 / 4; object-fit: cover; border-radius: 14px; border: 2px solid rgba(255, 255, 255, .6); transform: scaleX(-1); box-shadow: 0 6px 20px rgba(0, 0, 0, .4); }
   .vc-bar { position: absolute; left: 0; right: 0; bottom: 0; padding: 12px max(16px, env(safe-area-inset-right, 0px)) calc(env(safe-area-inset-bottom, 0px) + 16px) max(16px, env(safe-area-inset-left, 0px)); display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; background: linear-gradient(transparent, rgba(11, 13, 42, .75)); }
@@ -3367,57 +3370,89 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
       else { hearStop(); sysAudioOff(); }
     }
     // ---------- the video call: her in her room ----------
-    // Her room is the wallpaper (with its light, steam and rain), she sits in front of it, her face follows
-    // her mood, her mouth opens with her voice (its loudness, read from the audio), and she can get up and
-    // move to another room. Their own camera can be on (a small preview; she sees a picture with each turn).
-    const VC_FACES = ["neutral", "happy", "laugh", "excited", "shy", "pout", "annoyed", "sad", "surprised", "sleepy", "thinking", "wink"];
-    // where the mouth is on each face (0..1), and the skin around it (to cover the closed mouth line)
-    const VC_MOUTH = { neutral: [0.53, 0.576, "#f1d8d2"], happy: [0.561, 0.568, "#f3d8d2"], pout: [0.518, 0.588, "#ecd0ca"], annoyed: [0.544, 0.619, "#f0d2cd"], sad: [0.544, 0.612, "#f0d0cb"], sleepy: [0.553, 0.592, "#efd3ce"], thinking: [0.585, 0.545, "#eacbc6"], wink: [0.577, 0.566, "#edd3cc"] };
-    const VC_FOR = { happy: "happy", excited: "excited", listening: "neutral", thinking: "thinking", shy: "shy", pout: "pout", ignore: "annoyed", sad: "sad", sleepy: "sleepy" };
-    const vcImgs = {};
-    function vcTap(a) {
-      try {
-        if (!VC.ac || VC.ac.state !== "running" || !VC.an) return;   // (not running: her mouth just moves along instead)
-        const src = VC.ac.createMediaElementSource(a);
-        src.connect(VC.an);
-      } catch (e) {}
-    }
+    // Her room is the background (the empty parts of her pictures, softly blurred), and she is real
+    // animation: short video loops of her made from her art (listening, talking, thinking, laughing, shy,
+    // pouting, sad, sleepy, excited), see-through, so she sits in the room. Which one plays follows the
+    // call: idle while she listens, a talking loop while she speaks, thinking while she thinks, and a
+    // reaction when her mood changes. Two video layers crossfade so she never jumps.
+    const VC_CLIPS = ["idle", "talk_a", "talk_b", "talk_c", "thinking", "laugh", "excited", "shy", "pout", "sad", "sleepy"];
+    const VC_EMOTE = { excited: "excited", shy: "shy", pout: "pout", ignore: "pout", sad: "sad", sleepy: "sleepy" };
+    function vcTap() {}   // (her voice no longer needs reading: the clips move by themselves)
     function vcOpen() {
       if (VC.on || !CALL.on) return;
       VC.on = true; VC.want = false;
-      for (const f of VC_FACES) if (!vcImgs[f]) { const im = new Image(); im.src = "luma/vc_" + f + ".webp"; vcImgs[f] = im; }
-      try {
-        if (!VC.ac) throw 0;
-        if (!VC.an) { VC.an = VC.ac.createAnalyser(); VC.an.fftSize = 512; VC.an.connect(VC.ac.destination); VC.buf = new Uint8Array(VC.an.fftSize); }
-        VC.ac.resume().catch(() => {});
-      } catch (e) { VC.ac = null; }
       if (!WALLS[VC.room] || !WALLS[VC.room].img) VC.room = "cozy";
       const el = document.createElement("div");
       el.className = "vc"; el.id = "vc";
-      el.innerHTML = `<img class="vc-bg" alt="" src="luma/vcbg_${VC.room}.webp"><canvas class="vc-me"></canvas><div class="vc-cap" aria-live="polite"></div><video class="vc-cam" muted playsinline hidden></video>
+      el.innerHTML = `<img class="vc-bg" alt="" src="luma/vcbg_${VC.room}.webp"><div class="vc-me"><video muted playsinline preload="auto"></video><video muted playsinline preload="auto"></video></div><div class="vc-cap" aria-live="polite"></div><video class="vc-cam" muted playsinline hidden></video>
         <div class="vc-bar"><div class="vc-rooms">${Object.keys(WALLS).filter((k) => WALLS[k].img).map((k) => `<button type="button" data-room="${k}" aria-pressed="${k === VC.room}" style="background-image:url('${WALLS[k].img.replace(".webp", "_s.webp")}')" title="${esc(WALLS[k].name)}"></button>`).join("")}</div>
         <button type="button" class="vc-btn" data-cam aria-pressed="false" title="Camera">📷</button><button type="button" class="vc-btn vc-end" data-end>${t("callEnd")}</button></div>`;
       document.body.appendChild(el); document.body.classList.add("vcon");
-      VC.el = el; VC.cv = el.querySelector(".vc-me"); VC.cx = VC.cv.getContext("2d"); VC.cap = el.querySelector(".vc-cap"); VC.video = el.querySelector(".vc-cam");
+      VC.el = el; VC.cap = el.querySelector(".vc-cap"); VC.video = el.querySelector(".vc-cam");
+      VC.layers = [...el.querySelectorAll(".vc-me video")]; VC.top = 0; VC.clip = ""; VC.clipEnds = 0;
       el.querySelector("[data-end]").onclick = () => callEnd();
       el.querySelectorAll("[data-room]").forEach((b) => b.onclick = () => vcRoom(b.dataset.room));
       el.querySelector("[data-cam]").onclick = (e) => vcCam(!VC.cam, e.currentTarget);
-      VC.cv.onclick = () => { if (CALL.state === "speaking") { stopSpeaking(); callListen(); } };   // tap her to cut in
-      VC.face = "neutral"; VC.prev = null; VC.fadeAt = 0; VC.open = 0; VC.hop = 1;
-      vcFit(); addEventListener("resize", vcFit);
-      VC.raf = requestAnimationFrame(vcFrame);
+      el.querySelector(".vc-me").onclick = () => { if (CALL.state === "speaking") { stopSpeaking(); callListen(); } };   // tap her to cut in
+      // the ones needed first load now, the rest as they're used
+      for (const c of ["idle", "talk_a", "thinking"]) { const v = document.createElement("link"); v.rel = "preload"; v.as = "video"; v.href = "luma/vc/" + c + ".webm"; document.head.appendChild(v); }
+      VC.mood = (luma.pose() || "chibi:listening").split(":")[1];
+      vcPlay("idle", true);
+      VC.timer = setInterval(vcTick, 150);
     }
+    window.__vcState = (st) => { CALL.state = st; };   // (for testing the clips)
     function vcClose() {
       if (!VC.on) return;
       VC.on = false; VC.want = false;
-      cancelAnimationFrame(VC.raf); removeEventListener("resize", vcFit);
+      clearInterval(VC.timer);
       vcCam(false);
+      if (VC.layers) VC.layers.forEach((v) => { v.pause(); v.removeAttribute("src"); v.load(); });
       if (VC.el) VC.el.remove(); VC.el = null;
       document.body.classList.remove("vcon");
     }
+    // put a clip on the hidden layer and crossfade to it once it's playing
+    function vcPlay(name, loop) {
+      if (!VC.on) return;
+      VC.clip = name; VC.loop = loop;
+      const next = VC.layers[1 - VC.top], cur = VC.layers[VC.top];
+      next.loop = loop; next.src = "luma/vc/" + name + ".webm";
+      next.onended = loop ? null : () => { if (VC.clip === name) vcPlay(vcBase(), true); };
+      next.play().then(() => {
+        if (!VC.on || VC.clip !== name) return;
+        next.classList.add("on"); cur.classList.remove("on");
+        VC.top = 1 - VC.top;
+        later(() => { if (VC.on && VC.layers[1 - VC.top] === cur) cur.pause(); }, 260);
+      }).catch(() => {});
+    }
+    // what she does when nothing special is happening, by the call's state
+    function vcBase() {
+      if (CALL.state === "thinking") return "thinking";
+      if (CALL.state === "speaking") return ["talk_a", "talk_b", "talk_c"][Math.floor(Math.random() * 3)];
+      return "idle";
+    }
+    function vcTick() {
+      if (!VC.on) return;
+      // captions: what she's saying, or what she heard
+      const cap = CALL.state === "speaking" ? CALL.her : CALL.state === "listening" && CALL.you ? CALL.you : CALL.state === "thinking" ? "…" : "";
+      if (VC.cap.textContent !== cap) VC.cap.textContent = cap;
+
+      const mood = (luma.pose() || "chibi:listening").split(":")[1];
+      const want = vcBase(), base = want.startsWith("talk") ? "talk" : want;
+      const playing = VC.clip.startsWith("talk") ? "talk" : VC.clip;
+      // her mood changed: a reaction first (it plays once, then she goes back to what the call needs)
+      if (mood !== VC.mood) {
+        VC.mood = mood;
+        const laughs = mood === "happy" && /\b(ha(ha)+|he(he)+|lol)\b|\*giggl/i.test(CALL.her || "");
+        const e = laughs ? "laugh" : VC_EMOTE[mood];
+        if (e && CALL.state !== "thinking") return vcPlay(e, false);
+      }
+      if (!VC.loop && VC_CLIPS.includes(VC.clip) && !VC.clip.startsWith("talk") && VC.clip !== "thinking" && VC.clip !== "idle") return;   // let a reaction finish
+      if (playing !== base) vcPlay(want, true);
+      else if (base === "talk" && VC.layers[VC.top].currentTime > 4.4) vcPlay(want, true);   // a different talking loop now and then
+    }
     function vcRoom(k) {
       if (!WALLS[k] || !WALLS[k].img) return "not_found";
-      VC.room = k; if (VC.on) { VC.el.querySelector(".vc-bg").src = "luma/vcbg_" + k + ".webp"; VC.hop = 1; VC.el && VC.el.querySelectorAll("[data-room]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.room === k))); }
+      VC.room = k; if (VC.on) { VC.el.querySelector(".vc-bg").src = "luma/vcbg_" + k + ".webp"; VC.el.querySelectorAll("[data-room]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.room === k))); }
       return "ok";
     }
     window.__room = (arg) => vcRoom(Object.keys(WALLS).find((k) => new RegExp(k, "i").test(arg)) || ({ coffee: "kitchen", cook: "kitchen", game: "gaming", read: "cozy", couch: "cozy", plant: "plants" }[Object.keys({ coffee: 1, cook: 1, game: 1, read: 1, couch: 1, plant: 1 }).find((w) => new RegExp(w, "i").test(arg))] || ""));
@@ -3431,60 +3466,6 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
         VC.stream = null; VC.cam = false; if (VC.video) { VC.video.srcObject = null; VC.video.hidden = true; }
       }
       const b = btn || (VC.el && VC.el.querySelector("[data-cam]")); if (b) b.setAttribute("aria-pressed", String(VC.cam));
-    }
-    function vcFit() { if (!VC.cv) return; const d = Math.min(2, devicePixelRatio || 1), r = VC.cv.getBoundingClientRect(); VC.cv.width = r.width * d; VC.cv.height = r.height * d; VC.cx.setTransform(d, 0, 0, d, 0, 0); VC.w = r.width; VC.h = r.height; }
-    function vcFrame(t) {
-      VC.raf = requestAnimationFrame(vcFrame);
-      if (t - (VC.last || 0) < 33) return;
-      VC.last = t;
-      // how loud her voice is right now -> how open her mouth is
-      let level = 0;
-      if (VC.an && CALL.state === "speaking") { VC.an.getByteTimeDomainData(VC.buf); let sum = 0; for (const v of VC.buf) { const x = (v - 128) / 128; sum += x * x; } level = Math.sqrt(sum / VC.buf.length); }
-      const talking = (CALL.state === "speaking" && (level > 0.015 || !VC.an)) || VC.forceTalk;
-      const target = talking ? (VC.an && !VC.forceTalk ? Math.min(1, Math.max(0, (level - 0.015) * 9)) : 0.5 + 0.5 * Math.sin(t / 70)) : 0;
-      VC.open += (target - VC.open) * 0.5;
-      // which face: her mood; listening while they talk; a wink now and then
-      const mood = (luma.pose() || "chibi:listening").split(":")[1];
-      let face = CALL.state === "listening" && MIC.talking ? "neutral" : VC_FOR[mood] || "neutral";
-      if (CALL.state === "thinking") face = "thinking";
-      if (talking && (face === "excited" || face === "surprised")) face = "happy";   // those already have an open mouth
-      if (!talking && Math.random() < 0.002) VC.winkUntil = t + 700;
-      if (VC.winkUntil > t && !talking && face === "happy") face = "wink";
-      if (face !== VC.face) { VC.prev = VC.face; VC.face = face; VC.fadeAt = t; }
-      const cx = VC.cx, W = VC.w, H = VC.h;
-      cx.clearRect(0, 0, W, H);
-      const im = vcImgs[VC.face]; if (!im || !im.complete || !im.naturalWidth) return;
-      const breath = Math.sin(t / 3200 * Math.PI * 2);
-      VC.hop *= 0.9;
-      const dh = H, dw = dh * im.naturalWidth / im.naturalHeight;
-      const y = H * 0.02 - VC.hop * Math.sin((1 - VC.hop) * Math.PI) * 18 - (talking ? Math.abs(Math.sin(t / 160)) * 2 : 0);
-      const rot = Math.sin(t / 2600) * 0.012 + (talking ? Math.sin(t / 320) * 0.01 : 0);
-      cx.save(); cx.translate(W / 2, H + y); cx.rotate(rot); cx.scale(1 - breath * 0.003, 1 + breath * 0.008);
-      const draw = (key, alpha) => {
-        const img = vcImgs[key]; if (!img || !img.complete) return;
-        cx.globalAlpha = alpha; cx.drawImage(img, -dw / 2, -dh, dw, dh);
-        const m = VC_MOUTH[key];
-        if (m && VC.open > 0.06 && key === VC.face) {   // her mouth, open as wide as her voice is loud
-          const mx = -dw / 2 + m[0] * dw, my = -dh + m[1] * dh, mw = dw * (0.052 + VC.open * 0.03), mh = dh * (0.006 + VC.open * 0.034);
-          cx.fillStyle = m[2]; cx.beginPath(); cx.ellipse(mx, my, dw * 0.045, dh * 0.012, 0, 0, Math.PI * 2); cx.fill();
-          cx.fillStyle = "#6e2530"; cx.beginPath(); cx.ellipse(mx, my + mh * 0.3, mw / 2, mh / 2 + 0.5, 0, 0, Math.PI * 2); cx.fill();
-          cx.fillStyle = "#d8737c"; cx.beginPath(); cx.ellipse(mx, my + mh * 0.62, mw * 0.32, mh * 0.22, 0, 0, Math.PI * 2); cx.fill();
-          cx.strokeStyle = "rgba(120,50,60,.6)"; cx.lineWidth = 1; cx.beginPath(); cx.ellipse(mx, my + mh * 0.3, mw / 2, mh / 2 + 0.5, 0, 0, Math.PI * 2); cx.stroke();
-        }
-      };
-      const fade = Math.min(1, (t - VC.fadeAt) / 180);
-      if (VC.prev && fade < 1) draw(VC.prev, 1 - fade);
-      draw(VC.face, VC.prev && fade < 1 ? fade : 1);
-      cx.restore(); cx.globalAlpha = 1;
-      // soft edges where the picture ends (the top of her hair, the sides on a wide screen)
-      cx.globalCompositeOperation = "destination-out";
-      let g = cx.createLinearGradient(0, 0, 0, H * 0.13); g.addColorStop(0, "rgba(0,0,0,1)"); g.addColorStop(1, "rgba(0,0,0,0)"); cx.fillStyle = g; cx.fillRect(0, 0, W, H * 0.13);
-      g = cx.createLinearGradient(0, 0, W * 0.07, 0); g.addColorStop(0, "rgba(0,0,0,1)"); g.addColorStop(1, "rgba(0,0,0,0)"); cx.fillStyle = g; cx.fillRect(0, 0, W * 0.07, H);
-      g = cx.createLinearGradient(W, 0, W * 0.93, 0); g.addColorStop(0, "rgba(0,0,0,1)"); g.addColorStop(1, "rgba(0,0,0,0)"); cx.fillStyle = g; cx.fillRect(W * 0.93, 0, W * 0.07, H);
-      cx.globalCompositeOperation = "source-over";
-      // captions: what she's saying, or what she heard
-      const cap = CALL.state === "speaking" ? CALL.her : CALL.state === "listening" && CALL.you ? CALL.you : CALL.state === "thinking" ? "…" : "";
-      if (VC.cap.textContent !== cap) VC.cap.textContent = cap;
     }
     function callPaint() {
       if (!CALL.pane) return;

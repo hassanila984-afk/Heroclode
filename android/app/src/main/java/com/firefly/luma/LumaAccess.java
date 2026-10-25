@@ -57,7 +57,7 @@ public class LumaAccess extends AccessibilityService {
     }
 
     /** Apps (and screens) she must never touch. */
-    private static final Pattern OFF_LIMITS = Pattern.compile(
+    static final Pattern OFF_LIMITS = Pattern.compile(
             "bank|banco|pay|wallet|money|cash|card|crypto|coin|binance|trade|trading|finance|wise|revolut|venmo|zelle|"
             + "password|passkey|authenticator|vault|bitwarden|1password|lastpass|"
             + "com\\.android\\.settings|packageinstaller|permissioncontroller|com\\.android\\.vending|"

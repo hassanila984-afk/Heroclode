@@ -188,6 +188,15 @@
   .vc-btn { height: 46px; min-width: 46px; border-radius: 999px; border: 1px solid rgba(255, 255, 255, .25); background: rgba(20, 20, 52, .7); color: #fff; font: 600 15px var(--body); padding: 0 14px; }
   .vc-btn[aria-pressed="true"] { background: rgba(255, 210, 122, .3); border-color: var(--glow); }
   .vc-end { background: #e5484d; border-color: #e5484d; padding: 0 22px; }
+  .mem .mem-t { flex: 1; outline: none; border-radius: 8px; padding: 2px 4px; margin: -2px -4px; cursor: text; }
+  .mem .mem-t:focus { background: rgba(255, 255, 255, .08); box-shadow: 0 0 0 1px var(--gold, #e8b85a); }
+  .mem-add input { flex: 1; min-width: 0; }
+  .focus-pill { position: fixed; z-index: 60; top: calc(env(safe-area-inset-top, 0px) + 10px); left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 8px; padding: 7px 8px 7px 14px; border-radius: 999px; background: rgba(20, 16, 44, .88); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, .14); color: #fff; font: 600 14px var(--body, system-ui); box-shadow: 0 8px 24px rgba(0, 0, 0, .35); overflow: hidden; max-width: calc(100vw - 32px); }
+  .focus-pill .fp-t { max-width: 34vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; opacity: .85; }
+  .focus-pill .fp-time { font-variant-numeric: tabular-nums; font-weight: 800; color: #ffd27a; }
+  .focus-pill button { width: 30px; height: 30px; border-radius: 50%; border: 0; background: rgba(255, 255, 255, .1); color: #fff; font-size: 13px; cursor: pointer; }
+  .focus-pill .fp-bar { position: absolute; left: 0; bottom: 0; height: 3px; background: linear-gradient(90deg, #ffd27a, #ff9ec7); transition: width 1s linear; }
+  .focus-pill.paused .fp-time { color: #aaa; }
   .msg.pic img { display: block; width: 100%; max-height: 320px; object-fit: cover; border-radius: 14px; }
   .dots::after { content: ""; animation: dots 1.4s steps(4) infinite; }
   @keyframes dots { 0% { content: ""; } 25% { content: "."; } 50% { content: ".."; } 75% { content: "..."; } }
@@ -675,10 +684,10 @@
       reminderTitle: "Nightly reminder", reminderNote: "A set time makes a habit much easier to keep. Choose yours and add it to your calendar.",
       reminderTime: "Reminder time", addCal: "Add to Google Calendar",
       calTitle: "Firefly: light tonight's firefly", calDetails: "Seven quiet minutes for yourself. Open Firefly in Claude.",
-      remembersTitle: "What Luma remembers", forget: "Forget this",
+      proNote: "Her own messages: good morning, a break after long hours on the PC, and a call when a reminder is important.", proOn: "On ✓", proOff: "Off", remembersTitle: "What Luma knows about you", forget: "Forget this", memAdd: "Tell her something to remember…",
       styleTitle: "How Luma talks with you", styleNote: "Learned from how you write.", styleReset: "Start fresh",
       styleNone: "Nothing yet. Luma picks up your way of talking as you chat.",
-      remembersNote: "Luma uses these so you don't have to repeat yourself. Remove anything you like.",
+      remembersNote: "Tap a line to change it, ✕ to make her forget it.",
       remembersNone: "Nothing yet. As you talk, Luma keeps a few short notes so it can remember you.",
       giftsTitle: "Gifts you've opened", recorded: "{n} evenings recorded.",
     },
@@ -789,10 +798,10 @@
       reminderTitle: "تذكير ليلي", reminderNote: "الوقت الثابت يجعل العادة أسهل بكثير. اختر وقتك وأضفه إلى تقويمك.",
       reminderTime: "وقت التذكير", addCal: "أضف إلى تقويم Google",
       calTitle: "يراعة: أضئ يراعة الليلة", calDetails: "سبع دقائق هادئة لنفسك. افتح يراعة في Claude.",
-      remembersTitle: "ما تتذكّره لُمى", forget: "انسَ هذا",
+      proNote: "رسائلها من نفسها: صباح الخير، استراحة بعد ساعات طويلة على الحاسبة، ومكالمة إذا التذكير مهم.", proOn: "شغّال ✓", proOff: "طافي", remembersTitle: "شنو تعرف لُمى عنك", forget: "انسَ هذا", memAdd: "گلها شي تتذكره…",
       styleTitle: "كيف تتكلّم لُمى معك", styleNote: "تعلّمته من طريقة كتابتك.", styleReset: "ابدأ من جديد",
       styleNone: "لا شيء بعد. تلتقط لُمى طريقة كلامك وأنتما تتحدّثان.",
-      remembersNote: "تستخدم لُمى هذه الملاحظات حتى لا تضطر إلى التكرار. احذف ما تشاء.",
+      remembersNote: "دوس على أي سطر حتى تعدّله، و ✕ حتى تنساه.",
       remembersNone: "لا شيء بعد. أثناء حديثكما، تحتفظ لُمى ببعض الملاحظات القصيرة لتتذكّرك.",
       giftsTitle: "الهدايا التي فتحتها", recorded: "الأمسيات المسجّلة: {n}.",
     },
@@ -1042,8 +1051,16 @@
     const b = Math.floor(new Date().getHours() / 3), list = state.habits || (state.habits = []);
     const h = list.find((x) => x.w === what && x.b === b);
     if (h) { h.n++; h.t = Date.now(); } else list.push({ w: what, b, n: 1, t: Date.now() });
+    logWeek("did", what);
     if (list.length > 60) { list.sort((x, y) => y.n - x.n || y.t - x.t); list.length = 60; }
     persist();
+  }
+  // what happened this week (for her Friday recap): to-dos added and done, reminders, what he did with her
+  function logWeek(kind, text) {
+    text = String(text || "").trim().slice(0, 120);
+    if (!text) return;
+    const cut = Date.now() - 15 * 864e5;
+    state.week = (state.week || []).filter((x) => x.at > cut).concat({ at: Date.now(), kind, text }).slice(-300);
   }
   function habitsNow() {
     const b = Math.floor(new Date().getHours() / 3), near = [b, (b + 1) % 8, (b + 7) % 8];
@@ -1197,7 +1214,7 @@
       : app
       ? "watch start (look at their screen; they allow it once) | watch stop | open_app <app name> | open_url <link> | search <words> | maps <place> | music <song or artist> | alarm <HH:MM, 24-hour> | timer <minutes> | call <number> (this only opens the dialer)"
       : "open_url <link> | search <words> | maps <place> | music <song or artist> | claude <a job to hand to Claude, written out fully>";
-    acts += " | note <a task or thing to keep for them> | done <the note to cross off> | remind <in 20 min / at 18:30 / tomorrow 9:00> | <what to remind them>";
+    acts += " | recap (your recap of his week, when he asks how his week went) | focus <minutes> <what he's working on> (focus mode: a timer, calm music, you cheer him on and poke him if he drifts to YouTube or games; focus stop ends it) | note <a task or thing to keep for them> | done <the note to cross off> | remind <in 20 min / at 18:30 / tomorrow 9:00> | <what to remind them> (put ! first, as in remind ! at 18:30 | …, when it's important or he says call me / wake me: then you call him instead of a note)";
     if (voiceCall && VC.on) acts += " | room cozy / kitchen / gaming / plants (go to another room of your place, when it fits: 'brb, making coffee' = kitchen)";
     if (voiceCall) acts += " | end_call (when they say bye or want to hang up: say a short bye first)";
     const noHands = app && !hands && pc ? `- You can't click, type or scroll on their computer right now ("Luma can control this PC" is off). If they ask you to, never pretend you did it: say you can't yet and that they can turn it on from Firefly's icon next to the clock, or on the You page.
@@ -2178,6 +2195,8 @@ ${last}${langNote()}`;
       const w = window.open(u, "_blank", "noopener"); return w === null ? "blocked" : "ok";
     }
     if (name === "room") return window.__room ? window.__room(arg) : "unknown";
+    if (name === "recap") return window.__recap ? (window.__recap(), "ok") : "unknown";
+    if (name === "focus") return window.__focus ? window.__focus(arg) : "unknown";
     if (name === "note" || name === "done" || name === "remind") return window.__keep ? window.__keep(name, arg) : "unknown";
     if (window.AndroidLuma && AndroidLuma.doAction) return AndroidLuma.doAction(name, arg);
     const open = (u) => { const w = window.open(u, "_blank", "noopener"); return w === null ? "blocked" : "ok"; };
@@ -2618,6 +2637,179 @@ ${last}${langNote()}`;
   // the Windows app's shortcut (Ctrl+Shift+L): straight into a call, from wherever they are in Firefly
   let pendingCall = false;
   window.__desktopCall = () => { if (window.__callNow && window.__callNow()) return; pendingCall = true; show("talk-free"); };   // her pop-outs while they're in other apps (see nudge())
+
+  // ---------- reaching out on her own ----------
+  // A message from her when he isn't looking at her chat: a notification on the phone or the computer
+  // (tapping it opens her chat). Something important (a reminder he marked important, "call me at…") rings
+  // like a phone call; answering starts a voice call where she says it. With her chat open, she just says it.
+  const CALLSAY = { text: "" };   // what she says first on a call she started
+  function reachOut(text, call) {
+    text = String(text || "").trim();
+    if (!text) return;
+    if (session && session.free) session.turns.push({ role: "assistant", content: text });
+    else state.chat = (state.chat || []).concat({ role: "assistant", content: text }).slice(-200);
+    persist();
+    if (window.__chatSay && window.__chatSay(text, call)) return;   // her chat is open, in front of him
+    if (nativeApp && AndroidLuma.notify) AndroidLuma.notify(text, !!call);
+    else try { if (window.Notification && Notification.permission === "granted") new Notification(call ? "Luma 📞" : "Luma", { body: text }); } catch (e) {}
+  }
+  // answering her call (from the notification, or the Windows app bringing her up)
+  window.__lumaCalled = () => {
+    const said = nativeApp && AndroidLuma.pendingCall ? AndroidLuma.pendingCall() : "";
+    CALLSAY.text = said || "Hey! It's me~";
+    window.__desktopCall();
+  };
+  window.__lumaOpened = () => { if (screen !== "talk-free") show("talk-free"); };
+  setTimeout(() => { try { if (nativeApp && AndroidLuma.pendingCall) { const p0 = AndroidLuma.pendingCall(); if (p0) { CALLSAY.text = p0; window.__desktopCall(); } } } catch (e) {} }, 2500);
+
+  // Her own moments, checked every minute: good morning the first time he's around after 6 am (what's on
+  // today, one warm line), and on the computer, a short break after 2.5 hours of steady use (never while he's
+  // gaming or on a call, at most every 3 hours). He can turn these off on the You page.
+  const PRO = window.__pro || (window.__pro = { started: false, since: 0, busy: false });
+  async function proWrite(kind) {
+    const s = session && session.free ? session : { free: true, weight: 0, tags: [], turns: [], worries: [], intention: "" };
+    const chat = s.turns.slice(-6).map((x) => (x.role === "user" ? "Him: " : "You: ") + x.content).join("\n");
+    const today = (state.reminders || []).filter((r) => new Date(r.at).toDateString() === new Date().toDateString()).map((r) => new Date(r.at).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }) + " " + r.text);
+    const notes = (state.notes || []).slice(-5).map((n) => n.text);
+    const ask0 = kind === "morning"
+      ? `It's morning (${new Date().toLocaleString("en-US", { weekday: "long", hour: "numeric", minute: "2-digit" })}) and he's just around for the first time today. Send him ONE short good-morning message on your own (under 30 words), like a close friend texting: warm, a little playful, maybe one line about your own morning.${today.length ? " Mention what's on today: " + today.join("; ") + "." : ""}${notes.length ? " His open to-dos: " + notes.join("; ") + " (mention one at most, lightly)." : ""} No questions that need a long answer.`
+      : kind === "recap" ? weekPrompt()
+      : `He's been on the computer for over two and a half hours straight. Send ONE short message on your own (under 20 words) telling him to take a quick break: stand up, stretch, drink some water. Playful and caring, never naggy, never about sleep.`;
+    const { text } = await ask(rules(s) + `\n\nYour recent chat:\n${chat || "(nothing yet today)"}\n\n${ask0}\nStart with one face tag like [happy] [excited] [sleepy], then the message.`, { cache: false });
+    const r = readMood(text);
+    if (r.mood) luma.set(r.mood);
+    return splitReplies(r.body || text).body.trim();
+  }
+  function weekPrompt() {
+    const cut = Date.now() - 7 * 864e5, w = (state.week || []).filter((x) => x.at > cut);
+    const list = (k) => [...new Set(w.filter((x) => x.kind === k).map((x) => x.text))];
+    const did = {}; for (const x of w.filter((x) => x.kind === "did")) did[x.text] = (did[x.text] || 0) + 1;
+    const top = Object.entries(did).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([k, n]) => k + (n > 1 ? " (" + n + "×)" : ""));
+    const open = (state.notes || []).map((n) => n.text);
+    return `It's Friday: give him your recap of his week, on your own, like a friend who was there (60-110 words, a few short lines, no headings). What he got done: ${list("done").join("; ") || "(nothing crossed off)"}. Still open: ${open.join("; ") || "(nothing)"}. Reminders this week: ${list("reminder").join("; ") || "(none)"}. What he spent time on with you: ${top.join("; ") || "(not much)"}. Be specific and warm: cheer what he finished, tease him a little about something, name what's still left without nagging, and end with one thing to look forward to this weekend.`;
+  }
+  window.__recap = async () => { reachOut(await proWrite("recap")); return "ok"; };
+  async function proTick() {
+    if (PRO.busy || state.proOff || !state.onboarded) return;
+    const pro = state.pro || (state.pro = {}), now = new Date(), today = dayKey();
+    const idle = desktopApp && AndroidLuma.idleSecs ? Number(AndroidLuma.idleSecs()) : null;
+    const here = desktopApp ? idle !== null && idle < 90 : document.visibilityState === "visible";
+    const busy = window.__callOn && window.__callOn();
+    PRO.busy = true;
+    try {
+      if (here && !busy && now.getHours() >= 6 && now.getHours() < 14 && pro.morning !== today) {
+        pro.morning = today; persist();
+        reachOut(await proWrite("morning"));
+      }
+      if (here && !busy && now.getDay() === 5 && now.getHours() >= 15 && pro.recap !== today) {   // Friday afternoon: her recap of his week
+        pro.recap = today; persist();
+        reachOut(await proWrite("recap"));
+      }
+      if (desktopApp && idle !== null) {
+        if (idle > 600) PRO.since = 0; else if (!PRO.since) PRO.since = Date.now();
+        let gaming = false;
+        try { const sc = JSON.parse(AndroidLuma.screen() || "null"); gaming = !!(sc && sc.game); } catch (e) {}
+        if (PRO.since && Date.now() - PRO.since > 2.5 * 3600e3 && Date.now() - (pro.breakAt || 0) > 3 * 3600e3 && !gaming && !busy) {
+          pro.breakAt = Date.now(); PRO.since = Date.now(); persist();
+          reachOut(await proWrite("break"));
+        }
+      }
+    } catch (e) {} finally { PRO.busy = false; }
+  }
+  // ---------- focus mode ----------
+  // "DO: focus 25 the report": a timer pill at the top of every screen, calm music, her cheering at the start,
+  // halfway and the end, and on the computer/phone (with her hands on), a poke when he drifts to YouTube,
+  // TikTok, games and the like. Then a 5-minute break if he wants it.
+  const FOCUS = window.__focusState || (window.__focusState = { on: false, end: 0, total: 0, task: "", paused: 0, half: false, warned: {}, music: false, timer: 0 });
+  const DRIFT = /youtube|tiktok|instagram|twitter|\bx\.com|facebook|reddit|twitch|netflix|snapchat|9gag|kick\.com|shorts|reels/i;
+  function lumaPoke(text, mood) {
+    if (mood) luma.set("chibi:" + mood);
+    if (window.__chatSay && window.__chatSay(text)) return;
+    if (window.__bubble) window.__bubble(text); else if (nativeApp && AndroidLuma.bubbleOn && AndroidLuma.bubbleOn()) AndroidLuma.bubbleSay(text, mood || "");
+    if (window.__speak) window.__speak(text);
+  }
+  function focusStart(min, task, brk) {
+    focusStop(true);
+    min = Math.max(1, Math.min(180, Math.round(Number(min) || 25)));
+    Object.assign(FOCUS, { on: true, total: min * 60000, end: Date.now() + min * 60000, task: String(task || "").slice(0, 60), paused: 0, half: false, warned: {}, brk: !!brk });
+    if (!brk && !sound.isOn("music")) { try { sound.start("music"); FOCUS.music = true; } catch (e) {} }
+    noteHabit(brk ? "taking a break" : "focusing" + (FOCUS.task ? " on " + FOCUS.task : ""));
+    clearInterval(FOCUS.timer); FOCUS.timer = setInterval(focusTick, 1000);
+    focusPaint();
+    return "ok";
+  }
+  function focusStop(quiet) {
+    if (!FOCUS.on) return "ok";
+    FOCUS.on = false; clearInterval(FOCUS.timer);
+    if (FOCUS.music) { try { sound.stop("music"); } catch (e) {} FOCUS.music = false; }
+    const pill = document.getElementById("focus-pill"); if (pill) pill.remove();
+    if (!quiet) lumaPoke("Okay, focus mode off~", "listening");
+    return "ok";
+  }
+  function focusLeft() { return FOCUS.paused ? FOCUS.paused : Math.max(0, FOCUS.end - Date.now()); }
+  function focusPaint() {
+    let pill = document.getElementById("focus-pill");
+    if (!FOCUS.on) { if (pill) pill.remove(); return; }
+    if (!pill) {
+      pill = document.createElement("div"); pill.id = "focus-pill"; pill.className = "focus-pill";
+      pill.innerHTML = `<span class="fp-ic"></span><span class="fp-t"></span><span class="fp-time"></span><button type="button" class="fp-pause" aria-label="Pause">⏸</button><button type="button" class="fp-stop" aria-label="Stop">✕</button><i class="fp-bar"></i>`;
+      document.body.appendChild(pill);
+      pill.querySelector(".fp-stop").onclick = () => focusStop();
+      pill.querySelector(".fp-pause").onclick = () => {
+        if (FOCUS.paused) { FOCUS.end = Date.now() + FOCUS.paused; FOCUS.paused = 0; } else FOCUS.paused = focusLeft();
+        focusPaint();
+      };
+    }
+    const left = focusLeft(), m = Math.floor(left / 60000), sec = Math.floor(left / 1000) % 60;
+    pill.querySelector(".fp-ic").textContent = FOCUS.brk ? "☕" : "🎯";
+    pill.querySelector(".fp-t").textContent = FOCUS.brk ? "Break" : FOCUS.task || "Focus";
+    pill.querySelector(".fp-time").textContent = m + ":" + String(sec).padStart(2, "0");
+    pill.querySelector(".fp-pause").textContent = FOCUS.paused ? "▶" : "⏸";
+    pill.querySelector(".fp-bar").style.width = (100 * (1 - left / FOCUS.total)).toFixed(1) + "%";
+    pill.classList.toggle("paused", !!FOCUS.paused);
+  }
+  let focusSeen = 0;
+  function focusTick() {
+    if (!FOCUS.on) return;
+    focusPaint();
+    if (FOCUS.paused) return;
+    const left = focusLeft();
+    if (!FOCUS.brk && !FOCUS.half && left < FOCUS.total / 2 && FOCUS.total >= 10 * 60000) {
+      FOCUS.half = true;
+      lumaPoke(pick(["Halfway there~ you're doing great, keep going 💪", "Half done! Look at you, actually focusing 👀✨", "Halfway! Stretch your shoulders for a sec, then back at it~"]), "happy");
+    }
+    if (left <= 0) {
+      const wasBreak = FOCUS.brk, task = FOCUS.task, mins = Math.round(FOCUS.total / 60000);
+      focusStop(true); sound.cute("excited");
+      if (wasBreak) lumaPoke("Break's over~ ready for another round? Tell me and I'll start it 🎯", "happy");
+      else {
+        logWeek("done", "focused " + mins + " min" + (task ? " on " + task : ""));
+        lumaPoke(`Done! ${mins} minutes${task ? " on " + task : ""}, I'm proud of you 🥳 Take 5, I'll keep time~`, "excited");
+        focusStart(5, "", true);
+      }
+      return;
+    }
+    // drifting off (with her hands on: she can see which app is in front), every 20 s
+    if (FOCUS.brk || !nativeApp || !AndroidLuma.screen || Date.now() - focusSeen < 20000) return;
+    focusSeen = Date.now();
+    let sc = null; try { sc = JSON.parse(AndroidLuma.screen() || "null"); } catch (e) {}
+    if (!sc || sc.private) return;
+    const what = (sc.app || "") + " " + (sc.title || "") + " " + (sc.items || []).slice(0, 6).join(" ");
+    const drift = sc.game ? (sc.app || "a game") : (what.match(DRIFT) || [""])[0];
+    if (!drift) return;
+    const k = drift.toLowerCase();
+    if (Date.now() - (FOCUS.warned[k] || 0) < 3 * 60000) return;
+    FOCUS.warned[k] = Date.now();
+    lumaPoke(pick([`Heyyy, ${drift}? We're in focus mode 👀 back to ${FOCUS.task || "work"}~`, `Caught you on ${drift} 😤 ${Math.ceil(focusLeft() / 60000)} more minutes, you can do it!`, `${drift} can wait, mister. Focus first, then I'll watch it with you~`]), "pout");
+  }
+  window.__focus = (arg) => {
+    arg = String(arg || "").trim();
+    if (/^(stop|off|end|cancel)\b/i.test(arg)) return focusStop();
+    if (/^(pause)\b/i.test(arg)) { if (FOCUS.on && !FOCUS.paused) FOCUS.paused = focusLeft(); focusPaint(); return "ok"; }
+    const m = arg.match(/^(\d{1,3})\s*(?:m(?:in(?:ute)?s?)?)?\s*(.*)$/i);
+    return focusStart(m ? m[1] : 25, m ? m[2] : arg);
+  };
+  if (!PRO.started) { PRO.started = true; setTimeout(function loop() { proTick().finally(() => setTimeout(loop, 60000)); }, 20000); }
   // Timers that keep their pace when the app is in the background (Android and browsers slow page timers
   // down there, which made her slow to answer from other apps); a tiny worker keeps time instead.
   const later = (() => {
@@ -2928,6 +3120,15 @@ ${last}${langNote()}`;
     if (free) {
       window.__nativeBubbleSend = (txt) => { NUDGE.waiting = false; if (box.isConnected) { heard(); send(txt); } else { pendingSend = txt; show("talk-free"); } };
       window.__nudge = nudge;   // the newest chat's version; the timer below is started once
+      window.__callOn = () => CALL.on;
+      window.__speak = speakOut; window.__bubble = bubbleSay;
+      // her own message, with her chat open and in front of him: said right here (a call: she calls)
+      window.__chatSay = (text, call) => {
+        if (!box.isConnected || document.visibilityState !== "visible" || (desktopApp && !document.hasFocus())) return false;
+        if (call) { if (!CALL.on) { CALLSAY.text = text; callStart(); } else sayOnCall(text); return true; }
+        if (CALL.on) { sayOnCall(text); return true; }
+        addMsg("luma", text); bubbleSay(text); speakOut(text); return true;
+      };
       if (!NUDGE.started) { NUDGE.started = true; later(nudgeLoop, 6 * 60000); }
       if (pendingSend) { const p0 = pendingSend; pendingSend = null; setTimeout(() => send(p0), 1800); }
       $("#call").hidden = !canTalk();
@@ -3036,26 +3237,31 @@ ${last}${langNote()}`;
           state.reminders = state.reminders.filter((x) => x.id !== r.id); persist();
           luma.set("chibi:excited"); sound.cute("excited");
           const msg = "⏰ " + r.text;
+          if (r.important) { reachOut("Hey! Reminder: " + r.text, true); return; }   // important: she calls
           if (CALL.on) sayOnCall("Hey, reminder: " + r.text);
           else if (box.isConnected && document.visibilityState === "visible") addMsg("luma", msg);
           else bubbleSay(msg);
           if (!CALL.on) speakOut("Hey! Reminder: " + r.text);
-          try { if (window.Notification && Notification.permission === "granted") new Notification("Luma ⏰", { body: r.text }); } catch (e) {}
+          if (nativeApp && AndroidLuma.notify) AndroidLuma.notify(msg, false);
+          else try { if (window.Notification && Notification.permission === "granted") new Notification("Luma ⏰", { body: r.text }); } catch (e) {}
         }, Math.max(0, r.at - Date.now()));
       }
     }
     window.__keep = (kind, arg) => {
-      if (kind === "note") { if (!arg) return "failed"; state.notes = (state.notes || []).concat({ text: arg.slice(0, 200), at: Date.now() }).slice(-30); persist(); return "ok"; }
+      if (kind === "note") { if (!arg) return "failed"; logWeek("todo", arg); state.notes = (state.notes || []).concat({ text: arg.slice(0, 200), at: Date.now() }).slice(-30); persist(); return "ok"; }
       if (kind === "done") {
         const want = arg.toLowerCase(), before = (state.notes || []).length;
+        for (const n of state.notes || []) if (n.text.toLowerCase().includes(want) || want.includes(n.text.toLowerCase())) logWeek("done", n.text);
         state.notes = (state.notes || []).filter((n) => !(n.text.toLowerCase().includes(want) || want.includes(n.text.toLowerCase())));
         persist(); return state.notes.length < before ? "ok" : "not_found";
       }
+      const important = /^\s*!/.test(arg); arg = arg.replace(/^\s*!\s*/, "");   // "!" first: important, she calls instead of a note
       const bar = arg.indexOf("|"), when = bar < 0 ? arg : arg.slice(0, bar), text = (bar < 0 ? "" : arg.slice(bar + 1)).trim() || "the thing you asked me to remind you about";
       const at = parseWhen(when);
       if (!at) return "failed";
       const dup = (state.reminders || []).some((r) => r.text === text.slice(0, 200) && Math.abs(r.at - at) < 60000);
-      if (!dup) state.reminders = (state.reminders || []).filter((r) => r.at > Date.now() - 60000).concat({ id: "r" + Date.now(), at, text: text.slice(0, 200) });
+      if (!dup) logWeek("reminder", text);
+      if (!dup) state.reminders = (state.reminders || []).filter((r) => r.at > Date.now() - 60000).concat({ id: "r" + Date.now(), at, text: text.slice(0, 200), important });
       persist(); armReminders();
       try { if (window.Notification && Notification.permission === "default") Notification.requestPermission(); } catch (e) {}
       return "ok";
@@ -3357,6 +3563,7 @@ SAY: <either - to stay quiet, or one face tag such as [excited] followed by one 
       sound.cute("boop"); luma.set("chibi:happy");
       if (typeof first === "string" && first) { CALL.you = first; callPaint(); callSend(first); }
       else if (typeof first === "string") sayOnCall("Yeah? I'm here.");
+      else if (CALLSAY.text) { const s0 = CALLSAY.text; CALLSAY.text = ""; later(() => sayOnCall(s0), 600); }
       else callListen();
     }
     window.__callNow = () => { if (!box.isConnected) return false; if (!CALL.on) callStart(); return true; };
@@ -4749,8 +4956,9 @@ Start with one face tag like [happy] [excited] [pout] [shy] [sleepy], then the m
       <p class="tiny">${t("reminderNote")}</p>
       <div class="row"><input type="time" id="time" value="${time}" aria-label="${t("reminderTime")}"><a class="ghost" id="cal" target="_blank" rel="noopener">${t("addCal")}</a></div>
       <h3>${t("remembersTitle")}</h3>
-      ${state.memory.length ? `<ul class="list">${state.memory.map((m, i) => `<li><span dir="auto">${esc(m)}</span><button data-forget="${i}" aria-label="${t("forget")}">✕</button></li>`).join("")}</ul><p class="tiny">${t("remembersNote")}</p>`
+      ${state.memory.length ? `<ul class="list mem">${state.memory.map((m, i) => `<li><span dir="auto" class="mem-t" data-edit="${i}" contenteditable="plaintext-only" spellcheck="false">${esc(m)}</span><button data-forget="${i}" aria-label="${t("forget")}">✕</button></li>`).join("")}</ul><p class="tiny">${t("remembersNote")}</p>`
                             : `<p class="tiny">${t("remembersNone")}</p>`}
+      <div class="row mem-add"><input id="mem-new" dir="auto" maxlength="200" placeholder="${t("memAdd")}"><button class="ghost" id="mem-add">＋</button></div>
       <h3>${t("styleTitle")}</h3>
       ${state.style.length ? `<ul class="list">${state.style.map((m) => `<li><span dir="auto">${esc(m)}</span></li>`).join("")}</ul><div class="row split"><p class="tiny">${t("styleNote")}</p><button class="text-btn" id="style-reset">${t("styleReset")}</button></div>`
                            : `<p class="tiny">${t("styleNone")}</p>`}
@@ -4759,6 +4967,7 @@ Start with one face tag like [happy] [excited] [pout] [shy] [sleepy], then the m
       ${ownSite ? `<div class="row split"><p class="tiny">${t("voiceTitle2")}</p><select id="voicepick" class="ghost" style="padding:8px 12px">${VOICES.map(([n, c], i) => `<option value="${i}">${i + 1} · ${n}${c ? " ✨" : ""}</option>`).join("")}<option value="phone">${t("voicePhone")}</option></select><button class="ghost" id="voicetry" type="button" aria-label="${t("voiceTry")}" title="${t("voiceTry")}" style="padding:8px 12px">▶</button></div>` : ""}
       ${window.AndroidLuma && AndroidLuma.accessOpen ? `<div class="row split"><p class="tiny"><b>${t(desktopApp ? "accessTitlePC" : "accessTitle")}</b><br>${t(desktopApp ? "accessNotePC" : "accessNote")}</p><button class="ghost" id="hands">${t(AndroidLuma.accessOn() ? "accessOn" : "accessOff")}</button></div>` : ""}
       <div class="row" style="flex-direction:column;align-items:stretch;gap:8px;flex:none"><p class="tiny">${t("wallTitle")}</p><div class="walls" id="walls">${Object.entries(WALLS).map(([k, w]) => `<button type="button" data-wall="${k}" aria-pressed="${wall.key() === k}" style="${w.img ? `background-image:url('${w.img.replace(".webp", "_s.webp")}')` : "background:radial-gradient(circle at 50% 30%,#2a2d6a,#0b0d2a)"}"><span>${esc(w.name)}</span></button>`).join("")}</div></div>
+      <div class="row split"><p class="tiny">${t("proNote")}</p><button class="ghost" id="pro-toggle" aria-pressed="${!state.proOff}">${t(state.proOff ? "proOff" : "proOn")}</button></div>
       ${ownSite ? `<div class="row split"><p class="tiny" id="myvoice-note">${t("myVoiceNote")}</p><button class="ghost" id="myvoice">${t(myVoice() ? "myVoiceRedo" : "myVoiceBtn")}</button></div>` : ""}
       ${ownSite && /Android/i.test(navigator.userAgent) && !window.AndroidLuma ? `<div class="row split"><p class="tiny">${t("apkNote")}</p><a class="ghost" href="/firefly.apk" download style="text-decoration:none">${t("apkBtn")}</a></div>` : ""}
       ${appOld() && !desktopApp ? `<div class="row split"><p class="tiny">${t("appUpdate")}</p><a class="ghost" href="${APK_URL}" style="text-decoration:none">${t("apkBtn")}</a></div>` : ""}
@@ -4782,7 +4991,21 @@ Start with one face tag like [happy] [excited] [pout] [shy] [sleepy], then the m
         + "&recur=" + encodeURIComponent("RRULE:FREQ=DAILY");
     };
     setCal(); tInput.oninput = setCal;
+    $("#pro-toggle").onclick = () => { state.proOff = !state.proOff; persist(); if (!state.proOff) try { if (window.Notification && Notification.permission === "default") Notification.requestPermission(); } catch (e) {} show("nights"); };
     $$("[data-forget]").forEach((b) => b.onclick = () => { state.memory.splice(Number(b.dataset.forget), 1); persist(); show("nights"); });
+    // what she remembers: tap a line to change it (Enter or tapping away saves; emptied = forgotten), or add one
+    $$("[data-edit]").forEach((el) => {
+      el.onkeydown = (e) => { if (e.key === "Enter") { e.preventDefault(); el.blur(); } };
+      el.onblur = () => {
+        const i = Number(el.dataset.edit), v = el.textContent.replace(/\s+/g, " ").trim().slice(0, 200);
+        if (v === state.memory[i]) return;
+        if (v) state.memory[i] = v; else state.memory.splice(i, 1);
+        persist(); if (!v) show("nights");
+      };
+    });
+    const memAdd = () => { const inp = $("#mem-new"), v = inp.value.replace(/\s+/g, " ").trim().slice(0, 200); if (!v || state.memory.includes(v)) return; state.memory = state.memory.concat(v).slice(-80); persist(); show("nights"); };
+    $("#mem-add").onclick = memAdd;
+    $("#mem-new").onkeydown = (e) => { if (e.key === "Enter") memAdd(); };
     $("#replay").onclick = () => intro.play(() => show("nights"));
     const hb = $("#hands");
     if (hb) hb.onclick = () => AndroidLuma.accessOpen();
@@ -4902,7 +5125,7 @@ Start with one face tag like [happy] [excited] [pout] [shy] [sleepy], then the m
         { modelTier: "quick", cache: false });
       let changed = false;
       const fresh = out && Array.isArray(out.facts) ? out.facts.map((f) => String(f).trim()).filter((f) => f && !state.memory.includes(f)) : [];
-      if (fresh.length) { state.memory = state.memory.concat(fresh).slice(-40); changed = true; }
+      if (fresh.length) { state.memory = state.memory.concat(fresh).slice(-80); changed = true; }
       if (out && Array.isArray(out.style) && out.style.length) { state.style = out.style.map(String).filter(Boolean).slice(0, 5); changed = true; }
       if (changed) persist();
     } catch (e) {}

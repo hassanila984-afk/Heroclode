@@ -2,7 +2,7 @@
 // as window.AndroidLuma (the same bridge the Android app has, with platform() = "windows"): Luma's bubble
 // roaming the desktop, seeing the screen without asking each time, and her hands on the computer
 // (open programs, scroll, click and type, always asked first for clicks and typing).
-const { app, BrowserWindow, Tray, Menu, ipcMain, globalShortcut, desktopCapturer, shell, screen, session, nativeImage } = require("electron");
+const { app, BrowserWindow, Tray, Menu, ipcMain, globalShortcut, desktopCapturer, shell, screen, session, nativeImage, Notification, powerMonitor } = require("electron");
 const path = require("path");
 const fs = require("fs");
 const hands = require("./hands");
@@ -167,6 +167,8 @@ ipcMain.on("luma:sync", (e, name, ...a) => {
     case "accessOn": v = settings.control; break;
     case "screen": v = settings.control ? hands.screenNow() : ""; break;
     case "autoScrolling": v = hands.autoScrolling(); break;
+    case "idleSecs": v = powerMonitor.getSystemIdleTime(); break;   // how long since he last touched the keyboard or mouse
+    case "pendingCall": v = pendingCall || ""; pendingCall = null; break;
   }
   e.returnValue = v;
 });
@@ -181,10 +183,27 @@ ipcMain.on("luma:do", (e, name, ...a) => {
     case "stayWithMe": stayWithMe = !!a[0]; syncBubble(); break;
     case "answerAsk": answerAsk(!!a[0]); break;
     case "accessOpen": setControl(!settings.control); break;
+    case "notify": ping(String(a[0] || ""), !!a[1]); break;
   }
 });
 ipcMain.handle("luma:act", (e, name, arg) => (settings.control || !hands.NEEDS_CONTROL.has(name) ? hands.act(name, String(arg || ""), askFirst) : "no_access"));
 ipcMain.handle("luma:askCode", (e, text) => askCode(text));
+
+// Luma reaching out on her own: a Windows notification (click = her chat), or for something important a
+// call: she pops up in her window and calls him right away (unless he's in a fullscreen game: then a notification).
+let pendingCall = null;
+function ping(text, call) {
+  if (call && !hands.isGaming()) {
+    pendingCall = text; showWindow();
+    js("window.__lumaCalled && __lumaCalled()");
+    return;
+  }
+  try {
+    const n = new Notification({ title: call ? "Luma is calling 📞" : "Luma", body: text, icon: asset("icon.png"), silent: false });
+    n.on("click", () => { if (call) pendingCall = text; showWindow(); js(call ? "window.__lumaCalled && __lumaCalled()" : "window.__lumaOpened && __lumaOpened()"); });
+    n.show();
+  } catch (e) { logError(e); }
+}
 
 // sign-in code: a small window instead of the browser's prompt (Electron has none)
 function askCode(text) {

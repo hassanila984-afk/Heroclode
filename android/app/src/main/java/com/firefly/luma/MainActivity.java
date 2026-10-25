@@ -120,12 +120,27 @@ public class MainActivity extends Activity {
         if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
             requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, 9);
         }
+        fromPing(getIntent());   // (the page asks for a waiting call once it's loaded)
         web.loadUrl(SITE);
     }
 
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);   // tapping the bubble brings this screen back as it was
+        fromPing(intent);
+    }
+
+    /** Opened from her call (answer = a voice call with her) or her message (her chat). */
+    String pendingCall;
+    void fromPing(Intent i) {
+        if (i == null) return;
+        if (i.hasExtra(Pings.EXTRA_CALL)) {
+            Pings.cancelCall(this);
+            if (Build.VERSION.SDK_INT >= 27) { setShowWhenLocked(true); setTurnScreenOn(true); }   // answering from the lock screen
+            pendingCall = i.getStringExtra(Pings.EXTRA_CALL);
+            if (web != null) web.evaluateJavascript("window.__lumaCalled && window.__lumaCalled()", null);
+        } else if (i.hasExtra(Pings.EXTRA_OPEN) && web != null) web.evaluateJavascript("window.__lumaOpened && window.__lumaOpened()", null);
+        i.removeExtra(Pings.EXTRA_CALL); i.removeExtra(Pings.EXTRA_OPEN);
     }
 
     @Override
@@ -134,6 +149,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onPause() {
         LumaService.appVisible(false);
+        if (Build.VERSION.SDK_INT >= 27) { setShowWhenLocked(false); setTurnScreenOn(false); }
         if (stayWithMe && Settings.canDrawOverlays(this) && !LumaService.bubbleOn())
             startForegroundService(new Intent(this, LumaService.class).setAction(LumaService.BUBBLE));
         super.onPause();
@@ -212,6 +228,15 @@ public class MainActivity extends Activity {
             try { return getPackageManager().getPackageInfo(getPackageName(), 0).versionName; } catch (Exception e) { return ""; }
         }
         @JavascriptInterface public void stayWithMe(boolean on) { stayWithMe = on; }
+
+        // ----- Luma reaching out: a message, or a call that rings like a phone call -----
+        @JavascriptInterface public void notify(String text, boolean call) { Pings.show(MainActivity.this, text, call); }
+        @JavascriptInterface public String pendingCall() { String p = pendingCall; pendingCall = null; return p == null ? "" : p; }
+
+        // ----- his notifications (Discord, WhatsApp…), for her to sum up -----
+        @JavascriptInterface public boolean notesOn() { return LumaNotes.allowed(MainActivity.this); }
+        @JavascriptInterface public void notesOpen() { runOnUiThread(() -> startActivity(new Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS"))); }
+        @JavascriptInterface public String notes(double since) { return LumaNotes.since((long) since); }
 
         // ----- Luma's bubble over other apps -----
         @JavascriptInterface public void bubbleShow() {

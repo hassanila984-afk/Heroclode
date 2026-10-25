@@ -1,5 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { configured, sameSecret, sameOrigin, json, saveApiKey, apiKey, saveSecret, voiceKey } from "../../lib/auth.js";
+import { configured, checkCode, sameOrigin, json, saveApiKey, apiKey, saveSecret, voiceKey } from "../../lib/auth.js";
 
 // One-time setup from /setup.html: with the access code, save the Anthropic API key and/or the DeepInfra
 // key for Luma's voice (each checked first).
@@ -15,7 +15,7 @@ export async function onRequestPost({ request, env }) {
   if (!sameOrigin(request)) return json({ ok: false, error: "forbidden" }, 403);
   let body = {};
   try { body = await request.json(); } catch (e) {}
-  if (!(await sameSecret(String(body.code || "").slice(0, 200), env.ACCESS_CODE))) {
+  if (!(await checkCode(env, String(body.code || "").slice(0, 200)))) {
     await new Promise((r) => setTimeout(r, 1200));
     return json({ ok: false, error: "wrong_code" }, 401);
   }

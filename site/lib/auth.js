@@ -21,6 +21,24 @@ export async function sameSecret(a, b) {
   return diff === 0;
 }
 
+// An extra access code the owner can set (a reset), kept in KV as a salted PBKDF2 hash only — never in the
+// clear, and not derived from any server secret, so it can be written from outside. Login accepts the
+// Cloudflare ACCESS_CODE or this one.
+export async function checkCode(env, code) {
+  code = String(code || "").slice(0, 200);
+  if (env.ACCESS_CODE && (await sameSecret(code, env.ACCESS_CODE))) return true;
+  try {
+    const raw = env.FIREFLY_KV && (await env.FIREFLY_KV.get("accesscode2"));
+    if (!raw || !code) return false;
+    const rec = JSON.parse(raw);
+    if (rec.v !== 1) return false;
+    const salt = Uint8Array.from(atob(rec.salt), (c) => c.charCodeAt(0));
+    const km = await crypto.subtle.importKey("raw", enc.encode(code), "PBKDF2", false, ["deriveBits"]);
+    const bits = new Uint8Array(await crypto.subtle.deriveBits({ name: "PBKDF2", hash: "SHA-256", salt, iterations: rec.iter | 0 }, km, 256));
+    return sameSecret(btoa(String.fromCharCode(...bits)), rec.hash);
+  } catch (e) { return false; }
+}
+
 export function configured(env) {
   return !!(env.ACCESS_CODE && env.SESSION_SECRET && env.ACCESS_CODE.length >= 16 && env.SESSION_SECRET.length >= 32);
 }

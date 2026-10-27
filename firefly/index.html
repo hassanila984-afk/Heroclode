@@ -3463,7 +3463,10 @@ Start with one face tag like [thinking] [happy], then your help.`, Object.assign
   // paid video generation). The finished .webm downloads, ready to post. It's AI content and says so.
   const STUDIO = (() => {
     const S = { el: null, pack: null, topic: "", rec: null, ac: null, raf: 0, playing: false, vids: {}, bg: null, chunks: [] };
-    const NICHE = "cozy aesthetic / soft anime vibes / her little daily life (reading, coffee, plants, gaming at night), gentle relatable thoughts, and sweet encouragement";
+    // Her creator lane: a cute anime girl who explains tech & computer-science in the simplest, coziest way
+    // (how a CPU works, RAM vs storage, what an API is, why your PC lags, Git, networking…), warm and kawaii,
+    // with little kaomoji, a strong hook, one clear simple explanation, and a question CTA at the end.
+    const NICHE = "a cute anime girl who explains tech and computer-science concepts in the simplest, coziest, most beginner-friendly way (e.g. CPU cores vs threads, RAM vs storage, what an API is, why your PC lags, how the internet works, Git, caching), warm and a little kawaii with small kaomoji, hook + one simple explanation + a question CTA";
     function close() {
       stopRec(true); cancelAnimationFrame(S.raf);
       try { S.ac && S.ac.close(); } catch (e) {} S.ac = null;
@@ -3505,7 +3508,7 @@ Start with one face tag like [thinking] [happy], then your help.`, Object.assign
       const s = session && session.free ? session : { free: true, weight: 0, tags: [], turns: [], worries: [], intention: "" };
       stageMsg("thinking of an idea…");
       try {
-        const { text } = await ask(rules(s) + `\n\nYou're a content creator making Instagram Reels. Your niche: ${NICHE}. Suggest ONE fresh, specific Reel idea (a topic/angle), under 12 words, that would do well as a short cozy Reel. Reply with ONLY the idea, no quotes.`, { cache: false });
+        const { text } = await ask(rules(s) + `\n\nYou're a content creator making Instagram Reels. Your niche: ${NICHE}. Suggest ONE fresh, specific tech/CS topic to explain in a short Reel, phrased as a catchy hook under 12 words (like "8 cores and it still freezes??" or "your RAM is basically a desk"). Reply with ONLY the idea, no quotes.`, { cache: false });
         const idea = splitReplies(readMood(text).body || text).body.split("\n")[0].replace(/^["']|["']$/g, "").trim();
         if (S.el) S.el.querySelector("#stu-topic").value = idea;
         stageMsg("");
@@ -3516,10 +3519,11 @@ Start with one face tag like [thinking] [happy], then your help.`, Object.assign
       const pk = S.el.querySelector("#stu-pack"); pk.innerHTML = `<p class="tiny">✍️ ${t("studioWriting")}</p>`;
       S.el.querySelector("#stu-actions").hidden = true;
       try {
-        const { text } = await ask(rules(s) + `\n\nYou're a content creator making ONE Instagram Reel in your own voice (you are an AI anime girl; cozy, warm, a little playful). ${topic ? "Topic: " + topic + "." : "Pick a cozy relatable topic in your niche (" + NICHE + ")."}
+        const { text } = await ask(rules(s) + `\n\nYou're a cute anime girl who teaches tech & computer-science on Instagram Reels, in your own voice (you ARE an AI; cozy, warm, a little kawaii, tiny kaomoji ok). Niche: ${NICHE}. ${topic ? "Topic/hook: " + topic + "." : "Pick one beginner-friendly tech/CS topic."}
+Explain it the SIMPLEST way, with a relatable everyday analogy, correct and not hand-wavy, then end with a question that makes people comment.
 Write it as JSON only:
-{"hook":"a scroll-stopping first line (<8 words)","lines":[{"say":"what you say out loud, one short spoken sentence","cap":"the on-screen caption for this line (<6 words)"}, ... 4 to 6 lines total, 15-25 seconds spoken],"igCaption":"an Instagram caption, warm, 1-2 sentences","hashtags":["#tag", ... 6 to 10 relevant reachable hashtags]}
-Keep it genuine and specific, not generic. The first line of "lines" should deliver the hook.`, { cache: false, hard: true });
+{"hook":"a scroll-stopping first line, a question or surprise (<9 words)","lines":[{"say":"what you say out loud, one short spoken sentence in simple words","cap":"on-screen keyword caption (<5 words)"}, ... 4 to 6 lines, 15-28 seconds spoken, the first delivering the hook, the middle the simple explanation with an analogy, the last a question CTA],"igCaption":"a warm IG caption with 1-2 small kaomoji","hashtags":["#tag", ... 6 to 10 relevant tech hashtags like #computerscience #techtips #coding #cpu #programming]}
+Be accurate and genuinely simple, never generic filler.`, { cache: false, hard: true });
         const pack = JSON.parse(text.slice(text.indexOf("{"), text.lastIndexOf("}") + 1));
         if (!pack || !Array.isArray(pack.lines) || !pack.lines.length) throw 0;
         S.pack = pack;

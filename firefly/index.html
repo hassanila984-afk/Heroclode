@@ -715,6 +715,28 @@
   .travel-toast.go { opacity: 0; transform: translate(-50%, -8px); transition: opacity .4s, transform .4s; }
   @keyframes tvToast { from { opacity: 0; transform: translate(-50%, -8px); } to { opacity: 1; transform: translate(-50%, 0); } }
   @media (prefers-reduced-motion: reduce) { .travel { display: none; } }
+  .stu { position: fixed; inset: 0; z-index: 72; background: #0b0920; color: #f3efff; overflow-y: auto; padding: calc(env(safe-area-inset-top,0px)+10px) 14px calc(env(safe-area-inset-bottom,0px)+14px); }
+  .stu-top { display: flex; align-items: center; justify-content: space-between; max-width: 900px; margin: 0 auto 12px; }
+  .stu-top b { font: 700 18px var(--body); }
+  .stu-wrap { max-width: 900px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 280px) 1fr; gap: 16px; align-items: start; }
+  @media (max-width: 680px) { .stu-wrap { grid-template-columns: 1fr; } }
+  .stu-stagewrap { position: relative; }
+  .stu-stage { width: 100%; aspect-ratio: 9/16; border-radius: 16px; background: #000; box-shadow: 0 12px 30px rgba(0,0,0,.5); display: block; }
+  .stu-badge { position: absolute; top: 8px; left: 8px; background: rgba(0,0,0,.55); color: #fff; font: 700 11px var(--body); padding: 4px 8px; border-radius: 999px; letter-spacing: .04em; }
+  .stu-side { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+  .stu-row { display: flex; gap: 8px; }
+  .stu-row input { flex: 1; min-width: 0; border-radius: 12px; border: 1px solid var(--glass-line); background: var(--surface-2); color: #fff; padding: 10px 12px; }
+  .gm-btn.wide, .gm-btn.big { width: 100%; justify-content: center; text-align: center; }
+  .gm-btn.big { padding: 13px; font-size: 15px; }
+  .stu-actions { display: flex; flex-direction: column; gap: 8px; }
+  a.gm-btn { text-decoration: none; display: inline-block; }
+  .stu-pack { display: flex; flex-direction: column; gap: 8px; }
+  .stu-card { background: var(--surface); border: 1px solid var(--glass-line); border-radius: 14px; padding: 10px 12px; }
+  .stu-card h5 { margin: 0 0 4px; font: 700 11px var(--body); letter-spacing: .1em; text-transform: uppercase; color: var(--haze); }
+  .stu-card p { margin: 3px 0; font-size: 14.5px; line-height: 1.4; }
+  .stu-cap { color: var(--glow); font-size: 12px; }
+  .stu-copy { border: 1px solid var(--glass-line); background: var(--surface-2); color: #fff; border-radius: 999px; padding: 3px 10px; font: 600 12px var(--body); cursor: pointer; }
+  .stu-note { font-size: 12px; color: var(--haze); line-height: 1.4; }
 </style>
 
 <canvas id="sky" aria-hidden="true"></canvas>
@@ -860,7 +882,7 @@
       reminderTitle: "Nightly reminder", reminderNote: "A set time makes a habit much easier to keep. Choose yours and add it to your calendar.",
       reminderTime: "Reminder time", addCal: "Add to Google Calendar",
       calTitle: "Firefly: light tonight's firefly", calDetails: "Seven quiet minutes for yourself. Open Firefly in Claude.",
-      proTitle: "Her own messages", proNote: "Good morning, a break after long hours on the PC, and a call when a reminder is important.", proOn: "On ✓", proOff: "Off", secLuma: "Luma", secApp: "App", myVoiceTitle: "Your voice", linkTitle: "Luma Link", linkThis: "This device's name", linkNote: "So Luma can send things here from your other devices. Keep the app open or in the background.", linkNone: "No other devices online. Open Firefly on them too.", remembersTitle: "What Luma knows about you", forget: "Forget this", memAdd: "Tell her something to remember…",
+      proTitle: "Her own messages", proNote: "Good morning, a break after long hours on the PC, and a call when a reminder is important.", proOn: "On ✓", proOff: "Off", secLuma: "Luma", secApp: "App", myVoiceTitle: "Your voice", studioTitle: "Reels Studio", studioTopic: "Topic (or let her pick)…", studioIdea: "Her idea", studioWrite: "Write the Reel", studioWriting: "writing your Reel…", studioHook: "Hook", studioScript: "Script", studioCap: "Caption", studioTags: "Hashtags", studioRec: "Record", studioStop: "Stop", studioSave: "Save video", studioNote: "She records in her own voice over her animation, 9:16, ready for Reels. It's AI content — keep the AI label on.", studioFail: "My brain glitched, try again~", copy: "Copy", linkTitle: "Luma Link", linkThis: "This device's name", linkNote: "So Luma can send things here from your other devices. Keep the app open or in the background.", linkNone: "No other devices online. Open Firefly on them too.", remembersTitle: "What Luma knows about you", forget: "Forget this", memAdd: "Tell her something to remember…",
       styleTitle: "How Luma talks with you", styleNote: "Learned from how you write.", styleReset: "Start fresh",
       styleNone: "Nothing yet. Luma picks up your way of talking as you chat.",
       remembersNote: "Tap a line to change it, ✕ to make her forget it.",
@@ -974,7 +996,7 @@
       reminderTitle: "تذكير ليلي", reminderNote: "الوقت الثابت يجعل العادة أسهل بكثير. اختر وقتك وأضفه إلى تقويمك.",
       reminderTime: "وقت التذكير", addCal: "أضف إلى تقويم Google",
       calTitle: "يراعة: أضئ يراعة الليلة", calDetails: "سبع دقائق هادئة لنفسك. افتح يراعة في Claude.",
-      proTitle: "رسائلها من نفسها", proNote: "صباح الخير، استراحة بعد ساعات طويلة على الحاسبة، ومكالمة إذا التذكير مهم.", proOn: "شغّال ✓", proOff: "طافي", secLuma: "لُمى", secApp: "التطبيق", myVoiceTitle: "صوتك", linkTitle: "رابط لُمى", linkThis: "اسم هذا الجهاز", linkNote: "حتى لُمى تگدر تدز أشياء لهنا من أجهزتك الثانية. خلّي التطبيق مفتوح أو بالخلفية.", linkNone: "ماكو أجهزة ثانية شغّالة. افتح Firefly بيهن هم.", remembersTitle: "شنو تعرف لُمى عنك", forget: "انسَ هذا", memAdd: "گلها شي تتذكره…",
+      proTitle: "رسائلها من نفسها", proNote: "صباح الخير، استراحة بعد ساعات طويلة على الحاسبة، ومكالمة إذا التذكير مهم.", proOn: "شغّال ✓", proOff: "طافي", secLuma: "لُمى", secApp: "التطبيق", myVoiceTitle: "صوتك", studioTitle: "استوديو الريلز", studioTopic: "الموضوع (أو خليها تختار)…", studioIdea: "فكرتها", studioWrite: "اكتبي الريل", studioWriting: "تكتب الريل…", studioHook: "الهوك", studioScript: "السكربت", studioCap: "التعليق", studioTags: "الهاشتاقات", studioRec: "تسجيل", studioStop: "وقف", studioSave: "حفظ الفيديو", studioNote: "تسجّل بصوتها ويا حركتها، عمودي 9:16، جاهز للريلز. المحتوى AI — خلّي علامة AI.", studioFail: "دماغي علّق، جرّب مرة ثانية~", copy: "نسخ", linkTitle: "رابط لُمى", linkThis: "اسم هذا الجهاز", linkNote: "حتى لُمى تگدر تدز أشياء لهنا من أجهزتك الثانية. خلّي التطبيق مفتوح أو بالخلفية.", linkNone: "ماكو أجهزة ثانية شغّالة. افتح Firefly بيهن هم.", remembersTitle: "شنو تعرف لُمى عنك", forget: "انسَ هذا", memAdd: "گلها شي تتذكره…",
       styleTitle: "كيف تتكلّم لُمى معك", styleNote: "تعلّمته من طريقة كتابتك.", styleReset: "ابدأ من جديد",
       styleNone: "لا شيء بعد. تلتقط لُمى طريقة كلامك وأنتما تتحدّثان.",
       remembersNote: "دوس على أي سطر حتى تعدّله، و ✕ حتى تنساه.",
@@ -1390,7 +1412,7 @@
       : app
       ? "watch start (look at their screen; they allow it once) | watch stop | open_app <app name> | open_url <link> | search <words> | maps <place> | music <song or artist> | alarm <HH:MM, 24-hour> | timer <minutes> | call <number> (this only opens the dialer)"
       : "open_url <link> | search <words> | maps <place> | music <song or artist> | claude <a job to hand to Claude, written out fully>";
-    acts += " | recap (your recap of his week, when he asks how his week went) | notifications [discord / whatsapp / …] (sum up his new messages and notifications) | screen_help [what he needs] (look at his screen right now and help) | device <phone / computer / tablet> <action> <arg> (do something on another one of his devices that's online, e.g. device computer open_app Spotify, device phone remind at 18:00 | gym; only his devices listed as online below) | watch_together <YouTube link, or what to search> (plays it inside Firefly and you watch it with him, reacting as it plays; watch_together stop closes it; use this when he wants to watch something WITH you) | game chess / wordle / trivia (opens the game and you play it with him, in the app) | focus <minutes> <what he's working on> (focus mode: a timer, calm music, you cheer him on and poke him if he drifts to YouTube or games; focus stop ends it) | note <a task or thing to keep for them> | done <the note to cross off> | remind <in 20 min / at 18:30 / tomorrow 9:00> | <what to remind them> (put ! first, as in remind ! at 18:30 | …, when it's important or he says call me / wake me: then you call him instead of a note)";
+    acts += " | recap (your recap of his week, when he asks how his week went) | notifications [discord / whatsapp / …] (sum up his new messages and notifications) | studio [topic] (open your Reels studio and make a short Instagram Reel: idea, script, captions, and record it in your voice) | screen_help [what he needs] (look at his screen right now and help) | device <phone / computer / tablet> <action> <arg> (do something on another one of his devices that's online, e.g. device computer open_app Spotify, device phone remind at 18:00 | gym; only his devices listed as online below) | watch_together <YouTube link, or what to search> (plays it inside Firefly and you watch it with him, reacting as it plays; watch_together stop closes it; use this when he wants to watch something WITH you) | game chess / wordle / trivia (opens the game and you play it with him, in the app) | focus <minutes> <what he's working on> (focus mode: a timer, calm music, you cheer him on and poke him if he drifts to YouTube or games; focus stop ends it) | note <a task or thing to keep for them> | done <the note to cross off> | remind <in 20 min / at 18:30 / tomorrow 9:00> | <what to remind them> (put ! first, as in remind ! at 18:30 | …, when it's important or he says call me / wake me: then you call him instead of a note)";
     if (voiceCall && VC.on) acts += " | room cozy / kitchen / gaming / plants (go to another room of your place, when it fits: 'brb, making coffee' = kitchen)";
     if (voiceCall) acts += " | end_call (when they say bye or want to hang up: say a short bye first)";
     const noHands = app && !hands && pc ? `- You can't click, type or scroll on their computer right now ("Luma can control this PC" is off). If they ask you to, never pretend you did it: say you can't yet and that they can turn it on from Firefly's icon next to the clock, or on the You page.
@@ -2383,6 +2405,7 @@ ${last}${langNote()}`;
     if (name === "notifications") return window.__notifs ? window.__notifs(arg) : "unknown";
     if (name === "screen_help") return window.__screenHelp ? window.__screenHelp(arg) : "unknown";
     if (name === "device") return window.__linkSend ? window.__linkSend(arg) : "unknown";
+    if (name === "studio") return window.__studio ? window.__studio(arg) : "unknown";
     if (name === "watch_together") return window.__watchTogether ? window.__watchTogether(arg) : "unknown";
     if (name === "note" || name === "done" || name === "remind") return window.__keep ? window.__keep(name, arg) : "unknown";
     if (window.AndroidLuma && AndroidLuma.doAction) return AndroidLuma.doAction(name, arg);
@@ -3433,6 +3456,164 @@ Start with one face tag like [thinking] [happy], then your help.`, Object.assign
   }
   window.__screenHelp = screenHelp;
 
+  // ---------- Studio: Luma makes Reels ----------
+  // Luma as a creator: she picks a Reel idea, writes the hook, the spoken script, the on-screen captions and
+  // the Instagram caption + hashtags, then records a 9:16 video of herself saying it in her own voice over
+  // her animated loop, with the captions burned in — all client-side and free (her voice + her clips, no
+  // paid video generation). The finished .webm downloads, ready to post. It's AI content and says so.
+  const STUDIO = (() => {
+    const S = { el: null, pack: null, topic: "", rec: null, ac: null, raf: 0, playing: false, vids: {}, bg: null, chunks: [] };
+    const NICHE = "cozy aesthetic / soft anime vibes / her little daily life (reading, coffee, plants, gaming at night), gentle relatable thoughts, and sweet encouragement";
+    function close() {
+      stopRec(true); cancelAnimationFrame(S.raf);
+      try { S.ac && S.ac.close(); } catch (e) {} S.ac = null;
+      if (S.el) S.el.remove(); S.el = null; S.playing = false;
+    }
+    function open(topic) {
+      close();
+      const el = document.createElement("div"); el.className = "stu"; el.id = "stu";
+      el.innerHTML = `<div class="stu-top"><b>🎬 ${t("studioTitle")}</b><button type="button" class="gm-x" aria-label="Close">✕</button></div>
+        <div class="stu-wrap">
+          <div class="stu-stagewrap"><canvas class="stu-stage" width="540" height="960"></canvas><div class="stu-badge">AI • Luma</div></div>
+          <div class="stu-side">
+            <div class="stu-row"><input type="text" id="stu-topic" dir="auto" maxlength="120" placeholder="${t("studioTopic")}" value="${esc(topic || "")}"><button type="button" class="gm-btn" id="stu-idea">💡 ${t("studioIdea")}</button></div>
+            <button type="button" class="gm-btn wide" id="stu-write">✍️ ${t("studioWrite")}</button>
+            <div class="stu-pack" id="stu-pack"></div>
+            <div class="stu-actions" id="stu-actions" hidden>
+              <button type="button" class="gm-btn big" id="stu-rec">⏺️ ${t("studioRec")}</button>
+              <a class="gm-btn big" id="stu-dl" hidden download="luma-reel.webm">⬇️ ${t("studioSave")}</a>
+            </div>
+            <p class="stu-note">${t("studioNote")}</p>
+          </div>
+        </div>`;
+      document.body.appendChild(el);
+      S.el = el; S.topic = topic || "";
+      S.cv = el.querySelector(".stu-stage"); S.cx = S.cv.getContext("2d");
+      el.querySelector(".gm-x").onclick = close;
+      el.querySelector("#stu-idea").onclick = idea;
+      el.querySelector("#stu-write").onclick = () => write(el.querySelector("#stu-topic").value.trim());
+      el.querySelector("#stu-rec").onclick = () => (S.playing ? stopRec() : record());
+      // her room as the backdrop, and her idle + talking loops for the body
+      S.bg = Object.assign(new Image(), { src: (WALLS[VC.room] && WALLS[VC.room].img) || "luma/wall_cozy.webp" });
+      S.vids.idle = mkVid("luma/vc/idle.webm"); S.vids.talk = mkVid("luma/vc/talk_a.webm");
+      S.cur = "idle"; S.cap = ""; draw();
+      return "ok";
+    }
+    function mkVid(src) { const v = document.createElement("video"); v.src = src; v.loop = true; v.muted = true; v.playsInline = true; v.play().catch(() => {}); return v; }
+    function stageMsg(m) { S.cap = m; }
+    async function idea() {
+      const s = session && session.free ? session : { free: true, weight: 0, tags: [], turns: [], worries: [], intention: "" };
+      stageMsg("thinking of an idea…");
+      try {
+        const { text } = await ask(rules(s) + `\n\nYou're a content creator making Instagram Reels. Your niche: ${NICHE}. Suggest ONE fresh, specific Reel idea (a topic/angle), under 12 words, that would do well as a short cozy Reel. Reply with ONLY the idea, no quotes.`, { cache: false });
+        const idea = splitReplies(readMood(text).body || text).body.split("\n")[0].replace(/^["']|["']$/g, "").trim();
+        if (S.el) S.el.querySelector("#stu-topic").value = idea;
+        stageMsg("");
+      } catch (e) { stageMsg("hmm, try again"); }
+    }
+    async function write(topic) {
+      const s = session && session.free ? session : { free: true, weight: 0, tags: [], turns: [], worries: [], intention: "" };
+      const pk = S.el.querySelector("#stu-pack"); pk.innerHTML = `<p class="tiny">✍️ ${t("studioWriting")}</p>`;
+      S.el.querySelector("#stu-actions").hidden = true;
+      try {
+        const { text } = await ask(rules(s) + `\n\nYou're a content creator making ONE Instagram Reel in your own voice (you are an AI anime girl; cozy, warm, a little playful). ${topic ? "Topic: " + topic + "." : "Pick a cozy relatable topic in your niche (" + NICHE + ")."}
+Write it as JSON only:
+{"hook":"a scroll-stopping first line (<8 words)","lines":[{"say":"what you say out loud, one short spoken sentence","cap":"the on-screen caption for this line (<6 words)"}, ... 4 to 6 lines total, 15-25 seconds spoken],"igCaption":"an Instagram caption, warm, 1-2 sentences","hashtags":["#tag", ... 6 to 10 relevant reachable hashtags]}
+Keep it genuine and specific, not generic. The first line of "lines" should deliver the hook.`, { cache: false, hard: true });
+        const pack = JSON.parse(text.slice(text.indexOf("{"), text.lastIndexOf("}") + 1));
+        if (!pack || !Array.isArray(pack.lines) || !pack.lines.length) throw 0;
+        S.pack = pack;
+        renderPack();
+      } catch (e) { pk.innerHTML = `<p class="tiny">😣 ${t("studioFail")}</p>`; }
+    }
+    function renderPack() {
+      const p = S.pack, tags = (p.hashtags || []).join(" ");
+      S.el.querySelector("#stu-pack").innerHTML = `
+        <div class="stu-card"><h5>${t("studioHook")}</h5><p dir="auto">${esc(p.hook || "")}</p></div>
+        <div class="stu-card"><h5>${t("studioScript")}</h5>${p.lines.map((l) => `<p dir="auto">• ${esc(l.say)} <span class="stu-cap">${esc(l.cap || "")}</span></p>`).join("")}</div>
+        <div class="stu-card"><div class="row split"><h5>${t("studioCap")}</h5><button type="button" class="stu-copy" data-copy="cap">${t("copy")}</button></div><p dir="auto" id="stu-igcap">${esc(p.igCaption || "")}</p></div>
+        <div class="stu-card"><div class="row split"><h5>${t("studioTags")}</h5><button type="button" class="stu-copy" data-copy="tags">${t("copy")}</button></div><p dir="ltr" id="stu-tags">${esc(tags)}</p></div>`;
+      S.el.querySelector("#stu-actions").hidden = false;
+      S.el.querySelectorAll("[data-copy]").forEach((b) => b.onclick = () => {
+        const v = b.dataset.copy === "tags" ? tags : (p.igCaption || "");
+        navigator.clipboard.writeText(v).then(() => { b.textContent = "✓"; setTimeout(() => (b.textContent = t("copy")), 1200); }).catch(() => {});
+      });
+    }
+    // draw one frame: room (cover), her alpha loop (contain, bottom), the caption burned in big
+    function draw() {
+      const x = S.cx, W = S.cv.width, H = S.cv.height;
+      x.clearRect(0, 0, W, H);
+      if (S.bg && S.bg.complete && S.bg.naturalWidth) {
+        const r = Math.max(W / S.bg.naturalWidth, H / S.bg.naturalHeight), iw = S.bg.naturalWidth * r, ih = S.bg.naturalHeight * r;
+        x.drawImage(S.bg, (W - iw) / 2, (H - ih) / 2, iw, ih);
+      } else { x.fillStyle = "#1a1640"; x.fillRect(0, 0, W, H); }
+      const g = x.createLinearGradient(0, 0, 0, H); g.addColorStop(0, "rgba(10,10,30,.35)"); g.addColorStop(.5, "rgba(10,10,30,0)"); g.addColorStop(1, "rgba(10,10,30,.75)"); x.fillStyle = g; x.fillRect(0, 0, W, H);
+      const v = S.vids[S.cur];
+      if (v && v.videoWidth) { const vh = H * .82, vw = vh * (v.videoWidth / v.videoHeight); x.drawImage(v, (W - vw) / 2, H - vh, vw, vh); }
+      if (S.cap) {
+        x.font = "800 " + Math.round(W * .072) + "px " + "Manrope, system-ui, sans-serif";
+        x.textAlign = "center"; x.textBaseline = "bottom"; x.lineJoin = "round";
+        const words = String(S.cap).split(/\s+/), lines = []; let ln = "";
+        for (const w of words) { const tr = ln ? ln + " " + w : w; if (x.measureText(tr).width > W * .86 && ln) { lines.push(ln); ln = w; } else ln = tr; }
+        if (ln) lines.push(ln);
+        const lh = W * .092; let y = H * .80 + lines.length * lh;
+        for (const L of lines) { x.lineWidth = W * .018; x.strokeStyle = "rgba(10,8,25,.9)"; x.strokeText(L, W / 2, y); x.fillStyle = "#fff"; x.fillText(L, W / 2, y); y -= lh; }
+      }
+      S.raf = requestAnimationFrame(draw);
+    }
+    async function record() {
+      if (!S.pack || !S.pack.lines.length) return;
+      const recBtn = S.el.querySelector("#stu-rec"), dl = S.el.querySelector("#stu-dl");
+      dl.hidden = true; recBtn.textContent = "⏹️ " + t("studioStop"); S.playing = true;
+      try { S.ac = S.ac || new (window.AudioContext || window.webkitAudioContext)(); await S.ac.resume(); } catch (e) {}
+      const dest = S.ac.createMediaStreamDestination();
+      const vstream = S.cv.captureStream(30);
+      const mix = new MediaStream([...vstream.getVideoTracks(), ...dest.stream.getAudioTracks()]);
+      const mime = ["video/webm;codecs=vp9,opus", "video/webm;codecs=vp8,opus", "video/webm"].find((m) => window.MediaRecorder && MediaRecorder.isTypeSupported(m)) || "video/webm";
+      S.chunks = [];
+      S.rec = new MediaRecorder(mix, { mimeType: mime, videoBitsPerSecond: 6000000 });
+      S.rec.ondataavailable = (e) => { if (e.data && e.data.size) S.chunks.push(e.data); };
+      S.rec.onstop = () => {
+        const blob = new Blob(S.chunks, { type: "video/webm" });
+        dl.href = URL.createObjectURL(blob); dl.hidden = false;
+        recBtn.textContent = "⏺️ " + t("studioRec");
+      };
+      S.rec.start();
+      stageMsg(S.pack.hook || "");
+      await wait(700);
+      for (const line of S.pack.lines) {
+        if (!S.playing) break;
+        S.cap = line.cap || line.say; S.cur = "talk";
+        await speakLine(line.say, dest);
+        S.cur = "idle"; await wait(180);
+      }
+      S.cap = ""; S.cur = "idle"; await wait(400);
+      stopRec();
+    }
+    function speakLine(text, dest) {
+      return new Promise((done) => {
+        if (!S.playing) return done();
+        const a = new Audio("/api/voice?v=" + encodeURIComponent(voicePick().name) + "&m=happy&t=" + encodeURIComponent(sayClean(text)));
+        a.crossOrigin = "use-credentials";
+        try { const src = S.ac.createMediaElementSource(a); src.connect(dest); src.connect(S.ac.destination); } catch (e) {}
+        a.onended = a.onerror = () => done();
+        a.play().catch(() => done());
+        // safety: never hang forever on a line
+        setTimeout(() => done(), 12000);
+      });
+    }
+    const sayClean = (t) => String(t).replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}\u{200D}]/gu, "").replace(/\s+/g, " ").trim().slice(0, 300);
+    const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+    function stopRec(silent) {
+      S.playing = false;
+      try { if (S.rec && S.rec.state !== "inactive") S.rec.stop(); } catch (e) {}
+      S.rec = null;
+      if (silent && S.el) { const b = S.el.querySelector("#stu-rec"); if (b) b.textContent = "⏺️ " + t("studioRec"); }
+    }
+    return { open, close };
+  })();
+  window.__studio = (arg) => STUDIO.open(String(arg || ""));
+
   // ---------- focus mode ----------
   // "DO: focus 25 the report": a timer pill at the top of every screen, calm music, her cheering at the start,
   // halfway and the end, and on the computer/phone (with her hands on), a poke when he drifts to YouTube,
@@ -3740,7 +3921,7 @@ Start with one face tag like [thinking] [happy], then your help.`, Object.assign
         <div><b>${t("luma")}</b><span class="st" id="ch-status">${t("stListening")}</span></div>
         ${free ? `<div class="ch-acts"><button class="ch-act" id="call" type="button" hidden title="${t("callBtn")}" aria-label="${t("callBtn")}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/></svg></button><button class="ch-act" id="vcall" type="button" hidden title="${t("videoBtn")}" aria-label="${t("videoBtn")}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="13" height="12" rx="2"/><path d="m16 10 5-3v10l-5-3"/></svg></button><button class="ch-act" id="more" type="button" aria-expanded="false" title="More" aria-label="More"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></button></div>` : ""}
       </div>
-      ${free ? `<div class="ch-tools" id="tools" hidden><button class="ch-watch" id="watch" type="button" hidden>${t("watchBtn")}</button><button class="ch-bubble" id="bubble" type="button" hidden title="${t("bubbleTitle")}" aria-label="${t("bubbleTitle")}">🫧</button><button class="ch-bubble" id="games" type="button" title="Games" aria-label="Games">🎮</button><button class="ch-bubble" id="aloud" type="button" title="Her voice" aria-label="Her voice">🔊</button><button class="ch-bubble" id="ear" type="button" hidden title="${t("earTitle")}" aria-label="${t("earTitle")}" aria-pressed="false">👂</button><button class="ch-bubble" id="vlang" type="button" hidden title="${t("voiceTitle")}" aria-label="${t("voiceTitle")}" style="font:700 13px var(--body)"></button></div>` : ""}
+      ${free ? `<div class="ch-tools" id="tools" hidden><button class="ch-watch" id="watch" type="button" hidden>${t("watchBtn")}</button><button class="ch-bubble" id="bubble" type="button" hidden title="${t("bubbleTitle")}" aria-label="${t("bubbleTitle")}">🫧</button><button class="ch-bubble" id="games" type="button" title="Games" aria-label="Games">🎮</button><button class="ch-bubble" id="studio" type="button" title="Studio" aria-label="Studio">🎬</button><button class="ch-bubble" id="aloud" type="button" title="Her voice" aria-label="Her voice">🔊</button><button class="ch-bubble" id="ear" type="button" hidden title="${t("earTitle")}" aria-label="${t("earTitle")}" aria-pressed="false">👂</button><button class="ch-bubble" id="vlang" type="button" hidden title="${t("voiceTitle")}" aria-label="${t("voiceTitle")}" style="font:700 13px var(--body)"></button></div>` : ""}
       ${free && appOld() ? (desktopApp ? `<div class="update">🖥️ ${t("appUpdatePC")}<br><code style="user-select:all">irm https://firefly-3t9.pages.dev/pc | iex</code></div>` : `<a class="update" href="${APK_URL}">📲 ${t("appUpdate")}</a>`) : ""}
       ${free ? `<div class="watchbar" id="watchbar" hidden><span class="wb-dot"></span><span class="wb-t">${t("watchOn")}</span><button type="button" id="wfloat" hidden>${t("watchFloat")}</button><button type="button" id="wstop">${t("watchStop")}</button></div>` : ""}
       <div class="talk" id="talk"></div>
@@ -3844,6 +4025,7 @@ Start with one face tag like [thinking] [happy], then your help.`, Object.assign
       window.__callOn = () => CALL.on || !!(window.__callAlive && window.__callAlive());
       $("#more").onclick = () => { const tl = $("#tools"), open = tl.hidden; tl.hidden = !open; $("#more").setAttribute("aria-expanded", String(open)); };
       $("#games").onclick = () => GAME.menu();
+      $("#studio").onclick = () => STUDIO.open("");
       window.__speak = speakOut; window.__bubble = bubbleSay;
       // her own message, with her chat open and in front of him: said right here (a call: she calls)
       window.__chatSay = (text, call) => {

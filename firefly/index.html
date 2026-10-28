@@ -3508,7 +3508,7 @@ Start with one face tag like [thinking] [happy], then your help.`, Object.assign
       const s = session && session.free ? session : { free: true, weight: 0, tags: [], turns: [], worries: [], intention: "" };
       stageMsg("thinking of an idea…");
       try {
-        const { text } = await ask(rules(s) + `\n\nYou're a content creator making Instagram Reels. Your niche: ${NICHE}. Suggest ONE fresh, specific tech/CS topic to explain in a short Reel, phrased as a catchy hook under 12 words (like "8 cores and it still freezes??" or "your RAM is basically a desk"). Reply with ONLY the idea, no quotes.`, { cache: false });
+        const { text } = await ask(rules(s) + `\n\nYou're a content creator making Instagram Reels. Your niche: ${NICHE}. Suggest ONE fresh, specific tech/CS topic to explain in a short Reel, phrased as a catchy hook under 12 words (like "8 cores and it still freezes??" or "your RAM is basically a desk"). Reply with ONLY the idea, no quotes. Language: English (en-US) only.`, { cache: false });
         const idea = splitReplies(readMood(text).body || text).body.split("\n")[0].replace(/^["']|["']$/g, "").trim();
         if (S.el) S.el.querySelector("#stu-topic").value = idea;
         stageMsg("");
@@ -3523,7 +3523,7 @@ Start with one face tag like [thinking] [happy], then your help.`, Object.assign
 Explain it the SIMPLEST way, with a relatable everyday analogy, correct and not hand-wavy, then end with a question that makes people comment.
 Write it as JSON only:
 {"hook":"a scroll-stopping first line, a question or surprise (<9 words)","lines":[{"say":"what you say out loud, one short spoken sentence in simple words","cap":"on-screen keyword caption (<5 words)"}, ... 4 to 6 lines, 15-28 seconds spoken, the first delivering the hook, the middle the simple explanation with an analogy, the last a question CTA],"igCaption":"a warm IG caption with 1-2 small kaomoji","hashtags":["#tag", ... 6 to 10 relevant tech hashtags like #computerscience #techtips #coding #cpu #programming]}
-Be accurate and genuinely simple, never generic filler.`, { cache: false, hard: true });
+Be accurate and genuinely simple, never generic filler. Language: ALL of it in natural English (en-US), whatever language the app is in.`, { cache: false, hard: true });
         const pack = JSON.parse(text.slice(text.indexOf("{"), text.lastIndexOf("}") + 1));
         if (!pack || !Array.isArray(pack.lines) || !pack.lines.length) throw 0;
         S.pack = pack;

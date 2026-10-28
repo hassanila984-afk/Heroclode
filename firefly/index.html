@@ -3525,9 +3525,10 @@ Start with one face tag like [thinking] [happy], then your help.`, Object.assign
         const { text } = await ask(rules(s) + `\n\nYou're a cute anime girl who teaches tech & computer-science on Instagram Reels, in your own voice (you ARE an AI; cozy, warm, a little kawaii). Niche: ${NICHE}. ${topic ? "Topic/hook: " + topic + "." : "Pick one beginner-friendly tech/CS topic."}
 The video looks like a soft whiteboard explainer: a short title at the top, simple white UI cards / browser windows / popups that build up line by line like a teacher drawing, and your words shown as little chips beside you.
 Explain it the SIMPLEST way, with a relatable everyday analogy, correct and not hand-wavy, then end with a question that makes people comment. Start straight into it (no "hi guys"): the first line IS the hook.
+Make it FUN, like a friend who teases you a little while teaching: 2-3 small jokes woven in, never forced. Good jokes here are: taking a tech word literally for a second (cookies -> "no, not the chocolate chip kind"), a playful jab at the viewer ("you clicked accept without reading, didn't you"), a tiny self-aware aside ("I'm an AI, I have opinions about cookies"), or a deadpan one-word beat after a joke ("sorry.", "anyway.", "rude."). A beat is its own very short line (1-3 words, mood grin or wink) so the timing lands. Put a joke in a sticky-note "tag" sometimes (like "no chocolate chips"). Keep it kind and clean, and the explanation still correct.
 Write it as JSON only:
 {"hook":"the scroll-stopping first line, a question or surprise (<9 words)",
-"lines":[{"say":"what you say out loud, one short spoken sentence in simple words","title":"the big title at the top, 1-3 words like \\"Click.\\" or \\"cookies\\" or \\"websites forget you\\"; give it only when the scene changes","sub":"optional tiny grey line under the title (<7 words)","mood":"one of surprised|wink|think|grin|point|smug|explain|glasses","visual":SCENE}, ... 6 to 8 lines, 20-32 seconds spoken; first line is the hook (mood surprised or think), last line is the question CTA (mood wink or point)],
+"lines":[{"say":"what you say out loud, one short spoken sentence in simple words","title":"the big title at the top, 1-3 words like \\"Click.\\" or \\"cookies\\" or \\"websites forget you\\"; give it only when the scene changes","sub":"optional tiny grey line under the title (<7 words)","mood":"one of surprised|wink|think|grin|point|smug|explain|glasses","visual":SCENE}, ... 7 to 10 lines (beats count), 20-35 seconds spoken; first line is the hook (mood surprised or think), last line is the question CTA (mood wink or point)],
 "igCaption":"a warm IG caption with 1-2 small kaomoji","hashtags":["#tag", ... 6 to 10 relevant tech hashtags]}
 SCENE is one of (labels short, no emoji):
 {"type":"popup","title":"We use cookies","yes":"ACCEPT ALL","no":"REJECT ALL","pick":"yes"}  (a UI dialog, a cursor clicks the picked button)
@@ -3590,6 +3591,7 @@ Keep one scene for 2-3 lines with "same" and add a tag or note on the later line
       else if (l.sub && l.sub !== S.sub) { S.sub = l.sub; S.titleAt = now() - 300; }
       setMood(l.mood);
       setSay(preview ? "" : l.say);
+      if (!preview && S.chunks2.length === 1) S.beatAt = now();   // a one-beat line ("sorry.") gets a little hop so the joke lands
     }
 
     // ----- drawing -----
@@ -3635,7 +3637,8 @@ Keep one scene for 2-3 lines with "same" and add a tag or note on the later line
       const b = herBox(W, H), k = ease((tm - S.moodAt) / 260);
       const draw1 = (m, a, sc) => {
         const im = S.faces[m]; if (!im || !im.complete || !im.naturalWidth || a <= 0) return;
-        const h = b.h * sc, w = h * im.naturalWidth / im.naturalHeight, bob = Math.sin(tm / 1100) * 4;
+        const bt = (tm - (S.beatAt || 0)) / 420, hop = bt > 0 && bt < 1 ? -Math.sin(bt * Math.PI) * 22 : 0;
+        const h = b.h * sc, w = h * im.naturalWidth / im.naturalHeight, bob = Math.sin(tm / 1100) * 4 + hop;
         x.save(); x.globalAlpha = a; x.shadowColor = "rgba(40,70,80,.18)"; x.shadowBlur = 24;
         x.drawImage(im, b.x - (w - b.h * im.naturalWidth / im.naturalHeight) / 2, b.y + (b.h - h) + bob, w, h); x.restore();
       };

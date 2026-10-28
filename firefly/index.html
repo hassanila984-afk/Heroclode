@@ -3684,10 +3684,11 @@ Keep one scene for 2-3 lines with "same" and add a tag or note on the later line
     }
     const syl = (w) => Math.max(1, ((w.toLowerCase().replace(/[^a-z]/g, "").match(/[aeiouy]+/g) || []).length - (/[^aeiou]e$/i.test(w) ? 1 : 0)) || 1);
     const norm = (w) => String(w).toLowerCase().replace(/[^a-z0-9]/g, "");
+    const COMMON = new Set(["you", "your", "the", "and", "for", "its", "it", "a", "an", "to", "of", "in", "on", "me", "my", "i", "we", "is", "are", "this", "that", "with"]);
     // where she says (the main word of) a label, from word index "from" on, else anywhere; -1 if she doesn't
     function findWord(lab, words, from) {
-      const tk = String(lab).split(/\s+/).map(norm).filter(Boolean), key = tk.find((x) => x.length >= 3) || tk[0];
-      if (!key) return -1;
+      const tk = String(lab).split(/\s+/).map(norm).filter(Boolean), key = tk.find((x) => x.length >= 3 && !COMMON.has(x)) || tk.find((x) => !COMMON.has(x));
+      if (!key) return -1;   // "You", "The": too common to tell when she means the box
       const same = (w) => w === key || (w.length >= 4 && key.length >= 4 && (w.startsWith(key) || key.startsWith(w)));
       const j = words.findIndex((w, k) => k >= from && same(w));
       return j >= 0 ? j : words.findIndex(same);

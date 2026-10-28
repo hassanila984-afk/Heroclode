@@ -3468,7 +3468,8 @@ Start with one face tag like [thinking] [happy], then your help.`, Object.assign
   const STUDIO = (() => {
     const W0 = 720, H0 = 1280;
     const MOODS = ["surprised", "wink", "think", "grin", "point", "smug", "explain", "glasses",
-      "adjust", "heart", "shy", "sassy", "blush", "laugh", "stop", "annoyed", "phone", "present", "aside", "coffee"];
+      "adjust", "heart", "shy", "sassy", "blush", "laugh", "stop", "annoyed", "phone", "present", "aside", "coffee",
+      "thumbsup", "listen", "showcase", "shrug", "laptop", "funfact"];
     const INK = "#2b2d42", MUTED = "#7d8796", BLUE = "#2f6bff", BG1 = "#e3ecea", BG2 = "#cfdedb";
     const S = { el: null, pack: null, rec: null, ac: null, raf: 0, playing: false, chunks: [], faces: {}, line: -1, mood: "explain", prevMood: "", moodAt: 0, vis: null, visAt: 0, addAt: 0, say: "", sayAt: 0, chunks2: [], chIdx: -1, chAt: 0, audio: null, title: "", sub: "", titleAt: 0, sm: 0, nameUntil: 0, bgc: null };
     const NICHE = "a cute anime girl who explains tech and computer-science concepts in the simplest, coziest, most beginner-friendly way (e.g. what browser cookies are, CPU cores vs threads, RAM vs storage, what an API is, why your PC lags, how the internet works, Git, caching), warm and a little kawaii, hook + one simple explanation + a question CTA";
@@ -3536,7 +3537,7 @@ Make it FUN, like a friend who teases you a little while teaching: 2-3 small jok
 Sound ALIVE and human, like talking to friends you adore: natural little openers ("okay, real talk", "honestly", "right?"), a genuine *giggles* once or twice where it fits (written exactly like that), and vary the tone line by line. You love your followers: be warm and caring to them (a soft "you guys", a little "take care of yourself" moment when it fits), never cheesy.
 Write it as JSON only:
 {"hook":"the scroll-stopping first line, a question or surprise (<9 words)",
-"lines":[{"say":"what you say out loud, one short spoken sentence in simple words","title":"the big title at the top, 1-3 words like \\"Click.\\" or \\"cookies\\" or \\"websites forget you\\"; give it only when the scene changes","sub":"optional tiny grey line under the title (<7 words)","mood":"her pose, one of surprised|wink|think|grin|point|smug|explain|glasses|adjust (pushing up her glasses: 'actually...')|heart (heart hands: love for her followers)|shy|sassy (hand on hip: 'excuse me?')|blush (sweet, thankful)|laugh (after a joke)|stop (palm out: 'wait! don't!')|annoyed (arms crossed)|phone (holding a phone: phone topics)|present (presenting: 'ta-da, here it is')|aside (pointing at the boxes on screen)|coffee (cozy, calm)","tone":"how your voice sounds on this line, one of excited|happy|thinking|pout|shy|sad (pout = playful teasing)","visual":SCENE}, ... 7 to 10 lines (beats count), 20-35 seconds spoken; first line is the hook (mood surprised or think), last line is the question CTA (mood wink or point)],
+"lines":[{"say":"what you say out loud, one short spoken sentence in simple words","title":"the big title at the top, 1-3 words like \\"Click.\\" or \\"cookies\\" or \\"websites forget you\\"; give it only when the scene changes","sub":"optional tiny grey line under the title (<7 words)","mood":"her pose, one of surprised|wink|think|grin|point|smug|explain|glasses|adjust (pushing up her glasses: 'actually...')|heart (heart hands: love for her followers)|shy|sassy (hand on hip: 'excuse me?')|blush (sweet, thankful)|laugh (after a joke)|stop (palm out: 'wait! don't!')|annoyed (arms crossed)|phone (holding a phone: phone topics)|present (presenting: 'ta-da, here it is')|aside (pointing at the boxes on screen)|coffee (cozy, calm)|thumbsup (good job, approved)|listen (one finger up, serious: 'listen, this matters')|showcase (open palm, showing something off)|shrug ('who knows?', 'it depends')|laptop (holding a laptop: computer topics)|funfact (finger up, smiling: 'fun fact!')","tone":"how your voice sounds on this line, one of excited|happy|thinking|pout|shy|sad (pout = playful teasing)","visual":SCENE}, ... 7 to 10 lines (beats count), 20-35 seconds spoken; first line is the hook (mood surprised or think), last line is the question CTA (mood wink or point)],
 "igCaption":"a warm IG caption with 1-2 small kaomoji","hashtags":["#tag", ... 6 to 10 relevant tech hashtags]}
 SCENE is one of (labels short, no emoji):
 {"type":"popup","title":"We use cookies","yes":"ACCEPT ALL","no":"REJECT ALL","pick":"yes"}  (a UI dialog, a cursor clicks the picked button)
@@ -3753,7 +3754,8 @@ Keep one scene for 2-3 lines with "same" and add a tag or note on the later line
     function cueEmotes(raw, times, t0) {
       const l = S.pack && S.pack.lines[S.line] || {}, ev = [];
       const first = { surprised: "exclaim", think: "question", wink: "hearts", grin: "notes", smug: "sparkle", glasses: "sparkle",
-        adjust: "sparkle", heart: "hearts", shy: "hearts", blush: "hearts", laugh: "notes", stop: "exclaim", sassy: "question", present: "sparkle" }[l.mood];
+        adjust: "sparkle", heart: "hearts", shy: "hearts", blush: "hearts", laugh: "notes", stop: "exclaim", sassy: "question", present: "sparkle",
+        thumbsup: "sparkle", listen: "exclaim", showcase: "sparkle", shrug: "question", funfact: "exclaim" }[l.mood];
       if (first) ev.push([first, t0 + 80]);
       raw.forEach((w, j) => {
         const n = norm(w);
@@ -4374,7 +4376,8 @@ Keep one scene for 2-3 lines with "same" and add a tag or note on the later line
     // her voice's tone follows her face unless the line asks for a tone itself (same voice, more life)
     const TONES = ["excited", "happy", "thinking", "pout", "shy", "sad"];
     const TONE_OF = { surprised: "excited", wink: "pout", think: "thinking", grin: "excited", point: "excited", smug: "pout", explain: "happy", glasses: "thinking",
-      adjust: "thinking", heart: "happy", shy: "shy", sassy: "pout", blush: "shy", laugh: "excited", stop: "excited", annoyed: "pout", phone: "happy", present: "excited", aside: "happy", coffee: "happy" };
+      adjust: "thinking", heart: "happy", shy: "shy", sassy: "pout", blush: "shy", laugh: "excited", stop: "excited", annoyed: "pout", phone: "happy", present: "excited", aside: "happy", coffee: "happy",
+      thumbsup: "excited", listen: "thinking", showcase: "excited", shrug: "pout", laptop: "happy", funfact: "excited" };
     async function voiceFor(text, tone) {
       const ctl = new AbortController(), tid = setTimeout(() => ctl.abort(), 20000);
       try {

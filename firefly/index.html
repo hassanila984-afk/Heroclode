@@ -3532,7 +3532,7 @@ Make it FUN, like a friend who teases you a little while teaching: 2-3 small jok
 Write it as JSON only:
 {"hook":"the scroll-stopping first line, a question or surprise (<9 words)",
 "lines":[{"say":"what you say out loud, one short spoken sentence in simple words","title":"the big title at the top, 1-3 words like \\"Click.\\" or \\"cookies\\" or \\"websites forget you\\"; give it only when the scene changes","sub":"optional tiny grey line under the title (<7 words)","mood":"one of surprised|wink|think|grin|point|smug|explain|glasses","visual":SCENE}, ... 7 to 10 lines (beats count), 20-35 seconds spoken; first line is the hook (mood surprised or think), last line is the question CTA (mood wink or point)],
-"igCaption":"a warm IG caption with 1-2 small kaomoji that also says plainly you're an AI creator","hashtags":["#tag", ... 6 to 10 relevant tech hashtags]}
+"igCaption":"a warm IG caption with 1-2 small kaomoji","hashtags":["#tag", ... 6 to 10 relevant tech hashtags]}
 SCENE is one of (labels short, no emoji):
 {"type":"popup","title":"We use cookies","yes":"ACCEPT ALL","no":"REJECT ALL","pick":"yes"}  (a UI dialog, a cursor clicks the picked button)
 {"type":"windows","left":{"bar":"your browser","text":"you"},"right":{"bar":"shop.example","text":"the website"},"send":"cookie"}  (two browser windows; "send" is an optional little chip travelling left->right)
@@ -3545,7 +3545,7 @@ SCENE is one of (labels short, no emoji):
 {"type":"list","items":["short point","short point"]}  (up to 3)
 {"type":"same"}  (keep the previous scene, for continuity)
 Any scene (also "same") may add "tag":"a sticky-note label like it's you!" and/or "note":"a short blue annotation like sent back every visit".
-Keep one scene for 2-3 lines with "same" and add a tag or note on the later lines, building it up like a teacher. Vary scenes across the Reel. Be accurate and genuinely simple, never generic filler. Language: ALL of it in natural English (en-US), whatever language the app is in.`, { cache: false, hard: true });
+Keep one scene for 2-3 lines with "same" and add a tag or note on the later lines, building it up like a teacher. Vary scenes across the Reel. Be accurate and genuinely simple, never generic filler. Never mention AI or being an AI anywhere in the script, caption or hashtags. Language: ALL of it in natural English (en-US), whatever language the app is in.`, { cache: false, hard: true });
         const pack = JSON.parse(text.slice(text.indexOf("{"), text.lastIndexOf("}") + 1));
         if (!pack || !Array.isArray(pack.lines) || !pack.lines.length) throw 0;
         pack.lines.forEach((l) => { if (!MOODS.includes(l.mood)) l.mood = "explain"; });
@@ -4064,7 +4064,7 @@ Keep one scene for 2-3 lines with "same" and add a tag or note on the later line
       x.beginPath(); x.arc(cx - 62, cy, 7, 0, 6.3); x.fillStyle = "#ffd166"; x.fill(); x.lineWidth = 2; x.stroke();
       x.restore();
       x.save(); popIn(x, cx, cy, Math.min(e, 1.1));
-      text(x, "AI CREATOR · NO. 001", cx + 14, cy - 13, 120, "500", 12, MUTED);
+      text(x, "TECH CREATOR · NO. 001", cx + 14, cy - 13, 120, "500", 12, MUTED);
       text(x, "Luma", cx + 14, cy + 9, 120, "700", 30, INK); x.restore();
     }
     function title(x, W, H, tm) {

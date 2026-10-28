@@ -3537,7 +3537,7 @@ SCENE is one of (labels short, no emoji):
 {"type":"popup","title":"We use cookies","yes":"ACCEPT ALL","no":"REJECT ALL","pick":"yes"}  (a UI dialog, a cursor clicks the picked button)
 {"type":"windows","left":{"bar":"your browser","text":"you"},"right":{"bar":"shop.example","text":"the website"},"send":"cookie"}  (two browser windows; "send" is an optional little chip travelling left->right)
 {"type":"cards","items":["Core 1","Core 2","Core 3","Core 4"],"hi":0}  (up to 6, hi = index to highlight or -1)
-{"type":"bars","items":[{"label":"Core 1","value":100},{"label":"Core 2","value":5}]}  (up to 5, value 0-100)
+{"type":"bars","items":[{"label":"Core 1","value":100},{"label":"Core 2","value":5}]}  (up to 5, value 0-100; an item may add "text":"1000 W" to show instead of the %)
 {"type":"vs","left":"Cores","right":"Threads"}
 {"type":"flow","steps":["Click","CPU","RAM","Screen"]}  (2 to 4 steps)
 {"type":"code","lines":["git add .","git commit -m \\"fix\\""]}  (a tiny terminal, up to 4 short lines)
@@ -3588,7 +3588,7 @@ Keep one scene for 2-3 lines with "same" and add a tag or note on the later line
         // keep the scene, only add the new sticky note / annotation
         if (S.vis && v && (v.tag || v.note)) { S.vis = Object.assign({}, S.vis, v.tag ? { tag: v.tag } : {}, v.note ? { note: v.note } : {}, { type: S.vis.type }); S.addAt = now(); S.cue = "add"; S.addV = v; }
         else if (!S.vis && v && v.type !== "same") { S.vis = v; S.visAt = S.addAt = now(); S.cue = "new"; S.itemAt = null; }
-      } else if (S.vis && S.vis.type === v.type && v.type !== "popup") { S.vis = Object.assign({}, S.vis, v); S.addAt = now(); S.cue = "add"; S.addV = v; }   // same scene again: build on it, don't redraw it
+      } else if (S.vis && S.vis.type === v.type && v.type !== "popup" && JSON.stringify(itemLabels(S.vis)) === JSON.stringify(itemLabels(v))) { S.vis = Object.assign({}, S.vis, v); S.addAt = now(); S.cue = "add"; S.addV = v; }   // same scene again: build on it, don't redraw it
       else { S.vis = v; S.visAt = now(); S.addAt = now() + 900; S.cue = "new"; S.itemAt = null; }
       S.hiAt = null;
       if (l.title && l.title !== S.title) { if (!preview && now() - S.visAt > 50) fx.whoosh(0); S.title = l.title; S.sub = l.sub || ""; S.titleAt = now(); }
@@ -3938,11 +3938,11 @@ Keep one scene for 2-3 lines with "same" and add a tag or note on the later line
           const it0 = itemT(i, 250 + i * 160, lt), y = top + 15 + i * rh, e = ease(it0 / 800), val = Math.max(0, Math.min(100, Number(o.value) || 0)), lw = mw * .3;
           x.globalAlpha = Math.min(1, ease((it0 + 50) / 250));
           text(x, String(o.label || ""), L + 24, y + rh / 2, lw - 30, "600", 26, INK, "left");
-          const tx = L + lw, tw = mw - lw - 90, th = Math.min(28, rh - 22);
+          const tx = L + lw, tw = mw - lw - 120, th = Math.min(28, rh - 22);
           x.save(); rr(x, tx, y + (rh - th) / 2, tw, th, th / 2); x.fillStyle = "#edf0f3"; x.fill();
           const fw = tw * val / 100 * e; if (fw > 4) { rr(x, tx, y + (rh - th) / 2, fw, th, th / 2); x.fillStyle = val > 80 ? "#ff6b8a" : BLUE; x.fill(); }
           x.restore();
-          text(x, Math.round(val * e) + "%", tx + tw + 50, y + rh / 2, 80, "600", 24, val > 80 ? "#e2456a" : MUTED);
+          text(x, o.text ? String(o.text) : Math.round(val * e) + "%", tx + tw + 62, y + rh / 2, 100, "600", 24, val > 80 ? "#e2456a" : MUTED);
         });
         x.globalAlpha = 1; bottom = top + ch;
       } else if (v.type === "vs") {

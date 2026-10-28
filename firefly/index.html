@@ -3472,7 +3472,10 @@ Start with one face tag like [thinking] [happy], then your help.`, Object.assign
     const S = { el: null, pack: null, rec: null, ac: null, raf: 0, playing: false, chunks: [], faces: {}, line: -1, mood: "explain", prevMood: "", moodAt: 0, vis: null, visAt: 0, addAt: 0, say: "", sayAt: 0, chunks2: [], chIdx: -1, chAt: 0, audio: null, title: "", sub: "", titleAt: 0, sm: 0, nameUntil: 0, bgc: null };
     const NICHE = "a cute anime girl who explains tech and computer-science concepts in the simplest, coziest, most beginner-friendly way (e.g. what browser cookies are, CPU cores vs threads, RAM vs storage, what an API is, why your PC lags, how the internet works, Git, caching), warm and a little kawaii, hook + one simple explanation + a question CTA";
     const BUSY = { windows: 1, flow: 1, bars: 1, code: 1 };
-    const now = () => performance.now();
+    // the clock: real time while previewing, a virtual clock (exact 30 fps steps) while exporting a Reel
+    const now = () => (S.off ? S.vt : performance.now());
+    const tnow = () => (S.off ? S.vt / 1000 : S.ac.currentTime);
+    const actx = () => S.off || S.ac;
     const cl = (t) => Math.max(0, Math.min(1, t));
     const ease = (t) => 1 - Math.pow(1 - cl(t), 3);
     const back = (t) => { t = cl(t); const c = 1.7; return 1 + (c + 1) * Math.pow(t - 1, 3) + c * Math.pow(t - 1, 2); };
@@ -3602,14 +3605,14 @@ Keep one scene for 2-3 lines with "same" and add a tag or note on the later line
     // ----- sound: little effects and a soft music bed, all synthesized here (free, no files) -----
     const sfxOn = () => S.ac && S.sfxBus && S.sfx !== false && S.playing;
     function blip(f0, f1, dur, vol, type, delay) {
-      if (!sfxOn() || delay > 60000) return; const ac = S.ac, t0 = ac.currentTime + (delay || 0) / 1000;
+      if (!sfxOn() || delay > 60000) return; const ac = actx(), t0 = tnow() + (delay || 0) / 1000;
       const o = ac.createOscillator(), g = ac.createGain(); o.type = type || "sine";
       o.frequency.setValueAtTime(f0, t0); o.frequency.exponentialRampToValueAtTime(f1, t0 + dur);
       g.gain.setValueAtTime(.0001, t0); g.gain.exponentialRampToValueAtTime(vol, t0 + .008); g.gain.exponentialRampToValueAtTime(.0001, t0 + dur);
       o.connect(g); g.connect(S.sfxBus); o.start(t0); o.stop(t0 + dur + .03);
     }
     function hiss(dur, f0, f1, vol, delay, q) {
-      if (!sfxOn()) return; const ac = S.ac, t0 = ac.currentTime + (delay || 0) / 1000;
+      if (!sfxOn()) return; const ac = actx(), t0 = tnow() + (delay || 0) / 1000;
       if (!S.noise) { const b = ac.createBuffer(1, ac.sampleRate, ac.sampleRate), d = b.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; S.noise = b; }
       const src = ac.createBufferSource(), f = ac.createBiquadFilter(), g = ac.createGain(); src.buffer = S.noise;
       f.type = "bandpass"; f.Q.value = q || 1.2; f.frequency.setValueAtTime(f0, t0); f.frequency.exponentialRampToValueAtTime(f1, t0 + dur);
@@ -3649,16 +3652,17 @@ Keep one scene for 2-3 lines with "same" and add a tag or note on the later line
     }
     // a very soft lo-fi bed: Fmaj7 - Em7 - Dm7 - Cmaj7, a music-box arpeggio, a gentle kick and hat
     function music(on) {
-      const ac = S.ac;
-      if (!on) { if (S.mus) { clearInterval(S.mus.timer); S.mus.g.gain.setTargetAtTime(0, ac.currentTime, .35); if (S.mus.src) S.mus.src.stop(ac.currentTime + 2); S.mus = null; } return; }
+      const ac = actx();
+      if (!on) { if (S.mus) { clearInterval(S.mus.timer); S.mus.g.gain.setTargetAtTime(0, tnow(), .35); if (S.mus.src) S.mus.src.stop(tnow() + 2); S.mus = null; } return; }
       if (S.lofi) {
         // the cozy lo-fi loop (electric piano, bass, swung drums, a little vinyl), looped seamlessly
         const g = ac.createGain(), src = ac.createBufferSource();
-        src.buffer = S.lofi; src.loop = true; g.gain.value = .0001; g.gain.setTargetAtTime(.45, ac.currentTime, .6);
-        src.connect(g); g.connect(S.musBus); src.start();
+        src.buffer = S.lofi; src.loop = true; g.gain.value = .0001; g.gain.setTargetAtTime(.45, tnow(), .6);
+        src.connect(g); g.connect(S.musBus); src.start(tnow());
         S.mus = { g, src, timer: 0 };
         return;
       }
+      if (S.off) return;   // the synth bed runs on a real-time timer: export uses the lo-fi loop only
       const g = ac.createGain(), lp = ac.createBiquadFilter();
       g.gain.value = .0001; g.gain.setTargetAtTime(1, ac.currentTime, .8);
       lp.type = "lowpass"; lp.frequency.value = 2200; lp.connect(g); g.connect(S.musBus);
@@ -4121,7 +4125,7 @@ Keep one scene for 2-3 lines with "same" and add a tag or note on the later line
     function chips(x, W, H, tm) {
       if (!S.say || !S.chunks2.length) return;
       let idx = 0;
-      if (S.marks && S.audio) { const tt = S.ac.currentTime - S.clipAt + .1; S.marks.forEach((m, i) => { if (tt >= m) idx = i; }); }
+      if (S.marks && S.audio) { const tt = tnow() - S.clipAt + .1; S.marks.forEach((m, i) => { if (tt >= m) idx = i; }); }
       else if (S.marks) idx = S.chunks2.length - 1;   // her line has finished: leave its last words up
       else {
         const total = S.chunks2.reduce((n, c) => n + c.join(" ").length + 2, 0), frac = Math.min(1, (tm - S.sayAt) / (S.say.split(/\s+/).length * 230));
@@ -4180,7 +4184,8 @@ Keep one scene for 2-3 lines with "same" and add a tag or note on the later line
       x.fillStyle = INK; x.fillRect(a + w / 2 - 6, b + h, 12, 14); x.fillRect(a + w / 2 - 26, b + h + 12, 52, 6);
       x.restore();
     }
-    function draw() {
+    function draw() { frame(); S.raf = requestAnimationFrame(draw); }
+    function frame() {
       const x = S.cx, W = S.cv.width, H = S.cv.height, tm = now();
       const busy = S.vis && (BUSY[S.vis.type] || (S.vis.type === "cards" && (S.vis.items || []).length > 3));
       S.sm += ((busy ? 1 : 0) - S.sm) * .08;
@@ -4196,22 +4201,42 @@ Keep one scene for 2-3 lines with "same" and add a tag or note on the later line
       emotes(x, W, H, tm);
       nameTag(x, W, H, tm);
       chips(x, W, H, tm);
-      S.raf = requestAnimationFrame(draw);
     }
 
     // ----- recording -----
+    // Export: every frame is drawn at an exact 30 fps step on a virtual clock and encoded straight away
+    // (WebCodecs), and the sound is mixed offline, so the video is perfectly smooth however slow the device
+    // is. Devices without WebCodecs fall back to recording the canvas live.
+    const FPS = 30;
+    function muxerLib() {
+      return window.WebMMuxer ? Promise.resolve(true) : new Promise((ok) => {
+        const sc = document.createElement("script"); sc.src = "luma/reel/webm-muxer.js";
+        sc.onload = () => ok(!!window.WebMMuxer); sc.onerror = () => ok(false); document.head.appendChild(sc);
+      });
+    }
     async function record() {
       if (!S.pack || !S.pack.lines.length) return;
       const recBtn = S.el.querySelector("#stu-rec"), dl = S.el.querySelector("#stu-dl");
       dl.hidden = true; recBtn.textContent = "⏹️ " + t("studioStop"); S.playing = true;
       try { S.ac = S.ac || new (window.AudioContext || window.webkitAudioContext)(); await S.ac.resume(); } catch (e) {}
       try { document.fonts && await document.fonts.load("700 40px Fredoka"); } catch (e) {}
+      S.sfx = S.el.querySelector("#stu-sfx").checked;
+      const wantMusic = S.el.querySelector("#stu-mus").checked;
+      if (!S.lofi && wantMusic) {
+        try { S.lofi = await S.ac.decodeAudioData(await (await fetch("luma/reel/lofi.ogg")).arrayBuffer()); } catch (e) {}
+      }
+      const lines = S.pack.lines;
+      const clips = lines.map((l) => voiceFor(l.say, l.tone || TONE_OF[l.mood]));
+      const canExport = window.VideoEncoder && window.AudioEncoder && window.OfflineAudioContext && window.VideoFrame && await muxerLib();
+      if (canExport) {
+        try { return await exportReel(await Promise.all(clips), wantMusic, recBtn, dl); }
+        catch (e) { S.off = null; S.vt = null; cancelAnimationFrame(S.raf); draw(); }   // fall through to the live recording
+      }
+      // live: record the canvas as it plays
       const dest = S.ac.createMediaStreamDestination();
       const bus = (v) => { const g = S.ac.createGain(); g.gain.value = v; g.connect(dest); g.connect(S.ac.destination); return g; };
       S.voiceBus = bus(1); S.sfxBus = bus(.7); S.musBus = bus(.3);
-      S.sfx = S.el.querySelector("#stu-sfx").checked;
-      const vstream = S.cv.captureStream(30);
-      const mix = new MediaStream([...vstream.getVideoTracks(), ...dest.stream.getAudioTracks()]);
+      const mix = new MediaStream([...S.cv.captureStream(FPS).getVideoTracks(), ...dest.stream.getAudioTracks()]);
       const mime = ["video/webm;codecs=vp9,opus", "video/webm;codecs=vp8,opus", "video/webm"].find((m) => window.MediaRecorder && MediaRecorder.isTypeSupported(m)) || "video/webm";
       S.chunks = [];
       S.rec = new MediaRecorder(mix, { mimeType: mime, videoBitsPerSecond: 8000000 });
@@ -4220,21 +4245,22 @@ Keep one scene for 2-3 lines with "same" and add a tag or note on the later line
         dl.href = URL.createObjectURL(new Blob(S.chunks, { type: "video/webm" })); dl.hidden = false;
         recBtn.textContent = "⏺️ " + t("studioRec");
       };
-      // the next line's voice is fetched while the current one plays, so there are no gaps
-      const lines = S.pack.lines, n = lines.length;
-      const clips = lines.map((l) => voiceFor(l.say, l.tone || TONE_OF[l.mood]));
-      if (!S.lofi && S.el.querySelector("#stu-mus").checked) {
-        try { S.lofi = await S.ac.decodeAudioData(await (await fetch("luma/reel/lofi.ogg")).arrayBuffer()); } catch (e) {}
-      }
-      const first = await clips[0];
-      S.vis = null; S.title = ""; S.sub = ""; S.prevMood = "";
+      await clips[0];
       S.rec.start();
+      await timeline(clips, wantMusic);
+      stopRec();
+    }
+    // the Reel itself, the same for live and export: her lines one after another, then "follow for more"
+    async function timeline(clips, wantMusic) {
+      S.vis = null; S.title = ""; S.sub = ""; S.prevMood = ""; S.emotes = [];
+      S.moodAt = S.titleAt = S.visAt = S.addAt = S.sayAt = S.chAt = now() - 2000; S.beatAt = -1e9;   // (the export's clock starts at 0)
+      S.mood = S.pack.lines[0].mood || S.mood;   // open on her first expression, no fade from the preview
       hiss(.01, 1000, 1000, .0001, 0);   // makes the noise buffer the hi-hat uses
-      if (S.el.querySelector("#stu-mus").checked) music(true);   // (lofi loaded above; the synth bed is the fallback)
+      if (wantMusic) music(true);
       S.nameUntil = now() + 4000;
-      for (let i = 0; i < n; i++) {
+      for (let i = 0; i < S.pack.lines.length; i++) {
         if (!S.playing) break;
-        const c = i ? await clips[i] : first;
+        const c = await clips[i];
         setLine(i, false);
         if (c) { c.marks = align(c.buf, S.chunks2); cueLine(c.marks, now() + 30); }
         else if (S.cue === "new") sceneSounds(S.vis);
@@ -4245,7 +4271,67 @@ Keep one scene for 2-3 lines with "same" and add a tag or note on the later line
       await wait(1300);
       music(false);
       await wait(700);
-      stopRec();
+    }
+    async function exportReel(clips, wantMusic, recBtn, dl) {
+      const SR = 48000;
+      const total = clips.reduce((n, c) => n + (c ? c.buf.duration + .1 : .1), 0) + 3.5;
+      cancelAnimationFrame(S.raf); S.vt = 0; S.fi = 0;
+      S.off = new OfflineAudioContext(2, Math.ceil(SR * total), SR);
+      const bus = (v) => { const g = S.off.createGain(); g.gain.value = v; g.connect(S.off.destination); return g; };
+      S.voiceBus = bus(1); S.sfxBus = bus(.7); S.musBus = bus(.3);
+      const M = window.WebMMuxer;
+      let vcodec = "vp09.00.10.08", mcodec = "V_VP9";
+      const vcfg = (c) => ({ codec: c, width: W0, height: H0, bitrate: 8000000, framerate: FPS });
+      if (!(await VideoEncoder.isConfigSupported(vcfg(vcodec))).supported) { vcodec = "vp8"; mcodec = "V_VP8"; }
+      const mux = new M.Muxer({ target: new M.ArrayBufferTarget(), video: { codec: mcodec, width: W0, height: H0, frameRate: FPS }, audio: { codec: "A_OPUS", sampleRate: SR, numberOfChannels: 2 }, firstTimestampBehavior: "offset" });
+      let failed = null;
+      const venc = new VideoEncoder({ output: (ch, meta) => mux.addVideoChunk(ch, meta), error: (e) => (failed = e) });
+      venc.configure(vcfg(vcodec));
+      cancelAnimationFrame(S.raf);
+      S.vt = 0; S.fi = 0; S.venc = venc;
+      const frames = Math.ceil(total * FPS);
+      S.progress = () => { recBtn.textContent = "⏳ " + Math.min(99, Math.round(S.fi / frames * 100)) + "%"; };
+      await encodeFrame();
+      await timeline(clips, wantMusic);
+      await venc.flush(); venc.close();
+      if (failed) throw failed;
+      // the sound, mixed offline, then encoded as Opus
+      const ab = await S.off.startRendering();
+      const aenc = new AudioEncoder({ output: (ch, meta) => mux.addAudioChunk(ch, meta), error: (e) => (failed = e) });
+      aenc.configure({ codec: "opus", sampleRate: SR, numberOfChannels: 2, bitrate: 160000 });
+      const len = Math.min(ab.length, Math.ceil((S.fi + 1) / FPS * SR)), N = 4800;
+      for (let i = 0; i < len; i += N) {
+        const k = Math.min(N, len - i), data = new Float32Array(k * 2);
+        data.set(ab.getChannelData(0).subarray(i, i + k), 0); data.set(ab.getChannelData(1).subarray(i, i + k), k);
+        const ad = new AudioData({ format: "f32-planar", sampleRate: SR, numberOfFrames: k, numberOfChannels: 2, timestamp: Math.round(i / SR * 1e6), data });
+        aenc.encode(ad); ad.close();
+      }
+      await aenc.flush(); aenc.close();
+      if (failed) throw failed;
+      mux.finalize();
+      const done = S.playing;
+      S.off = null; S.vt = null; S.venc = null; S.playing = false; S.audio = null;
+      draw();
+      recBtn.textContent = "⏺️ " + t("studioRec");
+      if (!done) return;
+      dl.href = URL.createObjectURL(new Blob([mux.target.buffer], { type: "video/webm" })); dl.hidden = false;
+    }
+    // export: draw the next frame and hand it to the encoder (waiting if it's behind)
+    async function encodeFrame() {
+      frame();
+      const vf = new VideoFrame(S.cv, { timestamp: Math.round(S.fi * 1e6 / FPS), duration: Math.round(1e6 / FPS) });
+      S.venc.encode(vf, { keyFrame: S.fi % (FPS * 2) === 0 }); vf.close();
+      if (S.venc.encodeQueueSize > 6) await new Promise((r) => S.venc.addEventListener("dequeue", r, { once: true }));
+      if (S.fi % 15 === 0) { S.progress && S.progress(); await new Promise((r) => setTimeout(r, 0)); }
+    }
+    // export: move the virtual clock forward by ms, drawing every frame on the way
+    async function advance(ms) {
+      const end = S.vt + ms;
+      while ((S.fi + 1) * 1000 / FPS <= end) {
+        S.fi++; S.vt = S.fi * 1000 / FPS;
+        await encodeFrame();
+      }
+      S.vt = end;
     }
     // Reels move fast: her lines are trimmed of the silence around them and played a little quicker, with the
     // same pitch (WSOLA time-stretch: overlapping windows, each one lined up with the last so it stays smooth)
@@ -4294,7 +4380,17 @@ Keep one scene for 2-3 lines with "same" and add a tag or note on the later line
         return { buf: stretch(trim(await S.ac.decodeAudioData(await r.arrayBuffer())), PACE) };
       } catch (e) { return null; } finally { clearTimeout(tid); }
     }
-    function playClip(c) {
+    async function playClip(c) {
+      if (S.off) {
+        if (!c || !S.playing) return;
+        const src = S.off.createBufferSource(); src.buffer = c.buf; src.connect(S.voiceBus);
+        S.clipAt = tnow() + .03; S.marks = c.marks; S.audio = src;
+        S.musBus.gain.setTargetAtTime(.2, tnow(), .15);
+        src.start(S.clipAt);
+        await advance(c.buf.duration * 1000 + 30);
+        S.audio = null; S.musBus.gain.setTargetAtTime(.3, tnow(), .3);
+        return;
+      }
       return new Promise((done) => {
         if (!c || !S.playing) return done();
         const src = S.ac.createBufferSource(); src.buffer = c.buf; src.connect(S.voiceBus);
@@ -4306,11 +4402,11 @@ Keep one scene for 2-3 lines with "same" and add a tag or note on the later line
       });
     }
     const sayClean = (s) => String(s).replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}\u{200D}]/gu, "").replace(/\s+/g, " ").trim().slice(0, 300);
-    const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+    const wait = (ms) => (S.off ? advance(ms) : new Promise((r) => setTimeout(r, ms)));
     function stopRec(silent) {
       S.playing = false;
-      try { if (S.audio) S.audio.stop(); } catch (e) {}
-      try { S.ac && music(false); } catch (e) {}
+      try { if (S.audio && !S.off) S.audio.stop(); } catch (e) {}
+      try { S.ac && !S.off && music(false); } catch (e) {}
       try { if (S.rec && S.rec.state !== "inactive") S.rec.stop(); } catch (e) {}
       S.rec = null;
       if (silent && S.el) { const b = S.el.querySelector("#stu-rec"); if (b) b.textContent = "⏺️ " + t("studioRec"); }

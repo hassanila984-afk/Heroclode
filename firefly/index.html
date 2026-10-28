@@ -3699,6 +3699,8 @@ Keep one scene for 2-3 lines with "same" and add a tag or note on the later line
       if (v.type === "bars") return (v.items || []).map((o) => String(o.label || ""));
       if (v.type === "vs") return [String(v.left || ""), String(v.right || "")];
       if (v.type === "windows") return [String((v.left || {}).text || ""), String((v.right || {}).text || "")];
+      if (v.type === "big") return [String(v.text || "")];
+      if (v.type === "code") return (v.lines || []).map(String);
       return [];
     }
     // once her voice for a line is ready: each box of the scene comes in on the word where she says it

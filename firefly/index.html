@@ -4236,13 +4236,48 @@ Keep one scene for 2-3 lines with "same" and add a tag or note on the later line
         if (c) { c.marks = align(c.buf, S.chunks2); cueLine(c.marks, now() + 30); }
         else if (S.cue === "new") sceneSounds(S.vis);
         await playClip(c);
-        await wait(160);
+        await wait(70);
       }
       setMood("wink"); setSay("follow for more ♡"); fx.ding(200); emote("hearts", now() + 150);
       await wait(1300);
       music(false);
       await wait(700);
       stopRec();
+    }
+    // Reels move fast: her lines are trimmed of the silence around them and played a little quicker, with the
+    // same pitch (WSOLA time-stretch: overlapping windows, each one lined up with the last so it stays smooth)
+    const PACE = 1.12;
+    function trim(buf) {
+      const d = buf.getChannelData(0), hop = Math.round(buf.sampleRate * .01), n = Math.floor(d.length / hop);
+      const env = new Float32Array(n); let mx = 0;
+      for (let i = 0; i < n; i++) { let q = 0; for (let j = i * hop; j < i * hop + hop; j++) q += d[j] * d[j]; env[i] = Math.sqrt(q / hop); mx = Math.max(mx, env[i]); }
+      const thr = Math.max(.004, mx * .04);
+      let a = 0, b = n - 1; while (a < n && env[a] < thr) a++; while (b > a && env[b] < thr) b--;
+      const pad = Math.round(buf.sampleRate * .05), s0 = Math.max(0, a * hop - pad), s1 = Math.min(buf.length, (b + 1) * hop + pad * 2);
+      if (s1 - s0 < buf.sampleRate * .2 || (s0 === 0 && s1 === buf.length)) return buf;
+      const out = S.ac.createBuffer(buf.numberOfChannels, s1 - s0, buf.sampleRate);
+      for (let ch = 0; ch < buf.numberOfChannels; ch++) out.getChannelData(ch).set(buf.getChannelData(ch).subarray(s0, s1));
+      return out;
+    }
+    function stretch(buf, rate) {
+      if (!rate || Math.abs(rate - 1) < .01) return buf;
+      const sr = buf.sampleRate, win = Math.round(sr * .04) & ~1, hop = win / 2, tol = Math.round(sr * .012), inLen = buf.length;
+      const outLen = Math.floor(inLen / rate), out = S.ac.createBuffer(buf.numberOfChannels, outLen + win, sr), ref = buf.getChannelData(0);
+      const w = new Float32Array(win); for (let i = 0; i < win; i++) w[i] = .5 - .5 * Math.cos(2 * Math.PI * i / win);
+      let prev = 0;
+      for (let o = 0, k = 0; o + win < outLen; o += hop, k++) {
+        const nominal = Math.round(o * rate), nat = prev + hop;
+        let best = Math.min(Math.max(0, nominal), inLen - win - 1), bestC = -Infinity;
+        if (k && nat + hop < inLen) for (let dd = -tol; dd <= tol; dd += 2) {
+          const pp = nominal + dd; if (pp < 0 || pp + win >= inLen) continue;
+          let c = 0; for (let i = 0; i < hop; i += 3) c += ref[pp + i] * ref[nat + i];
+          if (c > bestC) { bestC = c; best = pp; }
+        }
+        if (best < 0) break;
+        for (let ch = 0; ch < buf.numberOfChannels; ch++) { const src = buf.getChannelData(ch), dst = out.getChannelData(ch); for (let i = 0; i < win; i++) dst[o + i] += src[best + i] * w[i]; }
+        prev = best;
+      }
+      return out;
     }
     // her voice for one line, fetched once and decoded, so we can both play it and read its timing
     // her voice's tone follows her face unless the line asks for a tone itself (same voice, more life)
@@ -4253,7 +4288,7 @@ Keep one scene for 2-3 lines with "same" and add a tag or note on the later line
       try {
         const r = await fetch("/api/voice?v=" + encodeURIComponent(voicePick().name) + "&m=" + (TONES.includes(tone) ? tone : "happy") + "&t=" + encodeURIComponent(sayClean(text)), { credentials: "same-origin", signal: ctl.signal });
         if (!r.ok) return null;
-        return { buf: await S.ac.decodeAudioData(await r.arrayBuffer()) };
+        return { buf: stretch(trim(await S.ac.decodeAudioData(await r.arrayBuffer())), PACE) };
       } catch (e) { return null; } finally { clearTimeout(tid); }
     }
     function playClip(c) {

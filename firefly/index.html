@@ -2,7 +2,7 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700&family=Amiri:wght@400;700&family=Anton&family=Archivo+Black&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700&family=Fredoka:wght@500;600;700&family=Amiri:wght@400;700&family=Anton&family=Archivo+Black&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap">
 <style>
   /* Layout: a living night meadow fills the screen; one quiet glass panel floats over its lower part and changes with each step of the evening. The land always sits just above the panel. */
   :root {
@@ -722,7 +722,6 @@
   @media (max-width: 680px) { .stu-wrap { grid-template-columns: 1fr; } }
   .stu-stagewrap { position: relative; }
   .stu-stage { width: 100%; aspect-ratio: 9/16; border-radius: 16px; background: #000; box-shadow: 0 12px 30px rgba(0,0,0,.5); display: block; }
-  .stu-badge { position: absolute; bottom: 8px; left: 8px; background: rgba(0,0,0,.55); color: #fff; font: 700 11px var(--body); padding: 4px 8px; border-radius: 999px; letter-spacing: .04em; }
   .stu-side { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
   .stu-row { display: flex; gap: 8px; }
   .stu-row input { flex: 1; min-width: 0; border-radius: 12px; border: 1px solid var(--glass-line); background: var(--surface-2); color: #fff; padding: 10px 12px; }
@@ -882,7 +881,7 @@
       reminderTitle: "Nightly reminder", reminderNote: "A set time makes a habit much easier to keep. Choose yours and add it to your calendar.",
       reminderTime: "Reminder time", addCal: "Add to Google Calendar",
       calTitle: "Firefly: light tonight's firefly", calDetails: "Seven quiet minutes for yourself. Open Firefly in Claude.",
-      proTitle: "Her own messages", proNote: "Good morning, a break after long hours on the PC, and a call when a reminder is important.", proOn: "On ✓", proOff: "Off", secLuma: "Luma", secApp: "App", myVoiceTitle: "Your voice", studioTitle: "Reels Studio", studioTopic: "Topic (or let her pick)…", studioIdea: "Her idea", studioWrite: "Write the Reel", studioWriting: "writing your Reel…", studioHook: "Hook", studioScript: "Script", studioCap: "Caption", studioTags: "Hashtags", studioRec: "Record", studioStop: "Stop", studioSave: "Save video", studioNote: "She records in her own voice over her animation, 9:16, ready for Reels. It's AI content — keep the AI label on.", studioFail: "My brain glitched, try again~", copy: "Copy", linkTitle: "Luma Link", linkThis: "This device's name", linkNote: "So Luma can send things here from your other devices. Keep the app open or in the background.", linkNone: "No other devices online. Open Firefly on them too.", remembersTitle: "What Luma knows about you", forget: "Forget this", memAdd: "Tell her something to remember…",
+      proTitle: "Her own messages", proNote: "Good morning, a break after long hours on the PC, and a call when a reminder is important.", proOn: "On ✓", proOff: "Off", secLuma: "Luma", secApp: "App", myVoiceTitle: "Your voice", studioTitle: "Reels Studio", studioTopic: "Topic (or let her pick)…", studioIdea: "Her idea", studioWrite: "Write the Reel", studioWriting: "writing your Reel…", studioHook: "Hook", studioScript: "Script", studioCap: "Caption", studioTags: "Hashtags", studioRec: "Record", studioStop: "Stop", studioSave: "Save video", studioNote: "Motion-graphics Reel: her expressions, animated diagrams and subtitles, in her own voice, 9:16. It's AI content — keep the AI label on.", studioFail: "My brain glitched, try again~", copy: "Copy", linkTitle: "Luma Link", linkThis: "This device's name", linkNote: "So Luma can send things here from your other devices. Keep the app open or in the background.", linkNone: "No other devices online. Open Firefly on them too.", remembersTitle: "What Luma knows about you", forget: "Forget this", memAdd: "Tell her something to remember…",
       styleTitle: "How Luma talks with you", styleNote: "Learned from how you write.", styleReset: "Start fresh",
       styleNone: "Nothing yet. Luma picks up your way of talking as you chat.",
       remembersNote: "Tap a line to change it, ✕ to make her forget it.",
@@ -3457,16 +3456,24 @@ Start with one face tag like [thinking] [happy], then your help.`, Object.assign
   window.__screenHelp = screenHelp;
 
   // ---------- Studio: Luma makes Reels ----------
-  // Luma as a creator: she picks a Reel idea, writes the hook, the spoken script, the on-screen captions and
-  // the Instagram caption + hashtags, then records a 9:16 video of herself saying it in her own voice over
-  // her animated loop, with the captions burned in — all client-side and free (her voice + her clips, no
-  // paid video generation). The finished .webm downloads, ready to post. It's AI content and says so.
+  // Luma as a creator of short tech explainers: she writes the Reel (spoken lines, a title and a little
+  // whiteboard-style scene for each line, her expression for each line, the IG caption and hashtags), then
+  // records a 9:16 motion-graphics video in a soft, light "explainer" look: a pastel backdrop, a rounded title,
+  // white UI cards / browser windows / popups with a cursor, sticky notes and blue annotations, her cut-out
+  // portrait changing expression line by line, and her words popping up as little chips beside her, in her
+  // own voice. All client-side and free apart from her voice; the .webm downloads ready to post. It's AI
+  // content and says so on every frame.
   const STUDIO = (() => {
-    const S = { el: null, pack: null, topic: "", rec: null, ac: null, raf: 0, playing: false, vids: {}, bg: null, chunks: [] };
-    // Her creator lane: a cute anime girl who explains tech & computer-science in the simplest, coziest way
-    // (how a CPU works, RAM vs storage, what an API is, why your PC lags, Git, networking…), warm and kawaii,
-    // with little kaomoji, a strong hook, one clear simple explanation, and a question CTA at the end.
-    const NICHE = "a cute anime girl who explains tech and computer-science concepts in the simplest, coziest, most beginner-friendly way (e.g. CPU cores vs threads, RAM vs storage, what an API is, why your PC lags, how the internet works, Git, caching), warm and a little kawaii with small kaomoji, hook + one simple explanation + a question CTA";
+    const W0 = 720, H0 = 1280;
+    const MOODS = ["surprised", "wink", "think", "grin", "point", "smug", "explain", "glasses"];
+    const INK = "#2b2d42", MUTED = "#7d8796", BLUE = "#2f6bff", BG1 = "#e3ecea", BG2 = "#cfdedb";
+    const S = { el: null, pack: null, rec: null, ac: null, raf: 0, playing: false, chunks: [], faces: {}, line: -1, mood: "explain", prevMood: "", moodAt: 0, vis: null, visAt: 0, addAt: 0, say: "", sayAt: 0, chunks2: [], chIdx: -1, chAt: 0, audio: null, title: "", sub: "", titleAt: 0, sm: 0, nameUntil: 0, bgc: null };
+    const NICHE = "a cute anime girl who explains tech and computer-science concepts in the simplest, coziest, most beginner-friendly way (e.g. what browser cookies are, CPU cores vs threads, RAM vs storage, what an API is, why your PC lags, how the internet works, Git, caching), warm and a little kawaii, hook + one simple explanation + a question CTA";
+    const BUSY = { windows: 1, flow: 1, bars: 1, code: 1 };
+    const now = () => performance.now();
+    const cl = (t) => Math.max(0, Math.min(1, t));
+    const ease = (t) => 1 - Math.pow(1 - cl(t), 3);
+    const back = (t) => { t = cl(t); const c = 1.7; return 1 + (c + 1) * Math.pow(t - 1, 3) + c * Math.pow(t - 1, 2); };
     function close() {
       stopRec(true); cancelAnimationFrame(S.raf);
       try { S.ac && S.ac.close(); } catch (e) {} S.ac = null;
@@ -3477,7 +3484,7 @@ Start with one face tag like [thinking] [happy], then your help.`, Object.assign
       const el = document.createElement("div"); el.className = "stu"; el.id = "stu";
       el.innerHTML = `<div class="stu-top"><b>🎬 ${t("studioTitle")}</b><button type="button" class="gm-x" aria-label="Close">✕</button></div>
         <div class="stu-wrap">
-          <div class="stu-stagewrap"><canvas class="stu-stage" width="540" height="960"></canvas><div class="stu-badge">AI • Luma</div></div>
+          <div class="stu-stagewrap"><canvas class="stu-stage" width="${W0}" height="${H0}"></canvas></div>
           <div class="stu-side">
             <div class="stu-row"><input type="text" id="stu-topic" dir="auto" maxlength="120" placeholder="${t("studioTopic")}" value="${esc(topic || "")}"><button type="button" class="gm-btn" id="stu-idea">💡 ${t("studioIdea")}</button></div>
             <button type="button" class="gm-btn wide" id="stu-write">✍️ ${t("studioWrite")}</button>
@@ -3490,44 +3497,54 @@ Start with one face tag like [thinking] [happy], then your help.`, Object.assign
           </div>
         </div>`;
       document.body.appendChild(el);
-      S.el = el; S.topic = topic || "";
-      S.cv = el.querySelector(".stu-stage"); S.cx = S.cv.getContext("2d");
+      S.el = el; S.cv = el.querySelector(".stu-stage"); S.cx = S.cv.getContext("2d");
       el.querySelector(".gm-x").onclick = close;
       el.querySelector("#stu-idea").onclick = idea;
       el.querySelector("#stu-write").onclick = () => write(el.querySelector("#stu-topic").value.trim());
       el.querySelector("#stu-rec").onclick = () => (S.playing ? stopRec() : record());
-      // her room as the backdrop, and her idle + talking loops for the body
-      S.bg = Object.assign(new Image(), { src: (WALLS[VC.room] && WALLS[VC.room].img) || "luma/wall_cozy.webp" });
-      // clean full images of her (no cropped heads, no keying halo) — shown as cards with motion captions
-      S.imgs = ["face_main", "face_3", "life_portrait", "face_2", "face_5", "outfit_front", "face_4"].map((n) => Object.assign(new Image(), { src: "luma/" + n + ".webp" }));
-      S.shot = 0; S.cap = ""; S.title = ""; S.prog = 0; S.capAt = performance.now(); S.imgAt = performance.now();
+      for (const m of MOODS) if (!S.faces[m]) S.faces[m] = Object.assign(new Image(), { src: "luma/reel/" + m + ".webp" });
+      try { document.fonts && ["500", "600", "700"].forEach((w) => document.fonts.load(w + " 30px Fredoka")); } catch (e) {}
+      S.line = -1; S.mood = "grin"; S.prevMood = ""; S.moodAt = now(); S.vis = null; S.say = "";
+      S.title = "Luma explains tech"; S.sub = "tiny lessons, cozy words"; S.titleAt = now(); S.nameUntil = now() + 4000;
       draw();
       return "ok";
     }
-    function mkVid(src) { const v = document.createElement("video"); v.src = src; v.loop = true; v.muted = true; v.playsInline = true; v.play().catch(() => {}); return v; }
-    function stageMsg(m) { S.title = m; }
     async function idea() {
       const s = session && session.free ? session : { free: true, weight: 0, tags: [], turns: [], worries: [], intention: "" };
-      stageMsg("thinking of an idea…");
       try {
-        const { text } = await ask(rules(s) + `\n\nYou're a content creator making Instagram Reels. Your niche: ${NICHE}. Suggest ONE fresh, specific tech/CS topic to explain in a short Reel, phrased as a catchy hook under 12 words (like "8 cores and it still freezes??" or "your RAM is basically a desk"). Reply with ONLY the idea, no quotes. Language: English (en-US) only.`, { cache: false });
-        const idea = splitReplies(readMood(text).body || text).body.split("\n")[0].replace(/^["']|["']$/g, "").trim();
-        if (S.el) S.el.querySelector("#stu-topic").value = idea;
-        stageMsg("");
-      } catch (e) { stageMsg("hmm, try again"); }
+        const { text } = await ask(rules(s) + `\n\nYou're a content creator making Instagram Reels. Your niche: ${NICHE}. Suggest ONE fresh, specific tech/CS topic to explain in a short Reel, phrased as a catchy hook under 12 words (like "accept all or reject all??" or "your RAM is basically a desk"). Reply with ONLY the idea, no quotes. Language: English (en-US) only.`, { cache: false });
+        const v = splitReplies(readMood(text).body || text).body.split("\n")[0].replace(/^["']|["']$/g, "").trim();
+        if (S.el) S.el.querySelector("#stu-topic").value = v;
+      } catch (e) {}
     }
     async function write(topic) {
       const s = session && session.free ? session : { free: true, weight: 0, tags: [], turns: [], worries: [], intention: "" };
       const pk = S.el.querySelector("#stu-pack"); pk.innerHTML = `<p class="tiny">✍️ ${t("studioWriting")}</p>`;
       S.el.querySelector("#stu-actions").hidden = true;
       try {
-        const { text } = await ask(rules(s) + `\n\nYou're a cute anime girl who teaches tech & computer-science on Instagram Reels, in your own voice (you ARE an AI; cozy, warm, a little kawaii, tiny kaomoji ok). Niche: ${NICHE}. ${topic ? "Topic/hook: " + topic + "." : "Pick one beginner-friendly tech/CS topic."}
-Explain it the SIMPLEST way, with a relatable everyday analogy, correct and not hand-wavy, then end with a question that makes people comment.
+        const { text } = await ask(rules(s) + `\n\nYou're a cute anime girl who teaches tech & computer-science on Instagram Reels, in your own voice (you ARE an AI; cozy, warm, a little kawaii). Niche: ${NICHE}. ${topic ? "Topic/hook: " + topic + "." : "Pick one beginner-friendly tech/CS topic."}
+The video looks like a soft whiteboard explainer: a short title at the top, simple white UI cards / browser windows / popups that build up line by line like a teacher drawing, and your words shown as little chips beside you.
+Explain it the SIMPLEST way, with a relatable everyday analogy, correct and not hand-wavy, then end with a question that makes people comment. Start straight into it (no "hi guys"): the first line IS the hook.
 Write it as JSON only:
-{"hook":"a scroll-stopping first line, a question or surprise (<9 words)","lines":[{"say":"what you say out loud, one short spoken sentence in simple words","cap":"on-screen keyword caption (<5 words)"}, ... 4 to 6 lines, 15-28 seconds spoken, the first delivering the hook, the middle the simple explanation with an analogy, the last a question CTA],"igCaption":"a warm IG caption with 1-2 small kaomoji","hashtags":["#tag", ... 6 to 10 relevant tech hashtags like #computerscience #techtips #coding #cpu #programming]}
-Be accurate and genuinely simple, never generic filler. Language: ALL of it in natural English (en-US), whatever language the app is in.`, { cache: false, hard: true });
+{"hook":"the scroll-stopping first line, a question or surprise (<9 words)",
+"lines":[{"say":"what you say out loud, one short spoken sentence in simple words","title":"the big title at the top, 1-3 words like \\"Click.\\" or \\"cookies\\" or \\"websites forget you\\"; give it only when the scene changes","sub":"optional tiny grey line under the title (<7 words)","mood":"one of surprised|wink|think|grin|point|smug|explain|glasses","visual":SCENE}, ... 6 to 8 lines, 20-32 seconds spoken; first line is the hook (mood surprised or think), last line is the question CTA (mood wink or point)],
+"igCaption":"a warm IG caption with 1-2 small kaomoji","hashtags":["#tag", ... 6 to 10 relevant tech hashtags]}
+SCENE is one of (labels short, no emoji):
+{"type":"popup","title":"We use cookies","yes":"ACCEPT ALL","no":"REJECT ALL","pick":"yes"}  (a UI dialog, a cursor clicks the picked button)
+{"type":"windows","left":{"bar":"your browser","text":"you"},"right":{"bar":"shop.example","text":"the website"},"send":"cookie"}  (two browser windows; "send" is an optional little chip travelling left->right)
+{"type":"cards","items":["Core 1","Core 2","Core 3","Core 4"],"hi":0}  (up to 6, hi = index to highlight or -1)
+{"type":"bars","items":[{"label":"Core 1","value":100},{"label":"Core 2","value":5}]}  (up to 5, value 0-100)
+{"type":"vs","left":"Cores","right":"Threads"}
+{"type":"flow","steps":["Click","CPU","RAM","Screen"]}  (2 to 4 steps)
+{"type":"code","lines":["git add .","git commit -m \\"fix\\""]}  (a tiny terminal, up to 4 short lines)
+{"type":"big","text":"100%"}  (one big number or word)
+{"type":"list","items":["short point","short point"]}  (up to 3)
+{"type":"same"}  (keep the previous scene, for continuity)
+Any scene (also "same") may add "tag":"a sticky-note label like it's you!" and/or "note":"a short blue annotation like sent back every visit".
+Keep one scene for 2-3 lines with "same" and add a tag or note on the later lines, building it up like a teacher. Vary scenes across the Reel. Be accurate and genuinely simple, never generic filler. Language: ALL of it in natural English (en-US), whatever language the app is in.`, { cache: false, hard: true });
         const pack = JSON.parse(text.slice(text.indexOf("{"), text.lastIndexOf("}") + 1));
         if (!pack || !Array.isArray(pack.lines) || !pack.lines.length) throw 0;
+        pack.lines.forEach((l) => { if (!MOODS.includes(l.mood)) l.mood = "explain"; });
         S.pack = pack;
         renderPack();
       } catch (e) { pk.innerHTML = `<p class="tiny">😣 ${t("studioFail")}</p>`; }
@@ -3536,117 +3553,413 @@ Be accurate and genuinely simple, never generic filler. Language: ALL of it in n
       const p = S.pack, tags = (p.hashtags || []).join(" ");
       S.el.querySelector("#stu-pack").innerHTML = `
         <div class="stu-card"><h5>${t("studioHook")}</h5><p dir="auto">${esc(p.hook || "")}</p></div>
-        <div class="stu-card"><h5>${t("studioScript")}</h5>${p.lines.map((l) => `<p dir="auto">• ${esc(l.say)} <span class="stu-cap">${esc(l.cap || "")}</span></p>`).join("")}</div>
-        <div class="stu-card"><div class="row split"><h5>${t("studioCap")}</h5><button type="button" class="stu-copy" data-copy="cap">${t("copy")}</button></div><p dir="auto" id="stu-igcap">${esc(p.igCaption || "")}</p></div>
-        <div class="stu-card"><div class="row split"><h5>${t("studioTags")}</h5><button type="button" class="stu-copy" data-copy="tags">${t("copy")}</button></div><p dir="ltr" id="stu-tags">${esc(tags)}</p></div>`;
+        <div class="stu-card"><h5>${t("studioScript")}</h5>${p.lines.map((l) => `<p dir="auto">• ${esc(l.say)} <span class="stu-cap">${esc(l.title || "")}</span></p>`).join("")}</div>
+        <div class="stu-card"><div class="row split"><h5>${t("studioCap")}</h5><button type="button" class="stu-copy" data-copy="cap">${t("copy")}</button></div><p dir="auto">${esc(p.igCaption || "")}</p></div>
+        <div class="stu-card"><div class="row split"><h5>${t("studioTags")}</h5><button type="button" class="stu-copy" data-copy="tags">${t("copy")}</button></div><p dir="ltr">${esc(tags)}</p></div>`;
       S.el.querySelector("#stu-actions").hidden = false;
-      S.shot = 0; S.imgAt = performance.now(); S.title = ""; S.cap = "";
       S.el.querySelectorAll("[data-copy]").forEach((b) => b.onclick = () => {
         const v = b.dataset.copy === "tags" ? tags : (p.igCaption || "");
         navigator.clipboard.writeText(v).then(() => { b.textContent = "✓"; setTimeout(() => (b.textContent = t("copy")), 1200); }).catch(() => {});
       });
+      S.vis = null; S.title = ""; S.sub = "";
+      setLine(0, true);   // the preview shows the first line's look
     }
-    // draw one frame: room (cover), her alpha loop (contain, bottom), the caption burned in big
-    function rrect(x, a, b, w, h, r) { x.beginPath(); if (x.roundRect) x.roundRect(a, b, w, h, r); else { x.moveTo(a + r, b); x.arcTo(a + w, b, a + w, b + h, r); x.arcTo(a + w, b + h, a, b + h, r); x.arcTo(a, b + h, a, b, r); x.arcTo(a, b, a + w, b, r); x.closePath(); } }
+    function setMood(m) { if (m && m !== S.mood) { S.prevMood = S.mood; S.mood = m; S.moodAt = now(); } }
+    function setSay(s) {
+      S.say = s || ""; S.sayAt = now(); S.chIdx = -1;
+      // her words come up 1-3 at a time, broken at punctuation, like spoken chips
+      const out = []; let c = [];
+      for (const w of S.say.split(/\s+/).filter(Boolean)) {
+        c.push(w);
+        if (c.length >= 3 || c.join(" ").length >= 13 || /[,.!?;:]$/.test(w)) { out.push(c); c = []; }
+      }
+      if (c.length) out.push(c);
+      S.chunks2 = out;
+    }
+    function setLine(i, preview) {
+      const l = S.pack && S.pack.lines[i]; if (!l) return;
+      S.line = i;
+      let v = l.visual && typeof l.visual === "object" ? l.visual : null;
+      if (!v || v.type === "same" || !v.type) {
+        // keep the scene, only add the new sticky note / annotation
+        if (S.vis && v && (v.tag || v.note)) { S.vis = Object.assign({}, S.vis, v.tag ? { tag: v.tag } : {}, v.note ? { note: v.note } : {}, { type: S.vis.type }); S.addAt = now(); }
+        else if (!S.vis && v && v.type !== "same") { S.vis = v; S.visAt = S.addAt = now(); }
+      } else if (S.vis && S.vis.type === v.type && v.type !== "popup") { S.vis = Object.assign({}, S.vis, v); S.addAt = now(); }   // same scene again: build on it, don't redraw it
+      else { S.vis = v; S.visAt = now(); S.addAt = now() + 900; }
+      if (l.title && l.title !== S.title) { S.title = l.title; S.sub = l.sub || ""; S.titleAt = now(); }
+      else if (l.sub && l.sub !== S.sub) { S.sub = l.sub; S.titleAt = now() - 300; }
+      setMood(l.mood);
+      setSay(preview ? "" : l.say);
+    }
+
+    // ----- drawing -----
+    function rr(x, a, b, w, h, r) { x.beginPath(); if (x.roundRect) x.roundRect(a, b, w, h, r); else { x.moveTo(a + r, b); x.arcTo(a + w, b, a + w, b + h, r); x.arcTo(a + w, b + h, a, b + h, r); x.arcTo(a, b + h, a, b, r); x.arcTo(a, b, a + w, b, r); x.closePath(); } }
+    const F = (wt, px) => wt + " " + Math.round(px) + "px Fredoka, Manrope, system-ui, sans-serif";
+    function fitText(x, s, maxW, wt, px) { x.font = F(wt, px); while (px > 10 && x.measureText(s).width > maxW) { px -= 2; x.font = F(wt, px); } return px; }
+    function text(x, s, cx, cy, maxW, wt, px, color, align) { x.save(); x.fillStyle = color || INK; x.textAlign = align || "center"; x.textBaseline = "middle"; fitText(x, s, maxW, wt, px); x.fillText(s, cx, cy); x.restore(); }
+    // pop an element in around its centre
+    function popIn(x, cx, cy, e) { x.globalAlpha *= Math.min(1, Math.max(0, e)); x.translate(cx, cy); x.scale(e, e); x.translate(-cx, -cy); }
+    function paper(x, a, b, w, h, r, stroke, fill) {
+      x.save(); x.shadowColor = "rgba(40,70,80,.16)"; x.shadowBlur = 26; x.shadowOffsetY = 8;
+      rr(x, a, b, w, h, r); x.fillStyle = fill || "#fff"; x.fill(); x.restore();
+      if (stroke) { x.save(); rr(x, a, b, w, h, r); x.lineWidth = 3.5; x.strokeStyle = stroke; x.stroke(); x.restore(); }
+    }
+    function backdrop(x, W, H, tm) {
+      if (!S.bgc) {
+        // the still part (soft pastel gradient, a faint dot grid) is drawn once
+        const c = document.createElement("canvas"); c.width = W; c.height = H; const y = c.getContext("2d");
+        const g = y.createLinearGradient(0, 0, 0, H); g.addColorStop(0, BG1); g.addColorStop(1, BG2);
+        y.fillStyle = g; y.fillRect(0, 0, W, H);
+        y.fillStyle = "rgba(60,90,95,.07)";
+        for (let yy = 18; yy < H; yy += 36) for (let xx = 18; xx < W; xx += 36) { y.beginPath(); y.arc(xx, yy, 1.6, 0, 6.3); y.fill(); }
+        const v = y.createRadialGradient(W / 2, H * .45, H * .3, W / 2, H * .45, H * .8);
+        v.addColorStop(0, "rgba(255,255,255,0)"); v.addColorStop(1, "rgba(120,150,150,.18)");
+        y.fillStyle = v; y.fillRect(0, 0, W, H);
+        S.bgc = c;
+      }
+      x.drawImage(S.bgc, 0, 0);
+      // two slow soft light blobs so the frame never feels frozen
+      for (const [px, py, r, sp] of [[.25, .3, .55, 7000], [.8, .7, .5, 9000]]) {
+        const cx = W * px + Math.sin(tm / sp) * 40, cy = H * py + Math.cos(tm / sp) * 50;
+        const rg = x.createRadialGradient(cx, cy, 0, cx, cy, W * r);
+        rg.addColorStop(0, "rgba(255,255,255,.35)"); rg.addColorStop(1, "rgba(255,255,255,0)");
+        x.fillStyle = rg; x.fillRect(0, 0, W, H);
+      }
+    }
+    // her portrait: big at the bottom-left, or smaller in the corner while a busy scene needs the room
+    function herBox(W, H) {
+      const k = ease(S.sm), h = H * (.6 - .25 * k);
+      return { h, x: -W * (.04 - .02 * k), y: H - h * .97 };
+    }
+    function her(x, W, H, tm) {
+      const b = herBox(W, H), k = ease((tm - S.moodAt) / 260);
+      const draw1 = (m, a, sc) => {
+        const im = S.faces[m]; if (!im || !im.complete || !im.naturalWidth || a <= 0) return;
+        const h = b.h * sc, w = h * im.naturalWidth / im.naturalHeight, bob = Math.sin(tm / 1100) * 4;
+        x.save(); x.globalAlpha = a; x.shadowColor = "rgba(40,70,80,.18)"; x.shadowBlur = 24;
+        x.drawImage(im, b.x - (w - b.h * im.naturalWidth / im.naturalHeight) / 2, b.y + (b.h - h) + bob, w, h); x.restore();
+      };
+      if (S.prevMood && k < 1) draw1(S.prevMood, 1 - k, 1);
+      draw1(S.mood, k, .97 + .03 * back((tm - S.moodAt) / 380));
+    }
+    function cursor(x, cx, cy, press) {
+      x.save(); x.translate(cx, cy); x.scale(press ? 1.6 : 1.7, press ? 1.6 : 1.7);
+      x.beginPath(); x.moveTo(0, 0); x.lineTo(0, 17); x.lineTo(4.5, 13); x.lineTo(7.5, 20); x.lineTo(10.5, 18.7); x.lineTo(7.6, 12); x.lineTo(13, 12); x.closePath();
+      x.fillStyle = "#fff"; x.fill(); x.lineWidth = 1.4; x.lineJoin = "round"; x.strokeStyle = INK; x.stroke(); x.restore();
+    }
+    function browser(x, a, b, w, h, bar, label, hi) {
+      paper(x, a, b, w, h, 16, hi ? BLUE : null);
+      x.save();
+      for (let i = 0; i < 3; i++) { x.beginPath(); x.arc(a + 18 + i * 13, b + 18, 4.2, 0, 6.3); x.fillStyle = "#d5dae0"; x.fill(); }
+      rr(x, a + 62, b + 9, w - 76, 19, 9.5); x.fillStyle = "#eef1f4"; x.fill();
+      x.fillStyle = "#e9edf0"; x.fillRect(a, b + 36, w, 2);
+      x.restore();
+      text(x, String(bar || ""), a + 62 + (w - 76) / 2, b + 19, w - 90, "500", 14, MUTED);
+      text(x, String(label || ""), a + w / 2, b + 38 + (h - 38) / 2, w - 30, "600", 34, hi ? BLUE : INK);
+    }
+    function sticky(x, s, cx, cy, e) {
+      if (e <= 0 || !s) return;
+      x.save(); popIn(x, cx, cy, e); x.translate(cx, cy); x.rotate(-.04);
+      x.font = F("500", 22); const w = x.measureText(s).width + 34, h = 44;
+      x.shadowColor = "rgba(40,70,80,.16)"; x.shadowBlur = 12; x.shadowOffsetY = 4;
+      x.fillStyle = "#fff"; x.fillRect(-w / 2, -h / 2, w, h); x.shadowColor = "transparent";
+      x.lineWidth = 2; x.strokeStyle = INK; x.strokeRect(-w / 2, -h / 2, w, h);
+      x.fillStyle = INK; x.fillRect(-w / 2, -h / 2, w, 5);
+      x.fillStyle = INK; x.textAlign = "center"; x.textBaseline = "middle"; x.fillText(s, 0, 2); x.restore();
+    }
+    function annot(x, s, cx, cy, e, maxW) {
+      if (e <= 0 || !s) return;
+      x.save(); x.globalAlpha = Math.min(1, e); const px = fitText(x, "↔ " + s, maxW, "600", 26);
+      x.font = F("600", px); x.fillStyle = BLUE; x.textAlign = "center"; x.textBaseline = "middle";
+      // the annotation writes itself in, letter by letter
+      const full = "↔ " + s, n = Math.ceil(full.length * Math.min(1, e)), wFull = x.measureText(full).width;
+      x.textAlign = "left"; x.fillText(full.slice(0, n), cx - wFull / 2, cy); x.restore();
+    }
+    // the scene for the current line, inside the area between the title and her; returns its bottom edge
+    function scene(x, W, H, v, lt, top, area) {
+      const L = W * .07, R = W * .93, mw = R - L;
+      let bottom = top + area * .5;
+      x.save();
+      if (v.type === "popup") {
+        const w = W * .68, h = 196, a = (W - w) / 2, b = top + Math.max(0, (area - h) / 2 - 10), e = back(lt / 420);
+        bottom = b + h;
+        x.save(); popIn(x, a + w / 2, b + h / 2, e);
+        paper(x, a, b, w, h, 18);
+        text(x, String(v.title || "We use cookies"), a + 28, b + 42, w - 56, "600", 30, INK, "left");
+        x.fillStyle = "#e4e8ec"; rr(x, a + 28, b + 70, w * .72, 10, 5); x.fill(); rr(x, a + 28, b + 90, w * .52, 10, 5); x.fill();
+        const bw = (w - 56 - 16) / 2, by = b + 124, bh = 46, pick = v.pick === "no" ? 1 : 0;
+        const press = lt > 1650 && lt < 1900, done = lt > 1650;
+        [String(v.yes || "ACCEPT ALL"), String(v.no || "REJECT ALL")].forEach((s, i) => {
+          const bx = a + 28 + i * (bw + 16), sc = press && i === pick ? .93 : 1;
+          x.save(); x.translate(bx + bw / 2, by + bh / 2); x.scale(sc, sc); x.translate(-(bx + bw / 2), -(by + bh / 2));
+          rr(x, bx, by, bw, bh, bh / 2);
+          if (i === 0) { x.fillStyle = done && pick === 0 ? "#1f55e0" : BLUE; x.fill(); } else { x.fillStyle = done && pick === 1 ? "#eef1f4" : "#fff"; x.fill(); x.lineWidth = 2.5; x.strokeStyle = INK; x.stroke(); }
+          x.restore();
+          text(x, s.toUpperCase(), bx + bw / 2, by + bh / 2 + 1, bw - 20, "600", 17, i === 0 ? "#fff" : INK);
+        });
+        x.restore();
+        // the cursor glides in and clicks
+        const tx = a + 28 + pick * (bw + 16) + bw * .45, ty = by + bh * .55;
+        const m = ease((lt - 500) / 1100), sx = W * .82, sy = b + h + 160;
+        if (lt > 400) {
+          cursor(x, sx + (tx - sx) * m, sy + (ty - sy) * m - Math.sin(m * Math.PI) * 40, press);
+          if (lt > 1650 && lt < 2300) { const r = ease((lt - 1650) / 650); x.save(); x.globalAlpha = 1 - r; x.strokeStyle = BLUE; x.lineWidth = 3; x.beginPath(); x.arc(tx, ty, 10 + r * 34, 0, 6.3); x.stroke(); x.restore(); }
+        }
+      } else if (v.type === "windows") {
+        const w = mw * .45, h = 170, b = top + 10, lx = L, rx = R - w;
+        const el = back(lt / 420), er = back((lt - 180) / 420);
+        const lf = v.left || {}, rt = v.right || {};
+        x.save(); popIn(x, lx + w / 2, b + h / 2, el); browser(x, lx, b, w, h, lf.bar || "your browser", lf.text || "you"); x.restore();
+        x.save(); popIn(x, rx + w / 2, b + h / 2, er); browser(x, rx, b, w, h, rt.bar || "the website", rt.text || "", lt > 2400 && v.send); x.restore();
+        bottom = b + h;
+        if (v.send && lt > 900) {
+          // a little chip hops from the browser to the website, again and again
+          const p = ((lt - 900) % 1900) / 1500;
+          if (p <= 1) {
+            const e2 = ease(p), cx = lx + w * .8 + (rx + w * .2 - (lx + w * .8)) * e2, cy = b + h * .62 - Math.sin(e2 * Math.PI) * 60;
+            x.save(); x.font = F("600", 20); const cw = x.measureText(String(v.send)).width + 28;
+            x.globalAlpha = Math.min(1, p * 5, (1 - p) * 5 + .2); rr(x, cx - cw / 2, cy - 17, cw, 34, 17); x.fillStyle = "#fff"; x.fill(); x.lineWidth = 2.5; x.strokeStyle = BLUE; x.stroke();
+            x.fillStyle = BLUE; x.textAlign = "center"; x.textBaseline = "middle"; x.fillText(String(v.send), cx, cy + 1); x.restore();
+          }
+        }
+      } else if (v.type === "cards") {
+        const it = (v.items || []).slice(0, 6), n = it.length || 1, cols = n <= 3 ? n : Math.ceil(n / 2), rows = Math.ceil(n / cols);
+        const gw = mw / cols, gh = Math.min(area / rows, 140);
+        it.forEach((s, i) => {
+          const e = back((lt - i * 120) / 380); if (e <= 0) return;
+          const c = i % cols, r = Math.floor(i / cols), bw = gw - 20, bh = gh - 20, cx = L + c * gw + 10, cy = top + r * gh + 10;
+          const hi = i === v.hi && lt > 700 + n * 120;
+          x.save(); popIn(x, cx + bw / 2, cy + bh / 2, e); paper(x, cx, cy, bw, bh, 18, hi ? BLUE : null);
+          text(x, String(s), cx + bw / 2, cy + bh / 2, bw - 22, "600", 32, hi ? BLUE : INK); x.restore();
+          bottom = Math.max(bottom, cy + bh);
+        });
+      } else if (v.type === "bars") {
+        const it = (v.items || []).slice(0, 5), rh = Math.min(70, (area - 30) / it.length), ch = rh * it.length + 30;
+        const e0 = back(lt / 380); x.save(); popIn(x, W / 2, top + ch / 2, e0); paper(x, L, top, mw, ch, 20); x.restore();
+        it.forEach((o, i) => {
+          const y = top + 15 + i * rh, e = ease((lt - 250 - i * 160) / 800), val = Math.max(0, Math.min(100, Number(o.value) || 0)), lw = mw * .3;
+          x.globalAlpha = Math.min(1, ease((lt - 200 - i * 160) / 250));
+          text(x, String(o.label || ""), L + 24, y + rh / 2, lw - 30, "600", 26, INK, "left");
+          const tx = L + lw, tw = mw - lw - 90, th = Math.min(28, rh - 22);
+          x.save(); rr(x, tx, y + (rh - th) / 2, tw, th, th / 2); x.fillStyle = "#edf0f3"; x.fill();
+          const fw = tw * val / 100 * e; if (fw > 4) { rr(x, tx, y + (rh - th) / 2, fw, th, th / 2); x.fillStyle = val > 80 ? "#ff6b8a" : BLUE; x.fill(); }
+          x.restore();
+          text(x, Math.round(val * e) + "%", tx + tw + 50, y + rh / 2, 80, "600", 24, val > 80 ? "#e2456a" : MUTED);
+        });
+        x.globalAlpha = 1; bottom = top + ch;
+      } else if (v.type === "vs") {
+        const cw = mw * .4, ch = Math.min(area * .75, 180), y = top + 10;
+        const el = ease(lt / 450), er = ease((lt - 150) / 450), ev = back((lt - 520) / 400);
+        x.save(); x.globalAlpha = el; paper(x, L - (1 - el) * 120, y, cw, ch, 22); x.restore();
+        text(x, String(v.left || ""), L - (1 - el) * 120 + cw / 2, y + ch / 2, cw - 30, "600", 44, INK);
+        x.save(); x.globalAlpha = er; paper(x, R - cw + (1 - er) * 120, y, cw, ch, 22); x.restore();
+        text(x, String(v.right || ""), R - cw + (1 - er) * 120 + cw / 2, y + ch / 2, cw - 30, "600", 44, INK);
+        if (ev > 0) { x.save(); x.translate(W / 2, y + ch / 2); x.scale(ev, ev); x.beginPath(); x.arc(0, 0, 36, 0, 6.3); x.fillStyle = INK; x.fill(); text(x, "vs", 0, 1, 60, "700", 30, "#fff"); x.restore(); }
+        bottom = y + ch;
+      } else if (v.type === "flow") {
+        const st = (v.steps || []).slice(0, 4), n = st.length || 1, gap = 34, bw = (mw - gap * (n - 1)) / n, bh = Math.min(120, area * .5), y = top + 20;
+        st.forEach((s, i) => {
+          const e = back((lt - i * 420) / 360); if (e <= 0) return;
+          const bx = L + i * (bw + gap), last = i === n - 1 && lt > n * 420 + 300;
+          x.save(); popIn(x, bx + bw / 2, y + bh / 2, e); paper(x, bx, y, bw, bh, 18, last ? BLUE : null);
+          text(x, String(s), bx + bw / 2, y + bh / 2, bw - 18, "600", 28, last ? BLUE : INK); x.restore();
+          if (i < n - 1) {
+            const ea = ease((lt - i * 420 - 260) / 260); if (ea <= 0) return;
+            const ax = bx + bw + 5, ay = y + bh / 2, len = (gap - 10) * ea;
+            x.save(); x.strokeStyle = BLUE; x.lineWidth = 4; x.lineCap = "round"; x.beginPath(); x.moveTo(ax, ay); x.lineTo(ax + len, ay); x.stroke();
+            if (ea > .9) { x.beginPath(); x.moveTo(ax + gap - 10, ay); x.lineTo(ax + gap - 18, ay - 7); x.moveTo(ax + gap - 10, ay); x.lineTo(ax + gap - 18, ay + 7); x.stroke(); }
+            x.restore();
+          }
+        });
+        // a dot runs along the whole path, so the flow reads at a glance
+        if (lt > n * 420 + 200 && n > 1) { const p = ((lt - n * 420) % 1600) / 1600, px = L + bw / 2 + p * (mw - bw); x.save(); x.fillStyle = BLUE; x.globalAlpha = .9; x.beginPath(); x.arc(px, y + bh + 22, 7, 0, 6.3); x.fill(); x.restore(); }
+        bottom = y + bh + 30;
+      } else if (v.type === "code") {
+        const ls = (v.lines || []).slice(0, 4).map(String), w = mw, lh = 44, h = 56 + ls.length * lh + 16, y = top + 10, e = back(lt / 380);
+        x.save(); popIn(x, W / 2, y + h / 2, e); paper(x, L, y, w, h, 18, null, "#22263a");
+        for (let i = 0; i < 3; i++) { x.beginPath(); x.arc(L + 22 + i * 16, y + 24, 5, 0, 6.3); x.fillStyle = ["#ff6b6b", "#ffd166", "#4cd97b"][i]; x.fill(); }
+        x.restore();
+        // typed out character by character
+        let budget = Math.max(0, (lt - 350) / 38);
+        x.save(); x.font = "500 24px ui-monospace, Menlo, Consolas, monospace"; x.textBaseline = "middle";
+        ls.forEach((s, i) => {
+          const n = Math.min(s.length, Math.floor(budget)); budget -= s.length + 6; if (n <= 0 && budget < 0) return;
+          const yy = y + 56 + i * lh + lh / 2;
+          x.fillStyle = "#7f8aa8"; x.fillText("$", L + 22, yy); x.fillStyle = "#e8ecf8"; x.fillText(s.slice(0, n), L + 46, yy);
+          if (n < s.length && Math.floor(lt / 400) % 2) { x.fillStyle = "#e8ecf8"; x.fillRect(L + 48 + x.measureText(s.slice(0, n)).width, yy - 12, 12, 24); }
+        });
+        x.restore(); bottom = y + h;
+      } else if (v.type === "big") {
+        const e = back(lt / 500), s = String(v.text || ""), cy = top + area * .4;
+        x.save(); x.translate(W / 2, cy); x.scale(e, e);
+        const px = fitText(x, s, mw, "700", 150); x.font = F("700", px); x.textAlign = "center"; x.textBaseline = "middle"; x.fillStyle = INK; x.fillText(s, 0, 0);
+        const tw = Math.min(mw, x.measureText(s).width), u = ease((lt - 400) / 500);
+        x.strokeStyle = BLUE; x.lineWidth = 8; x.lineCap = "round"; x.beginPath(); x.moveTo(-tw / 2, px * .52); x.quadraticCurveTo(0, px * .62, -tw / 2 + tw * u, px * .5); if (u > 0) x.stroke();
+        x.restore(); bottom = cy + 110;
+      } else if (v.type === "list") {
+        const it = (v.items || []).slice(0, 3), rh = Math.min(76, (area - 20) / it.length), ch = rh * it.length + 20;
+        const e0 = back(lt / 380); x.save(); popIn(x, W / 2, top + ch / 2, e0); paper(x, L, top, mw, ch, 20); x.restore();
+        it.forEach((s, i) => {
+          const e = ease((lt - 300 - i * 320) / 380); if (e <= 0) return;
+          const y = top + 10 + i * rh + rh / 2;
+          x.save(); x.globalAlpha = e; x.beginPath(); x.arc(L + 40, y, 15, 0, 6.3); x.fillStyle = BLUE; x.fill();
+          x.strokeStyle = "#fff"; x.lineWidth = 3.5; x.lineCap = "round"; x.lineJoin = "round"; x.beginPath(); x.moveTo(L + 33, y); x.lineTo(L + 38, y + 6); x.lineTo(L + 48, y - 6); x.stroke(); x.restore();
+          x.save(); x.globalAlpha = e; text(x, String(s), L + 70 + (1 - e) * 30, y, mw - 100, "500", 28, INK, "left"); x.restore();
+        });
+        bottom = top + ch;
+      }
+      x.restore();
+      return bottom;
+    }
+    // the little extras a later line adds to the scene: a sticky note and a blue annotation
+    function extras(x, W, H, v, bottom, at) {
+      const tm = now();
+      if (v.type === "windows") {
+        sticky(x, v.tag, W * .07 + W * .86 * .45 / 2, bottom + 34, back((tm - at) / 380));
+        annot(x, v.note, W * .62, bottom + 92, (tm - at - 350) / 900, W * .7);
+      } else {
+        sticky(x, v.tag, W * .3, bottom + 38, back((tm - at) / 380));
+        annot(x, v.note, W * .58, bottom + (v.tag ? 96 : 40), (tm - at - 350) / 900, W * .75);
+      }
+    }
+    // her words, a few at a time, as little outlined chips beside her head (the last few fade below, faint)
+    function chips(x, W, H, tm) {
+      if (!S.say || !S.chunks2.length) return;
+      const a = S.audio, total = S.chunks2.reduce((n, c) => n + c.join(" ").length + 2, 0);
+      const frac = a && a.duration && isFinite(a.duration) ? Math.min(1, a.currentTime / a.duration) : Math.min(1, (tm - S.sayAt) / (S.say.split(/\s+/).length * 230));
+      let acc = 0, idx = 0;
+      for (let i = 0; i < S.chunks2.length; i++) { acc += S.chunks2[i].join(" ").length + 2; idx = i; if (acc / total > frac + .02) break; }
+      if (idx !== S.chIdx) { S.prevChunk = S.chIdx >= 0 ? S.chunks2[S.chIdx] : null; S.chIdx = idx; S.chAt = tm; }
+      const k = ease(S.sm), ax = W * (.56 - .14 * k), ay = H * (.47 + .28 * k), maxW = W * (.38 + .1 * k);
+      x.save(); x.font = F("600", 30); x.textBaseline = "middle";
+      let cx = ax, cy = ay; const ch = 50, gap = 8;
+      S.chunks2[idx].forEach((w, j) => {
+        const cw = x.measureText(w).width + 30;
+        if (cx > ax && cx + cw > ax + maxW) { cx = ax + 14; cy += ch + gap; }
+        const e = back((tm - S.chAt - j * 70) / 260);
+        if (e > 0) {
+          x.save(); popIn(x, cx + cw / 2, cy, e);
+          rr(x, cx, cy - ch / 2, cw, ch, ch / 2); x.fillStyle = "#fff"; x.shadowColor = "rgba(40,70,80,.14)"; x.shadowBlur = 10; x.shadowOffsetY = 3; x.fill();
+          x.shadowColor = "transparent"; x.lineWidth = 3; x.strokeStyle = INK; x.stroke();
+          x.fillStyle = INK; x.textAlign = "center"; x.fillText(w, cx + cw / 2, cy + 1); x.restore();
+        }
+        cx += cw + gap;
+      });
+      if (S.prevChunk) {
+        const f = 1 - ease((tm - S.chAt) / 700);
+        if (f > 0) { x.globalAlpha = .45 * f; x.font = F("500", 22); x.fillStyle = MUTED; x.textAlign = "left"; x.fillText(S.prevChunk.join(" "), ax + 20, cy + ch / 2 + 22); }
+      }
+      x.restore();
+    }
+    // her name tag, like a little badge on her (and it says plainly that she's an AI)
+    function nameTag(x, W, H, tm) {
+      const e = back((S.nameUntil - tm) / 300) * back((tm - (S.nameUntil - 4000)) / 400); if (e <= 0) return;
+      const b = herBox(W, H), cx = W * .06 + 90, cy = b.y + b.h * .62;
+      x.save(); popIn(x, cx, cy, Math.min(e, 1.1));
+      rr(x, cx - 90, cy - 32, 180, 64, 32); x.fillStyle = "#fff"; x.fill(); x.lineWidth = 3; x.strokeStyle = INK; x.stroke();
+      x.beginPath(); x.arc(cx - 62, cy, 7, 0, 6.3); x.fillStyle = "#ffd166"; x.fill(); x.lineWidth = 2; x.stroke();
+      x.restore();
+      x.save(); popIn(x, cx, cy, Math.min(e, 1.1));
+      text(x, "AI CREATOR · NO. 001", cx + 14, cy - 13, 120, "500", 12, MUTED);
+      text(x, "Luma", cx + 14, cy + 9, 120, "700", 30, INK); x.restore();
+    }
+    function title(x, W, H, tm) {
+      if (!S.title) return;
+      const e = back((tm - S.titleAt) / 420);
+      x.save(); x.translate(W / 2, H * .105); x.scale(e, e);
+      const px = fitText(x, S.title, W * .86, "700", 64); x.font = F("700", px); x.fillStyle = INK; x.textAlign = "center"; x.textBaseline = "middle"; x.fillText(S.title, 0, 0);
+      x.restore();
+      if (S.sub) text(x, S.sub, W / 2, H * .105 + 50, W * .8, "500", 24, MUTED);
+    }
+    // a small monitor on the desk while she's in the corner
+    function prop(x, W, H) {
+      const k = ease(S.sm); if (k <= .02) return;
+      const w = 108, h = 76, a = W * .72, b = H * .84;
+      x.save(); x.globalAlpha = k;
+      paper(x, a, b, w, h, 8, null, "#22263a");
+      x.fillStyle = "#7f8aa8"; [.2, .4, .6].forEach((p, i) => x.fillRect(a + 14, b + h * p, w * (.6 - i * .12), 5));
+      x.fillStyle = INK; x.fillRect(a + w / 2 - 6, b + h, 12, 14); x.fillRect(a + w / 2 - 26, b + h + 12, 52, 6);
+      x.restore();
+    }
+    function aiMark(x, W, H) {
+      x.save(); x.font = F("600", 18); const s = "AI • Luma", w = x.measureText(s).width + 24;
+      rr(x, 22, H * .045, w, 32, 16); x.fillStyle = "rgba(255,255,255,.8)"; x.fill(); x.lineWidth = 1.5; x.strokeStyle = "rgba(43,45,66,.35)"; x.stroke();
+      x.fillStyle = INK; x.textBaseline = "middle"; x.fillText(s, 34, H * .045 + 17); x.restore();
+    }
     function draw() {
-      const x = S.cx, W = S.cv.width, H = S.cv.height, now = performance.now();
-      x.clearRect(0, 0, W, H);
-      // blurred room backdrop
-      if (S.bg && S.bg.complete && S.bg.naturalWidth) {
-        const r = Math.max(W / S.bg.naturalWidth, H / S.bg.naturalHeight) * 1.12, iw = S.bg.naturalWidth * r, ih = S.bg.naturalHeight * r;
-        try { x.filter = "blur(16px) brightness(.62)"; } catch (e) {}
-        x.drawImage(S.bg, (W - iw) / 2, (H - ih) / 2, iw, ih); try { x.filter = "none"; } catch (e) {}
-      } else { x.fillStyle = "#17123a"; x.fillRect(0, 0, W, H); }
-      const g = x.createLinearGradient(0, 0, 0, H); g.addColorStop(0, "rgba(20,16,50,.55)"); g.addColorStop(.5, "rgba(20,16,50,.18)"); g.addColorStop(1, "rgba(12,9,32,.9)"); x.fillStyle = g; x.fillRect(0, 0, W, H);
-      // her image in a rounded card, slow ken-burns zoom (full head, no crop)
-      const im = S.imgs && S.imgs[(S.shot || 0) % S.imgs.length];
-      if (im && im.complete && im.naturalWidth) {
-        const cardW = W * .74, cardH = cardW, cx0 = (W - cardW) / 2, cy0 = H * .105;
-        const z = 1 + Math.min(.12, (now - (S.imgAt || now)) / 42000);
-        x.save(); rrect(x, cx0, cy0, cardW, cardH, 30); x.clip();
-        const r = Math.max(cardW / im.naturalWidth, cardH / im.naturalHeight) * z, iw = im.naturalWidth * r, ih = im.naturalHeight * r;
-        x.drawImage(im, cx0 + (cardW - iw) / 2, cy0 + (cardH - ih) / 2 - cardH * .04, iw, ih);
-        x.restore();
-        x.save(); rrect(x, cx0, cy0, cardW, cardH, 30); x.lineWidth = 3; x.strokeStyle = "rgba(255,255,255,.2)"; x.stroke(); x.restore();
+      const x = S.cx, W = S.cv.width, H = S.cv.height, tm = now();
+      const busy = S.vis && (BUSY[S.vis.type] || (S.vis.type === "cards" && (S.vis.items || []).length > 3));
+      S.sm += ((busy ? 1 : 0) - S.sm) * .08;
+      backdrop(x, W, H, tm);
+      prop(x, W, H);
+      her(x, W, H, tm);
+      title(x, W, H, tm);
+      if (S.vis) {
+        const top = H * .2, area = H * (.22 + .3 * ease(S.sm));
+        const bottom = scene(x, W, H, S.vis, tm - S.visAt - 120, top, area);
+        if (S.vis.tag || S.vis.note) extras(x, W, H, S.vis, bottom, Math.max(S.addAt, S.visAt + 700));
       }
-      // big animated keyword caption (motion graphics): pops in on a pill
-      if (S.cap) {
-        const tt = Math.min(1, (now - (S.capAt || now)) / 240), e = 1 - Math.pow(1 - tt, 3), scale = .72 + .28 * e;
-        x.save(); x.textAlign = "center"; x.textBaseline = "middle";
-        x.font = "800 " + Math.round(W * .086 * scale) + "px Manrope, system-ui, sans-serif";
-        const words = String(S.cap).split(/\s+/), lines = []; let ln = "";
-        for (const w of words) { const tr = ln ? ln + " " + w : w; if (x.measureText(tr).width > W * .82 && ln) { lines.push(ln); ln = w; } else ln = tr; }
-        if (ln) lines.push(ln);
-        const lh = W * .1 * scale, totalH = lines.length * lh, pad = W * .045, cy = H * .76;
-        const maxw = Math.max.apply(null, lines.map((l) => x.measureText(l).width));
-        x.globalAlpha = e; rrect(x, (W - maxw) / 2 - pad, cy - totalH / 2 - pad * .55, maxw + pad * 2, totalH + pad * 1.1, 22); x.fillStyle = "rgba(123,90,255,.92)"; x.fill();
-        x.fillStyle = "#fff"; let yy = cy - totalH / 2 + lh / 2;
-        for (const L of lines) { x.fillText(L, W / 2, yy); yy += lh; }
-        x.restore();
-      }
-      // hook / title text at the top
-      if (S.title) {
-        x.save(); x.textAlign = "center"; x.textBaseline = "top"; x.lineJoin = "round";
-        x.font = "800 " + Math.round(W * .056) + "px Manrope, system-ui, sans-serif";
-        const words = String(S.title).split(/\s+/), lines = []; let ln = "";
-        for (const w of words) { const tr = ln ? ln + " " + w : w; if (x.measureText(tr).width > W * .9 && ln) { lines.push(ln); ln = w; } else ln = tr; }
-        if (ln) lines.push(ln);
-        let y = H * .035;
-        for (const L of lines) { x.lineWidth = W * .014; x.strokeStyle = "rgba(10,8,25,.9)"; x.strokeText(L, W / 2, y); x.fillStyle = "#ffe9b0"; x.fillText(L, W / 2, y); y += W * .066; }
-        x.restore();
-      }
-      if (S.prog > 0) { x.fillStyle = "rgba(255,255,255,.2)"; x.fillRect(0, H - 6, W, 6); x.fillStyle = "#ffd27a"; x.fillRect(0, H - 6, W * Math.min(1, S.prog), 6); }
+      nameTag(x, W, H, tm);
+      chips(x, W, H, tm);
+      aiMark(x, W, H);
       S.raf = requestAnimationFrame(draw);
     }
+
+    // ----- recording -----
     async function record() {
       if (!S.pack || !S.pack.lines.length) return;
       const recBtn = S.el.querySelector("#stu-rec"), dl = S.el.querySelector("#stu-dl");
       dl.hidden = true; recBtn.textContent = "⏹️ " + t("studioStop"); S.playing = true;
       try { S.ac = S.ac || new (window.AudioContext || window.webkitAudioContext)(); await S.ac.resume(); } catch (e) {}
+      try { document.fonts && await document.fonts.load("700 40px Fredoka"); } catch (e) {}
       const dest = S.ac.createMediaStreamDestination();
       const vstream = S.cv.captureStream(30);
       const mix = new MediaStream([...vstream.getVideoTracks(), ...dest.stream.getAudioTracks()]);
       const mime = ["video/webm;codecs=vp9,opus", "video/webm;codecs=vp8,opus", "video/webm"].find((m) => window.MediaRecorder && MediaRecorder.isTypeSupported(m)) || "video/webm";
       S.chunks = [];
-      S.rec = new MediaRecorder(mix, { mimeType: mime, videoBitsPerSecond: 6000000 });
+      S.rec = new MediaRecorder(mix, { mimeType: mime, videoBitsPerSecond: 8000000 });
       S.rec.ondataavailable = (e) => { if (e.data && e.data.size) S.chunks.push(e.data); };
       S.rec.onstop = () => {
-        const blob = new Blob(S.chunks, { type: "video/webm" });
-        dl.href = URL.createObjectURL(blob); dl.hidden = false;
+        dl.href = URL.createObjectURL(new Blob(S.chunks, { type: "video/webm" })); dl.hidden = false;
         recBtn.textContent = "⏺️ " + t("studioRec");
       };
+      // the next line's voice is fetched while the current one plays, so there are no gaps
+      const lines = S.pack.lines, n = lines.length;
+      const clips = lines.map((l) => voiceFor(l.say, dest));
+      const first = await clips[0];
+      S.vis = null; S.title = ""; S.sub = ""; S.prevMood = "";
       S.rec.start();
-      const n = S.pack.lines.length;
-      S.title = S.pack.hook || ""; S.cap = ""; S.shot = 0; S.imgAt = performance.now(); S.prog = 0;
-      await wait(900); S.title = "";
+      S.nameUntil = now() + 4000;
       for (let i = 0; i < n; i++) {
         if (!S.playing) break;
-        const line = S.pack.lines[i];
-        S.shot = i; S.imgAt = performance.now();
-        S.cap = line.cap || line.say; S.capAt = performance.now();
-        S.prog = (i + .4) / n;
-        await speakLine(line.say, dest);
-        S.prog = (i + 1) / n; await wait(160);
+        setLine(i, false);
+        await playClip(i ? await clips[i] : first);
+        await wait(160);
       }
-      S.cap = ""; S.title = "follow for more ♡"; S.prog = 1; await wait(900); S.title = "";
+      setMood("wink"); setSay("follow for more ♡");
+      await wait(1600);
       stopRec();
     }
-    function speakLine(text, dest) {
+    function voiceFor(text, dest) {
+      const a = new Audio("/api/voice?v=" + encodeURIComponent(voicePick().name) + "&m=happy&t=" + encodeURIComponent(sayClean(text)));
+      a.preload = "auto";
+      try { const src = S.ac.createMediaElementSource(a); src.connect(dest); src.connect(S.ac.destination); } catch (e) {}
+      return new Promise((ok) => { a.oncanplaythrough = () => ok(a); a.onerror = () => ok(null); setTimeout(() => ok(a), 8000); a.load(); });
+    }
+    function playClip(a) {
       return new Promise((done) => {
-        if (!S.playing) return done();
-        const a = new Audio("/api/voice?v=" + encodeURIComponent(voicePick().name) + "&m=happy&t=" + encodeURIComponent(sayClean(text)));
-        a.crossOrigin = "use-credentials";
-        try { const src = S.ac.createMediaElementSource(a); src.connect(dest); src.connect(S.ac.destination); } catch (e) {}
-        a.onended = a.onerror = () => done();
+        if (!a || !S.playing) return done();
+        S.audio = a;
+        a.onended = a.onerror = () => { S.audio = null; done(); };
         a.play().catch(() => done());
-        // safety: never hang forever on a line
-        setTimeout(() => done(), 12000);
+        setTimeout(done, 15000);
       });
     }
-    const sayClean = (t) => String(t).replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}\u{200D}]/gu, "").replace(/\s+/g, " ").trim().slice(0, 300);
+    const sayClean = (s) => String(s).replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}\u{200D}]/gu, "").replace(/\s+/g, " ").trim().slice(0, 300);
     const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     function stopRec(silent) {
       S.playing = false;
+      try { if (S.audio) S.audio.pause(); } catch (e) {}
       try { if (S.rec && S.rec.state !== "inactive") S.rec.stop(); } catch (e) {}
       S.rec = null;
       if (silent && S.el) { const b = S.el.querySelector("#stu-rec"); if (b) b.textContent = "⏺️ " + t("studioRec"); }
@@ -3654,6 +3967,7 @@ Be accurate and genuinely simple, never generic filler. Language: ALL of it in n
     return { open, close };
   })();
   window.__studio = (arg) => STUDIO.open(String(arg || ""));
+
 
   // ---------- focus mode ----------
   // "DO: focus 25 the report": a timer pill at the top of every screen, calm music, her cheering at the start,

@@ -3703,12 +3703,13 @@ Keep one scene for 2-3 lines with "same" and add a tag or note on the later line
     // once her voice for a line is ready: each box of the scene comes in on the word where she says it
     // (or lights up, if it's already there), and the sounds land on the same moments. t0 = when she starts.
     function cueLine(marks, t0) {
-      const words = [], times = [];
+      const words = [], times = [], raw = [];
       S.chunks2.forEach((c, k) => {
         const a = marks[k], b = k + 1 < marks.length ? marks[k + 1] : a + .28 * c.length, sy = c.map(syl), tot = sy.reduce((p, q) => p + q, 0);
-        let acc = 0; c.forEach((w, j) => { words.push(norm(w)); times.push(t0 + (a + (b - a) * acc / tot) * 1000); acc += sy[j]; });
+        let acc = 0; c.forEach((w, j) => { raw.push(w); words.push(norm(w)); times.push(t0 + (a + (b - a) * acc / tot) * 1000); acc += sy[j]; });
       });
       S.wordAt = times;
+      cueEmotes(raw, times, t0);
       const v = S.vis, labels = v ? itemLabels(v) : [];
       let from = 0;
       const hits = labels.map((lab) => {
@@ -3736,6 +3737,30 @@ Keep one scene for 2-3 lines with "same" and add a tag or note on the later line
           else fx.check(Math.max(0, rel[i]));
         });
         if (S.cue === "add" && S.addV) addSounds(S.addV, 0);
+      }
+    }
+    // her reactions for this line: one for her expression as she starts, then on the words that call for one
+    const LOVE = /^(love|loves|adore|care|cute|sweet|heart|hug|hugs|thank|thanks|lovelies|dear|promise)$/;
+    const WOW = /^(oh|wait|whoa|wow|omg|surprise|secret)$/;
+    function cueEmotes(raw, times, t0) {
+      const l = S.pack && S.pack.lines[S.line] || {}, ev = [];
+      const first = { surprised: "exclaim", think: "question", wink: "hearts", grin: "notes", smug: "sparkle", glasses: "sparkle" }[l.mood];
+      if (first) ev.push([first, t0 + 80]);
+      raw.forEach((w, j) => {
+        const n = norm(w);
+        if (/\?$/.test(w)) ev.push(["question", times[j] + 150]);
+        else if (/!$/.test(w) || WOW.test(n)) ev.push(["exclaim", times[j]]);
+        else if (LOVE.test(n) || (n === "guys" && norm(raw[j - 1] || "") === "you")) ev.push(["hearts", times[j]]);
+      });
+      // a giggle in her line: notes and a wiggle where it falls
+      const toks = String(l.say || "").split(/\s+/).filter(Boolean); let k = 0;
+      toks.forEach((tk) => { if (/^\*[^*]+\*$/.test(tk)) ev.push(["notes", k < times.length ? times[k] - 250 : (times[times.length - 1] || t0) + 300]); else k++; });
+      // not too busy: at most one every 0.8s, and never the same twice in a row within 2s
+      ev.sort((p, q) => p[1] - q[1]);
+      let last = -1e9, lastKind = "", lastKindAt = -1e9;
+      for (const [kind, at] of ev) {
+        if (at - last < 800 || (kind === lastKind && at - lastKindAt < 2000)) continue;
+        emote(kind, at); last = at; lastKind = kind; lastKindAt = at;
       }
     }
     // where each word-chip starts in her voice: find her pauses in the audio, line them up with the
@@ -3826,14 +3851,80 @@ Keep one scene for 2-3 lines with "same" and add a tag or note on the later line
       const d = (tm - last) / 200;
       return last >= 0 && d < 1 ? -Math.sin(d * Math.PI) * 7 : 0;
     }
+    // little manga reactions beside her head, popping on her words: hearts, ?, !, sparkles, music notes,
+    // plus a small jolt when she's surprised and a giggle wiggle when she laughs
+    function emote(kind, at) { (S.emotes || (S.emotes = [])).push({ kind, at, seed: Math.random() }); }
+    function shake(tm) {
+      let x = 0, y = 0;
+      for (const e of S.emotes || []) {
+        const d = tm - e.at; if (d < 0) continue;
+        if (e.kind === "exclaim" && d < 380) x += Math.sin(d / 24) * 6 * (1 - d / 380);
+        if (e.kind === "notes" && d < 620) y -= Math.abs(Math.sin(d / 75)) * 5 * (1 - d / 620);
+      }
+      return { x, y };
+    }
+    function headPt(W, H) { const b = herBox(W, H), w = b.h * 2 / 3; return { x: b.x + w * .5, y: b.y + b.h * .13, r: w * .22 }; }
+    function heart(x, cx, cy, r) {
+      x.beginPath(); x.moveTo(cx, cy + r * .9);
+      x.bezierCurveTo(cx - r * 1.6, cy - r * .2, cx - r * .6, cy - r * 1.4, cx, cy - r * .45);
+      x.bezierCurveTo(cx + r * .6, cy - r * 1.4, cx + r * 1.6, cy - r * .2, cx, cy + r * .9); x.closePath();
+    }
+    function emotes(x, W, H, tm) {
+      if (!S.emotes || !S.emotes.length) return;
+      S.emotes = S.emotes.filter((e) => tm - e.at < 1700);
+      const hp = headPt(W, H), u = hp.r / 68;   // scale with her size
+      for (const e of S.emotes) {
+        const d = tm - e.at; if (d < 0) continue;
+        const life = d / 1600, fade = life < .75 ? 1 : 1 - (life - .75) / .25, pop = back(d / 260);
+        x.save(); x.globalAlpha = Math.max(0, fade);
+        if (e.kind === "hearts") {
+          for (let i = 0; i < 3; i++) {
+            const di = d - i * 140; if (di < 0) continue;
+            const p = back(di / 260), rise = di / 1600 * 110 * u, sway = Math.sin(di / 260 + i * 2 + e.seed * 6) * 10 * u;
+            const cx = hp.x + hp.r * (.55 + i * .32) + sway, cy = hp.y - hp.r * (.75 + i * .22) - rise, r = (15 - i * 3) * u * p;
+            heart(x, cx, cy, r); x.fillStyle = i === 1 ? "#ff8fb3" : "#ff5d8f"; x.fill(); x.lineWidth = 2.5 * u; x.strokeStyle = "#fff"; x.stroke();
+          }
+        } else if (e.kind === "question" || e.kind === "exclaim") {
+          const q = e.kind === "question", n = q ? 2 : 1;
+          for (let i = 0; i < n; i++) {
+            const di = d - i * 160; if (di < 0) continue;
+            const p = back(di / 260), cx = hp.x - hp.r * (.95 - i * .45), cy = hp.y - hp.r * (1.05 + i * .25);
+            x.save(); x.translate(cx, cy); x.rotate((q ? -.25 + i * .35 : -.12) + Math.sin(di / 140) * .08); x.scale(p, p);
+            x.font = F("700", (q ? 54 - i * 12 : 64) * u); x.textAlign = "center"; x.textBaseline = "middle";
+            x.lineWidth = 7 * u; x.strokeStyle = "#fff"; x.lineJoin = "round"; x.strokeText(q ? "?" : "!", 0, 0);
+            x.fillStyle = q ? BLUE : "#ff5a5a"; x.fillText(q ? "?" : "!", 0, 0); x.restore();
+          }
+          if (!q) {   // manga surprise lines
+            const p = ease(d / 200); x.strokeStyle = "#ff5a5a"; x.lineWidth = 4 * u; x.lineCap = "round";
+            for (let i = 0; i < 3; i++) { const an = -2.2 + i * .45, r0 = hp.r * 1.25, r1 = r0 + 26 * u * p; x.beginPath(); x.moveTo(hp.x + Math.cos(an) * r0, hp.y + Math.sin(an) * r0); x.lineTo(hp.x + Math.cos(an) * r1, hp.y + Math.sin(an) * r1); x.stroke(); }
+          }
+        } else if (e.kind === "sparkle") {
+          for (let i = 0; i < 3; i++) {
+            const di = d - i * 120; if (di < 0) continue;
+            const tw = Math.sin(Math.min(1, di / 900) * Math.PI), cx = hp.x + hp.r * (.7 + (i % 2) * .5), cy = hp.y - hp.r * (.9 + i * .3), r = (18 - i * 4) * u * tw;
+            x.beginPath(); for (let k = 0; k < 8; k++) { const an = k * Math.PI / 4, rr2 = k % 2 ? r * .28 : r; x.lineTo(cx + Math.cos(an) * rr2, cy + Math.sin(an) * rr2); } x.closePath();
+            x.fillStyle = "#ffcf4a"; x.fill(); x.lineWidth = 2 * u; x.strokeStyle = "#fff"; x.stroke();
+          }
+        } else if (e.kind === "notes") {
+          for (let i = 0; i < 2; i++) {
+            const di = d - i * 200; if (di < 0) continue;
+            const p = back(di / 260), cx = hp.x + hp.r * (.7 + i * .45) + Math.sin(di / 200 + i) * 8 * u, cy = hp.y - hp.r * (.8 + i * .2) - di / 1600 * 90 * u;
+            x.save(); x.translate(cx, cy); x.rotate(-.15 + i * .3); x.scale(p, p);
+            x.font = F("700", (44 - i * 8) * u); x.textAlign = "center"; x.textBaseline = "middle";
+            x.lineWidth = 6 * u; x.strokeStyle = "#fff"; x.lineJoin = "round"; x.strokeText(i ? "♫" : "♪", 0, 0); x.fillStyle = INK; x.fillText(i ? "♫" : "♪", 0, 0); x.restore();
+          }
+        }
+        x.restore();
+      }
+    }
     function her(x, W, H, tm) {
       const b = herBox(W, H), k = ease((tm - S.moodAt) / 260);
       const draw1 = (m, a, sc) => {
         const im = S.faces[m]; if (!im || !im.complete || !im.naturalWidth || a <= 0) return;
         const bt = (tm - (S.beatAt || 0)) / 420, hop = (bt > 0 && bt < 1 ? -Math.sin(bt * Math.PI) * 22 : 0) + wordHop(tm);
-        const h = b.h * sc, w = h * im.naturalWidth / im.naturalHeight, bob = Math.sin(tm / 1100) * 4 + hop;
+        const sh = shake(tm), h = b.h * sc, w = h * im.naturalWidth / im.naturalHeight, bob = Math.sin(tm / 1100) * 4 + hop + sh.y;
         x.save(); x.globalAlpha = a; x.shadowColor = "rgba(40,70,80,.18)"; x.shadowBlur = 24;
-        x.drawImage(im, b.x - (w - b.h * im.naturalWidth / im.naturalHeight) / 2, b.y + (b.h - h) + bob, w, h); x.restore();
+        x.drawImage(im, b.x - (w - b.h * im.naturalWidth / im.naturalHeight) / 2 + sh.x, b.y + (b.h - h) + bob, w, h); x.restore();
       };
       if (S.prevMood && k < 1) draw1(S.prevMood, 1 - k, 1);
       draw1(S.mood, k, .97 + .03 * back((tm - S.moodAt) / 380));
@@ -4099,6 +4190,7 @@ Keep one scene for 2-3 lines with "same" and add a tag or note on the later line
         const bottom = scene(x, W, H, S.vis, tm - S.visAt - 120, top, area);
         if (S.vis.tag || S.vis.note) extras(x, W, H, S.vis, bottom, Math.max(S.addAt, S.visAt + 700));
       }
+      emotes(x, W, H, tm);
       nameTag(x, W, H, tm);
       chips(x, W, H, tm);
       S.raf = requestAnimationFrame(draw);
@@ -4146,7 +4238,7 @@ Keep one scene for 2-3 lines with "same" and add a tag or note on the later line
         await playClip(c);
         await wait(160);
       }
-      setMood("wink"); setSay("follow for more ♡"); fx.ding(200);
+      setMood("wink"); setSay("follow for more ♡"); fx.ding(200); emote("hearts", now() + 150);
       await wait(1300);
       music(false);
       await wait(700);

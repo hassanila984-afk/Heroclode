@@ -3649,7 +3649,15 @@ Keep one scene for 2-3 lines with "same" and add a tag or note on the later line
     // a very soft lo-fi bed: Fmaj7 - Em7 - Dm7 - Cmaj7, a music-box arpeggio, a gentle kick and hat
     function music(on) {
       const ac = S.ac;
-      if (!on) { if (S.mus) { clearInterval(S.mus.timer); S.mus.g.gain.setTargetAtTime(0, ac.currentTime, .35); S.mus = null; } return; }
+      if (!on) { if (S.mus) { clearInterval(S.mus.timer); S.mus.g.gain.setTargetAtTime(0, ac.currentTime, .35); if (S.mus.src) S.mus.src.stop(ac.currentTime + 2); S.mus = null; } return; }
+      if (S.lofi) {
+        // the cozy lo-fi loop (electric piano, bass, swung drums, a little vinyl), looped seamlessly
+        const g = ac.createGain(), src = ac.createBufferSource();
+        src.buffer = S.lofi; src.loop = true; g.gain.value = .0001; g.gain.setTargetAtTime(.45, ac.currentTime, .6);
+        src.connect(g); g.connect(S.musBus); src.start();
+        S.mus = { g, src, timer: 0 };
+        return;
+      }
       const g = ac.createGain(), lp = ac.createBiquadFilter();
       g.gain.value = .0001; g.gain.setTargetAtTime(1, ac.currentTime, .8);
       lp.type = "lowpass"; lp.frequency.value = 2200; lp.connect(g); g.connect(S.musBus);
@@ -4119,11 +4127,14 @@ Keep one scene for 2-3 lines with "same" and add a tag or note on the later line
       // the next line's voice is fetched while the current one plays, so there are no gaps
       const lines = S.pack.lines, n = lines.length;
       const clips = lines.map((l) => voiceFor(l.say));
+      if (!S.lofi && S.el.querySelector("#stu-mus").checked) {
+        try { S.lofi = await S.ac.decodeAudioData(await (await fetch("luma/reel/lofi.ogg")).arrayBuffer()); } catch (e) {}
+      }
       const first = await clips[0];
       S.vis = null; S.title = ""; S.sub = ""; S.prevMood = "";
       S.rec.start();
       hiss(.01, 1000, 1000, .0001, 0);   // makes the noise buffer the hi-hat uses
-      if (S.el.querySelector("#stu-mus").checked) music(true);
+      if (S.el.querySelector("#stu-mus").checked) music(true);   // (lofi loaded above; the synth bed is the fallback)
       S.nameUntil = now() + 4000;
       for (let i = 0; i < n; i++) {
         if (!S.playing) break;

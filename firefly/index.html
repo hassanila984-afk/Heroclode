@@ -3529,9 +3529,10 @@ Start with one face tag like [thinking] [happy], then your help.`, Object.assign
 The video looks like a soft whiteboard explainer: a short title at the top, simple white UI cards / browser windows / popups that build up line by line like a teacher drawing, and your words shown as little chips beside you.
 Explain it the SIMPLEST way, with a relatable everyday analogy, correct and not hand-wavy, then end with a question that makes people comment. Start straight into it (no "hi guys"): the first line IS the hook.
 Make it FUN, like a friend who teases you a little while teaching: 2-3 small jokes woven in, never forced. Good jokes here are: taking a tech word literally for a second (cookies -> "no, not the chocolate chip kind"), a playful jab at the viewer ("you clicked accept without reading, didn't you"), a tiny self-aware aside ("I'm an AI, I have opinions about cookies"), or a deadpan one-word beat after a joke ("sorry.", "anyway.", "rude."). A beat is its own very short line (1-3 words, mood grin or wink) so the timing lands. Put a joke in a sticky-note "tag" sometimes (like "no chocolate chips"). Keep it kind and clean, and the explanation still correct.
+Sound ALIVE and human, like talking to friends you adore: natural little openers ("okay, real talk", "honestly", "right?"), a genuine *giggles* once or twice where it fits (written exactly like that), and vary the tone line by line. You love your followers: be warm and caring to them (a soft "you guys", a little "take care of yourself" moment when it fits), never cheesy.
 Write it as JSON only:
 {"hook":"the scroll-stopping first line, a question or surprise (<9 words)",
-"lines":[{"say":"what you say out loud, one short spoken sentence in simple words","title":"the big title at the top, 1-3 words like \\"Click.\\" or \\"cookies\\" or \\"websites forget you\\"; give it only when the scene changes","sub":"optional tiny grey line under the title (<7 words)","mood":"one of surprised|wink|think|grin|point|smug|explain|glasses","visual":SCENE}, ... 7 to 10 lines (beats count), 20-35 seconds spoken; first line is the hook (mood surprised or think), last line is the question CTA (mood wink or point)],
+"lines":[{"say":"what you say out loud, one short spoken sentence in simple words","title":"the big title at the top, 1-3 words like \\"Click.\\" or \\"cookies\\" or \\"websites forget you\\"; give it only when the scene changes","sub":"optional tiny grey line under the title (<7 words)","mood":"one of surprised|wink|think|grin|point|smug|explain|glasses","tone":"how your voice sounds on this line, one of excited|happy|thinking|pout|shy|sad (pout = playful teasing)","visual":SCENE}, ... 7 to 10 lines (beats count), 20-35 seconds spoken; first line is the hook (mood surprised or think), last line is the question CTA (mood wink or point)],
 "igCaption":"a warm IG caption with 1-2 small kaomoji","hashtags":["#tag", ... 6 to 10 relevant tech hashtags]}
 SCENE is one of (labels short, no emoji):
 {"type":"popup","title":"We use cookies","yes":"ACCEPT ALL","no":"REJECT ALL","pick":"yes"}  (a UI dialog, a cursor clicks the picked button)
@@ -3573,7 +3574,7 @@ Keep one scene for 2-3 lines with "same" and add a tag or note on the later line
       S.say = s || ""; S.sayAt = now(); S.chIdx = -1; S.marks = null; S.wordAt = null;
       // her words come up 1-3 at a time, broken at punctuation, like spoken chips
       const out = []; let c = [];
-      for (const w of S.say.split(/\s+/).filter(Boolean)) {
+      for (const w of S.say.replace(/\*[^*]{1,30}\*/g, " ").split(/\s+/).filter(Boolean)) {
         c.push(w);
         if (c.length >= 3 || c.join(" ").length >= 13 || /[,.!?;:]$/.test(w)) { out.push(c); c = []; }
       }
@@ -4126,7 +4127,7 @@ Keep one scene for 2-3 lines with "same" and add a tag or note on the later line
       };
       // the next line's voice is fetched while the current one plays, so there are no gaps
       const lines = S.pack.lines, n = lines.length;
-      const clips = lines.map((l) => voiceFor(l.say));
+      const clips = lines.map((l) => voiceFor(l.say, l.tone || TONE_OF[l.mood]));
       if (!S.lofi && S.el.querySelector("#stu-mus").checked) {
         try { S.lofi = await S.ac.decodeAudioData(await (await fetch("luma/reel/lofi.ogg")).arrayBuffer()); } catch (e) {}
       }
@@ -4152,10 +4153,13 @@ Keep one scene for 2-3 lines with "same" and add a tag or note on the later line
       stopRec();
     }
     // her voice for one line, fetched once and decoded, so we can both play it and read its timing
-    async function voiceFor(text) {
+    // her voice's tone follows her face unless the line asks for a tone itself (same voice, more life)
+    const TONES = ["excited", "happy", "thinking", "pout", "shy", "sad"];
+    const TONE_OF = { surprised: "excited", wink: "pout", think: "thinking", grin: "excited", point: "excited", smug: "pout", explain: "happy", glasses: "thinking" };
+    async function voiceFor(text, tone) {
       const ctl = new AbortController(), tid = setTimeout(() => ctl.abort(), 20000);
       try {
-        const r = await fetch("/api/voice?v=" + encodeURIComponent(voicePick().name) + "&m=happy&t=" + encodeURIComponent(sayClean(text)), { credentials: "same-origin", signal: ctl.signal });
+        const r = await fetch("/api/voice?v=" + encodeURIComponent(voicePick().name) + "&m=" + (TONES.includes(tone) ? tone : "happy") + "&t=" + encodeURIComponent(sayClean(text)), { credentials: "same-origin", signal: ctl.signal });
         if (!r.ok) return null;
         return { buf: await S.ac.decodeAudioData(await r.arrayBuffer()) };
       } catch (e) { return null; } finally { clearTimeout(tid); }

@@ -736,6 +736,8 @@
   .stu-cap { color: var(--glow); font-size: 12px; }
   .stu-copy { border: 1px solid var(--glass-line); background: var(--surface-2); color: #fff; border-radius: 999px; padding: 3px 10px; font: 600 12px var(--body); cursor: pointer; }
   .stu-note { font-size: 12px; color: var(--haze); line-height: 1.4; }
+  .stu-opts { display: flex; gap: 16px; font-size: 13.5px; color: var(--haze); }
+  .stu-opts label { display: flex; gap: 6px; align-items: center; cursor: pointer; }
 </style>
 
 <canvas id="sky" aria-hidden="true"></canvas>
@@ -881,7 +883,7 @@
       reminderTitle: "Nightly reminder", reminderNote: "A set time makes a habit much easier to keep. Choose yours and add it to your calendar.",
       reminderTime: "Reminder time", addCal: "Add to Google Calendar",
       calTitle: "Firefly: light tonight's firefly", calDetails: "Seven quiet minutes for yourself. Open Firefly in Claude.",
-      proTitle: "Her own messages", proNote: "Good morning, a break after long hours on the PC, and a call when a reminder is important.", proOn: "On ✓", proOff: "Off", secLuma: "Luma", secApp: "App", myVoiceTitle: "Your voice", studioTitle: "Reels Studio", studioTopic: "Topic (or let her pick)…", studioIdea: "Her idea", studioWrite: "Write the Reel", studioWriting: "writing your Reel…", studioHook: "Hook", studioScript: "Script", studioCap: "Caption", studioTags: "Hashtags", studioRec: "Record", studioStop: "Stop", studioSave: "Save video", studioNote: "Motion-graphics Reel: her expressions, animated diagrams and subtitles, in her own voice, 9:16. It's AI content — keep the AI label on.", studioFail: "My brain glitched, try again~", copy: "Copy", linkTitle: "Luma Link", linkThis: "This device's name", linkNote: "So Luma can send things here from your other devices. Keep the app open or in the background.", linkNone: "No other devices online. Open Firefly on them too.", remembersTitle: "What Luma knows about you", forget: "Forget this", memAdd: "Tell her something to remember…",
+      proTitle: "Her own messages", proNote: "Good morning, a break after long hours on the PC, and a call when a reminder is important.", proOn: "On ✓", proOff: "Off", secLuma: "Luma", secApp: "App", myVoiceTitle: "Your voice", studioTitle: "Reels Studio", studioTopic: "Topic (or let her pick)…", studioIdea: "Her idea", studioWrite: "Write the Reel", studioWriting: "writing your Reel…", studioHook: "Hook", studioScript: "Script", studioCap: "Caption", studioTags: "Hashtags", studioRec: "Record", studioStop: "Stop", studioSave: "Save video", studioNote: "Motion-graphics Reel: her expressions, animated diagrams and subtitles, in her own voice, 9:16. It's AI content — keep the AI label on.", studioMusic: "Soft music", studioSfx: "Sound effects", studioFail: "My brain glitched, try again~", copy: "Copy", linkTitle: "Luma Link", linkThis: "This device's name", linkNote: "So Luma can send things here from your other devices. Keep the app open or in the background.", linkNone: "No other devices online. Open Firefly on them too.", remembersTitle: "What Luma knows about you", forget: "Forget this", memAdd: "Tell her something to remember…",
       styleTitle: "How Luma talks with you", styleNote: "Learned from how you write.", styleReset: "Start fresh",
       styleNone: "Nothing yet. Luma picks up your way of talking as you chat.",
       remembersNote: "Tap a line to change it, ✕ to make her forget it.",
@@ -995,7 +997,7 @@
       reminderTitle: "تذكير ليلي", reminderNote: "الوقت الثابت يجعل العادة أسهل بكثير. اختر وقتك وأضفه إلى تقويمك.",
       reminderTime: "وقت التذكير", addCal: "أضف إلى تقويم Google",
       calTitle: "يراعة: أضئ يراعة الليلة", calDetails: "سبع دقائق هادئة لنفسك. افتح يراعة في Claude.",
-      proTitle: "رسائلها من نفسها", proNote: "صباح الخير، استراحة بعد ساعات طويلة على الحاسبة، ومكالمة إذا التذكير مهم.", proOn: "شغّال ✓", proOff: "طافي", secLuma: "لُمى", secApp: "التطبيق", myVoiceTitle: "صوتك", studioTitle: "استوديو الريلز", studioTopic: "الموضوع (أو خليها تختار)…", studioIdea: "فكرتها", studioWrite: "اكتبي الريل", studioWriting: "تكتب الريل…", studioHook: "الهوك", studioScript: "السكربت", studioCap: "التعليق", studioTags: "الهاشتاقات", studioRec: "تسجيل", studioStop: "وقف", studioSave: "حفظ الفيديو", studioNote: "تسجّل بصوتها ويا حركتها، عمودي 9:16، جاهز للريلز. المحتوى AI — خلّي علامة AI.", studioFail: "دماغي علّق، جرّب مرة ثانية~", copy: "نسخ", linkTitle: "رابط لُمى", linkThis: "اسم هذا الجهاز", linkNote: "حتى لُمى تگدر تدز أشياء لهنا من أجهزتك الثانية. خلّي التطبيق مفتوح أو بالخلفية.", linkNone: "ماكو أجهزة ثانية شغّالة. افتح Firefly بيهن هم.", remembersTitle: "شنو تعرف لُمى عنك", forget: "انسَ هذا", memAdd: "گلها شي تتذكره…",
+      proTitle: "رسائلها من نفسها", proNote: "صباح الخير، استراحة بعد ساعات طويلة على الحاسبة، ومكالمة إذا التذكير مهم.", proOn: "شغّال ✓", proOff: "طافي", secLuma: "لُمى", secApp: "التطبيق", myVoiceTitle: "صوتك", studioTitle: "استوديو الريلز", studioTopic: "الموضوع (أو خليها تختار)…", studioIdea: "فكرتها", studioWrite: "اكتبي الريل", studioWriting: "تكتب الريل…", studioHook: "الهوك", studioScript: "السكربت", studioCap: "التعليق", studioTags: "الهاشتاقات", studioRec: "تسجيل", studioStop: "وقف", studioSave: "حفظ الفيديو", studioNote: "تسجّل بصوتها ويا حركتها، عمودي 9:16، جاهز للريلز. المحتوى AI — خلّي علامة AI.", studioMusic: "موسيقى خفيفة", studioSfx: "مؤثرات صوتية", studioFail: "دماغي علّق، جرّب مرة ثانية~", copy: "نسخ", linkTitle: "رابط لُمى", linkThis: "اسم هذا الجهاز", linkNote: "حتى لُمى تگدر تدز أشياء لهنا من أجهزتك الثانية. خلّي التطبيق مفتوح أو بالخلفية.", linkNone: "ماكو أجهزة ثانية شغّالة. افتح Firefly بيهن هم.", remembersTitle: "شنو تعرف لُمى عنك", forget: "انسَ هذا", memAdd: "گلها شي تتذكره…",
       styleTitle: "كيف تتكلّم لُمى معك", styleNote: "تعلّمته من طريقة كتابتك.", styleReset: "ابدأ من جديد",
       styleNone: "لا شيء بعد. تلتقط لُمى طريقة كلامك وأنتما تتحدّثان.",
       remembersNote: "دوس على أي سطر حتى تعدّله، و ✕ حتى تنساه.",
@@ -3490,6 +3492,7 @@ Start with one face tag like [thinking] [happy], then your help.`, Object.assign
             <button type="button" class="gm-btn wide" id="stu-write">✍️ ${t("studioWrite")}</button>
             <div class="stu-pack" id="stu-pack"></div>
             <div class="stu-actions" id="stu-actions" hidden>
+              <div class="stu-opts"><label><input type="checkbox" id="stu-mus" checked> 🎵 ${t("studioMusic")}</label><label><input type="checkbox" id="stu-sfx" checked> ✨ ${t("studioSfx")}</label></div>
               <button type="button" class="gm-btn big" id="stu-rec">⏺️ ${t("studioRec")}</button>
               <a class="gm-btn big" id="stu-dl" hidden download="luma-reel.webm">⬇️ ${t("studioSave")}</a>
             </div>
@@ -3567,7 +3570,7 @@ Keep one scene for 2-3 lines with "same" and add a tag or note on the later line
     }
     function setMood(m) { if (m && m !== S.mood) { S.prevMood = S.mood; S.mood = m; S.moodAt = now(); } }
     function setSay(s) {
-      S.say = s || ""; S.sayAt = now(); S.chIdx = -1;
+      S.say = s || ""; S.sayAt = now(); S.chIdx = -1; S.marks = null;
       // her words come up 1-3 at a time, broken at punctuation, like spoken chips
       const out = []; let c = [];
       for (const w of S.say.split(/\s+/).filter(Boolean)) {
@@ -3579,19 +3582,192 @@ Keep one scene for 2-3 lines with "same" and add a tag or note on the later line
     }
     function setLine(i, preview) {
       const l = S.pack && S.pack.lines[i]; if (!l) return;
-      S.line = i;
+      S.line = i; S.cue = ""; S.addV = null;
       let v = l.visual && typeof l.visual === "object" ? l.visual : null;
       if (!v || v.type === "same" || !v.type) {
         // keep the scene, only add the new sticky note / annotation
-        if (S.vis && v && (v.tag || v.note)) { S.vis = Object.assign({}, S.vis, v.tag ? { tag: v.tag } : {}, v.note ? { note: v.note } : {}, { type: S.vis.type }); S.addAt = now(); }
-        else if (!S.vis && v && v.type !== "same") { S.vis = v; S.visAt = S.addAt = now(); }
-      } else if (S.vis && S.vis.type === v.type && v.type !== "popup") { S.vis = Object.assign({}, S.vis, v); S.addAt = now(); }   // same scene again: build on it, don't redraw it
-      else { S.vis = v; S.visAt = now(); S.addAt = now() + 900; }
-      if (l.title && l.title !== S.title) { S.title = l.title; S.sub = l.sub || ""; S.titleAt = now(); }
+        if (S.vis && v && (v.tag || v.note)) { S.vis = Object.assign({}, S.vis, v.tag ? { tag: v.tag } : {}, v.note ? { note: v.note } : {}, { type: S.vis.type }); S.addAt = now(); S.cue = "add"; S.addV = v; }
+        else if (!S.vis && v && v.type !== "same") { S.vis = v; S.visAt = S.addAt = now(); S.cue = "new"; S.itemAt = null; }
+      } else if (S.vis && S.vis.type === v.type && v.type !== "popup") { S.vis = Object.assign({}, S.vis, v); S.addAt = now(); S.cue = "add"; S.addV = v; }   // same scene again: build on it, don't redraw it
+      else { S.vis = v; S.visAt = now(); S.addAt = now() + 900; S.cue = "new"; S.itemAt = null; }
+      S.hiAt = null;
+      if (l.title && l.title !== S.title) { if (!preview && now() - S.visAt > 50) fx.whoosh(0); S.title = l.title; S.sub = l.sub || ""; S.titleAt = now(); }
       else if (l.sub && l.sub !== S.sub) { S.sub = l.sub; S.titleAt = now() - 300; }
       setMood(l.mood);
       setSay(preview ? "" : l.say);
-      if (!preview && S.chunks2.length === 1) S.beatAt = now();   // a one-beat line ("sorry.") gets a little hop so the joke lands
+      if (!preview && S.chunks2.length === 1) { S.beatAt = now(); fx.boing(0); }   // a one-beat line ("sorry.") gets a little hop so the joke lands
+    }
+
+    // ----- sound: little effects and a soft music bed, all synthesized here (free, no files) -----
+    const sfxOn = () => S.ac && S.sfxBus && S.sfx !== false && S.playing;
+    function blip(f0, f1, dur, vol, type, delay) {
+      if (!sfxOn() || delay > 60000) return; const ac = S.ac, t0 = ac.currentTime + (delay || 0) / 1000;
+      const o = ac.createOscillator(), g = ac.createGain(); o.type = type || "sine";
+      o.frequency.setValueAtTime(f0, t0); o.frequency.exponentialRampToValueAtTime(f1, t0 + dur);
+      g.gain.setValueAtTime(.0001, t0); g.gain.exponentialRampToValueAtTime(vol, t0 + .008); g.gain.exponentialRampToValueAtTime(.0001, t0 + dur);
+      o.connect(g); g.connect(S.sfxBus); o.start(t0); o.stop(t0 + dur + .03);
+    }
+    function hiss(dur, f0, f1, vol, delay, q) {
+      if (!sfxOn()) return; const ac = S.ac, t0 = ac.currentTime + (delay || 0) / 1000;
+      if (!S.noise) { const b = ac.createBuffer(1, ac.sampleRate, ac.sampleRate), d = b.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; S.noise = b; }
+      const src = ac.createBufferSource(), f = ac.createBiquadFilter(), g = ac.createGain(); src.buffer = S.noise;
+      f.type = "bandpass"; f.Q.value = q || 1.2; f.frequency.setValueAtTime(f0, t0); f.frequency.exponentialRampToValueAtTime(f1, t0 + dur);
+      g.gain.setValueAtTime(.0001, t0); g.gain.exponentialRampToValueAtTime(vol, t0 + dur * .35); g.gain.exponentialRampToValueAtTime(.0001, t0 + dur);
+      src.connect(f); f.connect(g); g.connect(S.sfxBus); src.start(t0); src.stop(t0 + dur + .03);
+    }
+    const fx = {
+      pop: (d) => blip(480, 960, .09, .18, "sine", d),
+      chip: (d) => blip(1000, 1400, .045, .05, "sine", d),
+      whoosh: (d) => hiss(.38, 260, 2600, .16, d, .7),
+      click: (d) => { hiss(.03, 3200, 2600, .3, d, 2); blip(1700, 1100, .03, .07, "square", d); },
+      ding: (d) => { blip(1318, 1318, .55, .08, "triangle", d); blip(1976, 1976, .45, .04, "sine", (d || 0) + 40); },
+      thwip: (d) => hiss(.13, 2000, 600, .14, d, 1.4),
+      tick: (d) => hiss(.018, 4200, 3600, .07, d, 3),
+      check: (d) => blip(880, 1320, .09, .1, "triangle", d),
+      boing: (d) => blip(240, 760, .24, .14, "sine", d),
+    };
+    // sticky note / annotation added later in a scene (d = when it starts, ms)
+    function addSounds(v, d) {
+      if (v.tag) fx.thwip(d);
+      if (v.note) for (let k = 0; k < 9; k++) fx.tick(d + 350 + k * 70);
+    }
+    function sceneSounds(v, at) {
+      const d = (i, def) => at && at[i] != null ? (at[i] === -1 ? 1e9 : Math.max(0, at[i])) : def;
+      fx.whoosh(0);
+      const O = 120, ty = v.type;
+      if (ty === "popup") { fx.pop(O); fx.click(O + 1650); }
+      else if (ty === "windows") { fx.pop(d(0, O)); fx.pop(d(1, O + 180)); if (v.send) fx.thwip(O + 900); }
+      else if (ty === "cards") { const n = Math.min(6, (v.items || []).length); for (let i = 0; i < n; i++) fx.pop(d(i, O + i * 120)); if (v.hi >= 0 && v.hi < n) fx.ding(O + 700 + n * 120); }
+      else if (ty === "bars") { fx.pop(O); (v.items || []).slice(0, 5).forEach((o, i) => blip(300, 300 + 9 * Math.min(100, Number(o.value) || 0), .6, .05, "triangle", d(i, O + 250 + i * 160))); }
+      else if (ty === "vs") { fx.pop(d(0, O)); fx.pop(d(1, O + 150)); fx.boing(d(1, O + 150) + 370); }
+      else if (ty === "flow") { const n = Math.min(4, (v.steps || []).length); let last = 0; for (let i = 0; i < n; i++) { const t = Math.max(d(i, O + i * 420), i ? last + 300 : 0); last = t; fx.pop(t); } fx.ding(last + 420); }
+      else if (ty === "code") { fx.pop(O); const c = (v.lines || []).slice(0, 4).join("").length; for (let k = 0; k < Math.min(90, c); k += 2) fx.tick(O + 350 + k * 38); }
+      else if (ty === "big") { fx.pop(O); fx.thwip(O + 400); }
+      else if (ty === "list") { fx.pop(O); (v.items || []).slice(0, 3).forEach((s, i) => fx.check(d(i, O + 300 + i * 320))); }
+      if (v.tag || v.note) addSounds(v, 900);
+    }
+    // a very soft lo-fi bed: Fmaj7 - Em7 - Dm7 - Cmaj7, a music-box arpeggio, a gentle kick and hat
+    function music(on) {
+      const ac = S.ac;
+      if (!on) { if (S.mus) { clearInterval(S.mus.timer); S.mus.g.gain.setTargetAtTime(0, ac.currentTime, .35); S.mus = null; } return; }
+      const g = ac.createGain(), lp = ac.createBiquadFilter();
+      g.gain.value = .0001; g.gain.setTargetAtTime(1, ac.currentTime, .8);
+      lp.type = "lowpass"; lp.frequency.value = 2200; lp.connect(g); g.connect(S.musBus);
+      const beat = 60 / 84, prog = [[53, 57, 60, 64], [52, 55, 59, 62], [50, 53, 57, 60], [48, 52, 55, 59]], arp = [0, 2, 1, 3, 2, 1, 3, 2];
+      const hz = (m) => 440 * Math.pow(2, (m - 69) / 12);
+      const note = (m, t, dur, vol, type, out) => { const o = ac.createOscillator(), e = ac.createGain(); o.type = type; o.frequency.value = hz(m); e.gain.setValueAtTime(.0001, t); e.gain.exponentialRampToValueAtTime(vol, t + .03); e.gain.exponentialRampToValueAtTime(.0001, t + dur); o.connect(e); e.connect(out || lp); o.start(t); o.stop(t + dur + .05); };
+      const kick = (t) => { const o = ac.createOscillator(), e = ac.createGain(); o.frequency.setValueAtTime(110, t); o.frequency.exponentialRampToValueAtTime(42, t + .16); e.gain.setValueAtTime(.32, t); e.gain.exponentialRampToValueAtTime(.0001, t + .22); o.connect(e); e.connect(g); o.start(t); o.stop(t + .25); };
+      const hat = (t) => { if (!S.noise) return; const src = ac.createBufferSource(), f = ac.createBiquadFilter(), e = ac.createGain(); src.buffer = S.noise; f.type = "highpass"; f.frequency.value = 7000; e.gain.setValueAtTime(.05, t); e.gain.exponentialRampToValueAtTime(.0001, t + .04); src.connect(f); f.connect(e); e.connect(g); src.start(t, Math.random() * .5); src.stop(t + .05); };
+      let next = ac.currentTime + .1, step = 0;
+      const sched = () => {
+        while (next < ac.currentTime + .5) {
+          const ch = prog[Math.floor(step / 8) % 4], s8 = step % 8, t = next;
+          if (s8 === 0) { ch.forEach((m) => note(m, t, beat * 4, .045, "triangle")); note(ch[0] - 12, t, beat * 2, .14, "sine"); }
+          if (s8 === 4) note(ch[0] - 5, t, beat * 2, .1, "sine");
+          if (s8 % 2 === 0 || s8 === 5) note(ch[arp[s8]] + 12, t, beat * 1.4, .05, "sine");
+          if (s8 === 0 || s8 === 4) kick(t);
+          if (s8 % 2 === 1) hat(t);
+          next += beat / 2; step++;
+        }
+      };
+      sched();
+      S.mus = { g, timer: setInterval(sched, 120) };
+    }
+    const syl = (w) => Math.max(1, ((w.toLowerCase().replace(/[^a-z]/g, "").match(/[aeiouy]+/g) || []).length - (/[^aeiou]e$/i.test(w) ? 1 : 0)) || 1);
+    const norm = (w) => String(w).toLowerCase().replace(/[^a-z0-9]/g, "");
+    // where she says (the main word of) a label, from word index "from" on, else anywhere; -1 if she doesn't
+    function findWord(lab, words, from) {
+      const tk = String(lab).split(/\s+/).map(norm).filter(Boolean), key = tk.find((x) => x.length >= 3) || tk[0];
+      if (!key) return -1;
+      const same = (w) => w === key || (w.length >= 4 && key.length >= 4 && (w.startsWith(key) || key.startsWith(w)));
+      const j = words.findIndex((w, k) => k >= from && same(w));
+      return j >= 0 ? j : words.findIndex(same);
+    }
+    function itemLabels(v) {
+      if (v.type === "list" || v.type === "cards") return (v.items || []).map(String);
+      if (v.type === "flow") return (v.steps || []).map(String);
+      if (v.type === "bars") return (v.items || []).map((o) => String(o.label || ""));
+      if (v.type === "vs") return [String(v.left || ""), String(v.right || "")];
+      if (v.type === "windows") return [String((v.left || {}).text || ""), String((v.right || {}).text || "")];
+      return [];
+    }
+    // once her voice for a line is ready: each box of the scene comes in on the word where she says it
+    // (or lights up, if it's already there), and the sounds land on the same moments. t0 = when she starts.
+    function cueLine(marks, t0) {
+      const words = [], times = [];
+      S.chunks2.forEach((c, k) => {
+        const a = marks[k], b = k + 1 < marks.length ? marks[k + 1] : a + .28 * c.length, sy = c.map(syl), tot = sy.reduce((p, q) => p + q, 0);
+        let acc = 0; c.forEach((w, j) => { words.push(norm(w)); times.push(t0 + (a + (b - a) * acc / tot) * 1000); acc += sy[j]; });
+      });
+      const v = S.vis, labels = v ? itemLabels(v) : [];
+      let from = 0;
+      const hits = labels.map((lab) => {
+        const j = findWord(lab, words, from);
+        if (j < 0) return null;
+        from = j + 1;
+        return times[j] - 120;   // a beat before the word, so it's there as she says it
+      });
+      const rel = hits.map((h) => (h == null ? null : h - now()));
+      if (S.cue === "new") {
+        // a box she only names in the next line(s) of this same scene waits for that line, like a teacher drawing
+        const later = [];
+        for (let k = S.line + 1; k < S.pack.lines.length; k++) {
+          const nv = S.pack.lines[k].visual;
+          if (nv && typeof nv === "object" && nv.type && nv.type !== "same" && nv.type !== v.type) break;
+          later.push(...S.pack.lines[k].say.split(/\s+/).map(norm));
+        }
+        S.itemAt = hits.map((h, i) => (h == null && findWord(labels[i], later, 0) >= 0 ? Infinity : h));
+        sceneSounds(v, rel.map((r, i) => (S.itemAt[i] === Infinity ? -1 : r)));
+      } else if (v) {
+        S.hiAt = hits.slice();
+        hits.forEach((h, i) => {
+          if (h == null) return;
+          if (S.itemAt && S.itemAt[i] === Infinity) { S.itemAt[i] = h; S.hiAt[i] = null; fx.pop(Math.max(0, rel[i])); }   // its turn to appear
+          else fx.check(Math.max(0, rel[i]));
+        });
+        if (S.cue === "add" && S.addV) addSounds(S.addV, 0);
+      }
+    }
+    // where each word-chip starts in her voice: find her pauses in the audio, line them up with the
+    // punctuation, and spread the words over the voiced parts by syllables (free, no transcription needed)
+    function align(buf, chunks) {
+      const d = buf.getChannelData(0), hop = Math.max(1, Math.round(buf.sampleRate * .01)), n = Math.floor(d.length / hop);
+      if (!n || !chunks.length) return chunks.map(() => 0);
+      const env = new Float32Array(n);
+      for (let i = 0; i < n; i++) { let q = 0; for (let j = i * hop, e = j + hop; j < e; j++) q += d[j] * d[j]; env[i] = Math.sqrt(q / hop); }
+      const sorted = Array.from(env).sort((a, b) => a - b), thr = Math.max(.006, sorted[Math.floor(n * .95)] * .1);
+      const on = Array.from(env, (v) => v > thr);
+      let first = on.indexOf(true), last = on.lastIndexOf(true);
+      if (first < 0) { on.fill(true); first = 0; last = n - 1; }
+      const pauses = []; let run = -1;
+      for (let i = first; i <= last; i++) { if (!on[i]) { if (run < 0) run = i; } else if (run >= 0) { if (i - run >= 12) pauses.push({ a: run, b: i, len: i - run }); run = -1; } }
+      const wts = chunks.map((c) => c.reduce((q, w) => q + syl(w), 0) + .3);
+      const vfAll = []; for (let i = first; i <= last; i++) if (on[i]) vfAll.push(i);
+      const total = wts.reduce((p, q) => p + q, 0), anchors = { 0: first }, used = new Set();
+      let cum = 0;
+      chunks.forEach((c, i) => {
+        cum += wts[i];
+        if (i === chunks.length - 1 || !/[,.!?;:]$/.test(c[c.length - 1])) return;
+        const exp = vfAll[Math.min(vfAll.length - 1, Math.floor(cum / total * vfAll.length))];
+        let best = null;
+        pauses.forEach((pz, j) => {
+          if (used.has(j)) return;
+          const dd = Math.abs((pz.a + pz.b) / 2 - exp);
+          if (dd < .35 * vfAll.length && (!best || dd - pz.len * 1.5 < best.sc)) best = { sc: dd - pz.len * 1.5, j };
+        });
+        if (best) { used.add(best.j); anchors[i + 1] = pauses[best.j].b; }
+      });
+      anchors[chunks.length] = last + 1;
+      const keys = Object.keys(anchors).map(Number).sort((p, q) => p - q), marks = chunks.map(() => 0);
+      for (let ki = 0; ki + 1 < keys.length; ki++) {
+        const c0 = keys[ki], c1 = keys[ki + 1], A = anchors[c0], B = Math.max(anchors[c1], A + 1), vf = [];
+        for (let i = A; i < B; i++) if (on[i]) vf.push(i);
+        if (!vf.length) vf.push(A);
+        let tot = 0; for (let k = c0; k < c1; k++) tot += wts[k];
+        let acc = 0;
+        for (let k = c0; k < c1; k++) { marks[k] = vf[Math.min(vf.length - 1, Math.floor(acc / tot * vf.length))] * hop / buf.sampleRate; acc += wts[k]; }
+      }
+      return marks;
     }
 
     // ----- drawing -----
@@ -3678,6 +3854,9 @@ Keep one scene for 2-3 lines with "same" and add a tag or note on the later line
       const full = "↔ " + s, n = Math.ceil(full.length * Math.min(1, e)), wFull = x.measureText(full).width;
       x.textAlign = "left"; x.fillText(full.slice(0, n), cx - wFull / 2, cy); x.restore();
     }
+    // when each item of the scene comes in: on the word where she says it, else on the usual stagger
+    function itemT(i, def, lt) { const a = S.itemAt && S.itemAt[i]; return a ? now() - a : lt - def; }
+    function hiOn(i) { const a = S.hiAt && S.hiAt[i]; if (!a) return false; const d = now() - a; return d > 0 && d < 1500; }
     // the scene for the current line, inside the area between the title and her; returns its bottom edge
     function scene(x, W, H, v, lt, top, area) {
       const L = W * .07, R = W * .93, mw = R - L;
@@ -3710,10 +3889,10 @@ Keep one scene for 2-3 lines with "same" and add a tag or note on the later line
         }
       } else if (v.type === "windows") {
         const w = mw * .45, h = 170, b = top + 10, lx = L, rx = R - w;
-        const el = back(lt / 420), er = back((lt - 180) / 420);
+        const el = back(itemT(0, 0, lt) / 420), er = back(itemT(1, 180, lt) / 420);
         const lf = v.left || {}, rt = v.right || {};
-        x.save(); popIn(x, lx + w / 2, b + h / 2, el); browser(x, lx, b, w, h, lf.bar || "your browser", lf.text || "you"); x.restore();
-        x.save(); popIn(x, rx + w / 2, b + h / 2, er); browser(x, rx, b, w, h, rt.bar || "the website", rt.text || "", lt > 2400 && v.send); x.restore();
+        x.save(); popIn(x, lx + w / 2, b + h / 2, el); browser(x, lx, b, w, h, lf.bar || "your browser", lf.text || "you", hiOn(0)); x.restore();
+        x.save(); popIn(x, rx + w / 2, b + h / 2, er); browser(x, rx, b, w, h, rt.bar || "the website", rt.text || "", (lt > 2400 && v.send) || hiOn(1)); x.restore();
         bottom = b + h;
         if (v.send && lt > 900) {
           // a little chip hops from the browser to the website, again and again
@@ -3729,9 +3908,9 @@ Keep one scene for 2-3 lines with "same" and add a tag or note on the later line
         const it = (v.items || []).slice(0, 6), n = it.length || 1, cols = n <= 3 ? n : Math.ceil(n / 2), rows = Math.ceil(n / cols);
         const gw = mw / cols, gh = Math.min(area / rows, 140);
         it.forEach((s, i) => {
-          const e = back((lt - i * 120) / 380); if (e <= 0) return;
+          const e = back(itemT(i, i * 120, lt) / 380); if (e <= 0) return;
           const c = i % cols, r = Math.floor(i / cols), bw = gw - 20, bh = gh - 20, cx = L + c * gw + 10, cy = top + r * gh + 10;
-          const hi = i === v.hi && lt > 700 + n * 120;
+          const hi = (i === v.hi && lt > 700 + n * 120) || hiOn(i);
           x.save(); popIn(x, cx + bw / 2, cy + bh / 2, e); paper(x, cx, cy, bw, bh, 18, hi ? BLUE : null);
           text(x, String(s), cx + bw / 2, cy + bh / 2, bw - 22, "600", 32, hi ? BLUE : INK); x.restore();
           bottom = Math.max(bottom, cy + bh);
@@ -3740,8 +3919,8 @@ Keep one scene for 2-3 lines with "same" and add a tag or note on the later line
         const it = (v.items || []).slice(0, 5), rh = Math.min(70, (area - 30) / it.length), ch = rh * it.length + 30;
         const e0 = back(lt / 380); x.save(); popIn(x, W / 2, top + ch / 2, e0); paper(x, L, top, mw, ch, 20); x.restore();
         it.forEach((o, i) => {
-          const y = top + 15 + i * rh, e = ease((lt - 250 - i * 160) / 800), val = Math.max(0, Math.min(100, Number(o.value) || 0)), lw = mw * .3;
-          x.globalAlpha = Math.min(1, ease((lt - 200 - i * 160) / 250));
+          const it0 = itemT(i, 250 + i * 160, lt), y = top + 15 + i * rh, e = ease(it0 / 800), val = Math.max(0, Math.min(100, Number(o.value) || 0)), lw = mw * .3;
+          x.globalAlpha = Math.min(1, ease((it0 + 50) / 250));
           text(x, String(o.label || ""), L + 24, y + rh / 2, lw - 30, "600", 26, INK, "left");
           const tx = L + lw, tw = mw - lw - 90, th = Math.min(28, rh - 22);
           x.save(); rr(x, tx, y + (rh - th) / 2, tw, th, th / 2); x.fillStyle = "#edf0f3"; x.fill();
@@ -3752,22 +3931,24 @@ Keep one scene for 2-3 lines with "same" and add a tag or note on the later line
         x.globalAlpha = 1; bottom = top + ch;
       } else if (v.type === "vs") {
         const cw = mw * .4, ch = Math.min(area * .75, 180), y = top + 10;
-        const el = ease(lt / 450), er = ease((lt - 150) / 450), ev = back((lt - 520) / 400);
+        const el = ease(itemT(0, 0, lt) / 450), er = ease(itemT(1, 150, lt) / 450), ev = back((itemT(1, 150, lt) - 370) / 400);
         x.save(); x.globalAlpha = el; paper(x, L - (1 - el) * 120, y, cw, ch, 22); x.restore();
-        text(x, String(v.left || ""), L - (1 - el) * 120 + cw / 2, y + ch / 2, cw - 30, "600", 44, INK);
+        x.save(); x.globalAlpha = el; text(x, String(v.left || ""), L - (1 - el) * 120 + cw / 2, y + ch / 2, cw - 30, "600", 44, INK); x.restore();
         x.save(); x.globalAlpha = er; paper(x, R - cw + (1 - er) * 120, y, cw, ch, 22); x.restore();
-        text(x, String(v.right || ""), R - cw + (1 - er) * 120 + cw / 2, y + ch / 2, cw - 30, "600", 44, INK);
+        x.save(); x.globalAlpha = er; text(x, String(v.right || ""), R - cw + (1 - er) * 120 + cw / 2, y + ch / 2, cw - 30, "600", 44, INK); x.restore();
         if (ev > 0) { x.save(); x.translate(W / 2, y + ch / 2); x.scale(ev, ev); x.beginPath(); x.arc(0, 0, 36, 0, 6.3); x.fillStyle = INK; x.fill(); text(x, "vs", 0, 1, 60, "700", 30, "#fff"); x.restore(); }
         bottom = y + ch;
       } else if (v.type === "flow") {
         const st = (v.steps || []).slice(0, 4), n = st.length || 1, gap = 34, bw = (mw - gap * (n - 1)) / n, bh = Math.min(120, area * .5), y = top + 20;
+        // a flow builds left to right: a step never shows up before the one before it
+        const ts = []; for (let i = 0; i <= n; i++) ts.push(i ? Math.min(itemT(i, i * 420, lt), ts[i - 1] - 300) : itemT(0, 0, lt));
         st.forEach((s, i) => {
-          const e = back((lt - i * 420) / 360); if (e <= 0) return;
-          const bx = L + i * (bw + gap), last = i === n - 1 && lt > n * 420 + 300;
+          const e = back(ts[i] / 360); if (e <= 0) return;
+          const bx = L + i * (bw + gap), last = (i === n - 1 && lt > n * 420 + 300 && e >= 1) || hiOn(i);
           x.save(); popIn(x, bx + bw / 2, y + bh / 2, e); paper(x, bx, y, bw, bh, 18, last ? BLUE : null);
           text(x, String(s), bx + bw / 2, y + bh / 2, bw - 18, "600", 28, last ? BLUE : INK); x.restore();
           if (i < n - 1) {
-            const ea = ease((lt - i * 420 - 260) / 260); if (ea <= 0) return;
+            const ea = ease((ts[i + 1] + 160) / 260); if (ea <= 0) return;
             const ax = bx + bw + 5, ay = y + bh / 2, len = (gap - 10) * ea;
             x.save(); x.strokeStyle = BLUE; x.lineWidth = 4; x.lineCap = "round"; x.beginPath(); x.moveTo(ax, ay); x.lineTo(ax + len, ay); x.stroke();
             if (ea > .9) { x.beginPath(); x.moveTo(ax + gap - 10, ay); x.lineTo(ax + gap - 18, ay - 7); x.moveTo(ax + gap - 10, ay); x.lineTo(ax + gap - 18, ay + 7); x.stroke(); }
@@ -3775,7 +3956,7 @@ Keep one scene for 2-3 lines with "same" and add a tag or note on the later line
           }
         });
         // a dot runs along the whole path, so the flow reads at a glance
-        if (lt > n * 420 + 200 && n > 1) { const p = ((lt - n * 420) % 1600) / 1600, px = L + bw / 2 + p * (mw - bw); x.save(); x.fillStyle = BLUE; x.globalAlpha = .9; x.beginPath(); x.arc(px, y + bh + 22, 7, 0, 6.3); x.fill(); x.restore(); }
+        if (ts[n - 1] > 300 && n > 1) { const p = ((lt - n * 420) % 1600) / 1600, px = L + bw / 2 + p * (mw - bw); x.save(); x.fillStyle = BLUE; x.globalAlpha = .9; x.beginPath(); x.arc(px, y + bh + 22, 7, 0, 6.3); x.fill(); x.restore(); }
         bottom = y + bh + 30;
       } else if (v.type === "code") {
         const ls = (v.lines || []).slice(0, 4).map(String), w = mw, lh = 44, h = 56 + ls.length * lh + 16, y = top + 10, e = back(lt / 380);
@@ -3803,11 +3984,11 @@ Keep one scene for 2-3 lines with "same" and add a tag or note on the later line
         const it = (v.items || []).slice(0, 3), rh = Math.min(76, (area - 20) / it.length), ch = rh * it.length + 20;
         const e0 = back(lt / 380); x.save(); popIn(x, W / 2, top + ch / 2, e0); paper(x, L, top, mw, ch, 20); x.restore();
         it.forEach((s, i) => {
-          const e = ease((lt - 300 - i * 320) / 380); if (e <= 0) return;
+          const e = ease(itemT(i, 300 + i * 320, lt) / 380); if (e <= 0) return;
           const y = top + 10 + i * rh + rh / 2;
           x.save(); x.globalAlpha = e; x.beginPath(); x.arc(L + 40, y, 15, 0, 6.3); x.fillStyle = BLUE; x.fill();
           x.strokeStyle = "#fff"; x.lineWidth = 3.5; x.lineCap = "round"; x.lineJoin = "round"; x.beginPath(); x.moveTo(L + 33, y); x.lineTo(L + 38, y + 6); x.lineTo(L + 48, y - 6); x.stroke(); x.restore();
-          x.save(); x.globalAlpha = e; text(x, String(s), L + 70 + (1 - e) * 30, y, mw - 100, "500", 28, INK, "left"); x.restore();
+          x.save(); x.globalAlpha = e; text(x, String(s), L + 70 + (1 - e) * 30, y, mw - 100, hiOn(i) ? "600" : "500", 28, hiOn(i) ? BLUE : INK, "left"); x.restore();
         });
         bottom = top + ch;
       }
@@ -3828,11 +4009,15 @@ Keep one scene for 2-3 lines with "same" and add a tag or note on the later line
     // her words, a few at a time, as little outlined chips beside her head (the last few fade below, faint)
     function chips(x, W, H, tm) {
       if (!S.say || !S.chunks2.length) return;
-      const a = S.audio, total = S.chunks2.reduce((n, c) => n + c.join(" ").length + 2, 0);
-      const frac = a && a.duration && isFinite(a.duration) ? Math.min(1, a.currentTime / a.duration) : Math.min(1, (tm - S.sayAt) / (S.say.split(/\s+/).length * 230));
-      let acc = 0, idx = 0;
-      for (let i = 0; i < S.chunks2.length; i++) { acc += S.chunks2[i].join(" ").length + 2; idx = i; if (acc / total > frac + .02) break; }
-      if (idx !== S.chIdx) { S.prevChunk = S.chIdx >= 0 ? S.chunks2[S.chIdx] : null; S.chIdx = idx; S.chAt = tm; }
+      let idx = 0;
+      if (S.marks && S.audio) { const tt = S.ac.currentTime - S.clipAt + .1; S.marks.forEach((m, i) => { if (tt >= m) idx = i; }); }
+      else if (S.marks) idx = S.chunks2.length - 1;   // her line has finished: leave its last words up
+      else {
+        const total = S.chunks2.reduce((n, c) => n + c.join(" ").length + 2, 0), frac = Math.min(1, (tm - S.sayAt) / (S.say.split(/\s+/).length * 230));
+        let acc = 0;
+        for (let i = 0; i < S.chunks2.length; i++) { acc += S.chunks2[i].join(" ").length + 2; idx = i; if (acc / total > frac + .02) break; }
+      }
+      if (idx !== S.chIdx) { S.prevChunk = S.chIdx >= 0 ? S.chunks2[S.chIdx] : null; S.chIdx = idx; S.chAt = tm; fx.chip(0); }
       const k = ease(S.sm), ax = W * (.56 - .14 * k), ay = H * (.47 + .28 * k), maxW = W * (.38 + .1 * k);
       x.save(); x.font = F("600", 30); x.textBaseline = "middle";
       let cx = ax, cy = ay; const ch = 50, gap = 8;
@@ -3916,6 +4101,9 @@ Keep one scene for 2-3 lines with "same" and add a tag or note on the later line
       try { S.ac = S.ac || new (window.AudioContext || window.webkitAudioContext)(); await S.ac.resume(); } catch (e) {}
       try { document.fonts && await document.fonts.load("700 40px Fredoka"); } catch (e) {}
       const dest = S.ac.createMediaStreamDestination();
+      const bus = (v) => { const g = S.ac.createGain(); g.gain.value = v; g.connect(dest); g.connect(S.ac.destination); return g; };
+      S.voiceBus = bus(1); S.sfxBus = bus(.7); S.musBus = bus(.3);
+      S.sfx = S.el.querySelector("#stu-sfx").checked;
       const vstream = S.cv.captureStream(30);
       const mix = new MediaStream([...vstream.getVideoTracks(), ...dest.stream.getAudioTracks()]);
       const mime = ["video/webm;codecs=vp9,opus", "video/webm;codecs=vp8,opus", "video/webm"].find((m) => window.MediaRecorder && MediaRecorder.isTypeSupported(m)) || "video/webm";
@@ -3928,41 +4116,54 @@ Keep one scene for 2-3 lines with "same" and add a tag or note on the later line
       };
       // the next line's voice is fetched while the current one plays, so there are no gaps
       const lines = S.pack.lines, n = lines.length;
-      const clips = lines.map((l) => voiceFor(l.say, dest));
+      const clips = lines.map((l) => voiceFor(l.say));
       const first = await clips[0];
       S.vis = null; S.title = ""; S.sub = ""; S.prevMood = "";
       S.rec.start();
+      hiss(.01, 1000, 1000, .0001, 0);   // makes the noise buffer the hi-hat uses
+      if (S.el.querySelector("#stu-mus").checked) music(true);
       S.nameUntil = now() + 4000;
       for (let i = 0; i < n; i++) {
         if (!S.playing) break;
+        const c = i ? await clips[i] : first;
         setLine(i, false);
-        await playClip(i ? await clips[i] : first);
+        if (c) { c.marks = align(c.buf, S.chunks2); cueLine(c.marks, now() + 30); }
+        else if (S.cue === "new") sceneSounds(S.vis);
+        await playClip(c);
         await wait(160);
       }
-      setMood("wink"); setSay("follow for more ♡");
-      await wait(1600);
+      setMood("wink"); setSay("follow for more ♡"); fx.ding(200);
+      await wait(1300);
+      music(false);
+      await wait(700);
       stopRec();
     }
-    function voiceFor(text, dest) {
-      const a = new Audio("/api/voice?v=" + encodeURIComponent(voicePick().name) + "&m=happy&t=" + encodeURIComponent(sayClean(text)));
-      a.preload = "auto";
-      try { const src = S.ac.createMediaElementSource(a); src.connect(dest); src.connect(S.ac.destination); } catch (e) {}
-      return new Promise((ok) => { a.oncanplaythrough = () => ok(a); a.onerror = () => ok(null); setTimeout(() => ok(a), 8000); a.load(); });
+    // her voice for one line, fetched once and decoded, so we can both play it and read its timing
+    async function voiceFor(text) {
+      const ctl = new AbortController(), tid = setTimeout(() => ctl.abort(), 20000);
+      try {
+        const r = await fetch("/api/voice?v=" + encodeURIComponent(voicePick().name) + "&m=happy&t=" + encodeURIComponent(sayClean(text)), { credentials: "same-origin", signal: ctl.signal });
+        if (!r.ok) return null;
+        return { buf: await S.ac.decodeAudioData(await r.arrayBuffer()) };
+      } catch (e) { return null; } finally { clearTimeout(tid); }
     }
-    function playClip(a) {
+    function playClip(c) {
       return new Promise((done) => {
-        if (!a || !S.playing) return done();
-        S.audio = a;
-        a.onended = a.onerror = () => { S.audio = null; done(); };
-        a.play().catch(() => done());
-        setTimeout(done, 15000);
+        if (!c || !S.playing) return done();
+        const src = S.ac.createBufferSource(); src.buffer = c.buf; src.connect(S.voiceBus);
+        S.clipAt = S.ac.currentTime + .03; S.marks = c.marks; S.audio = src;
+        if (S.musBus) S.musBus.gain.setTargetAtTime(.2, S.ac.currentTime, .15);   // the music dips a little under her voice
+        let fin = false; const end = () => { if (fin) return; fin = true; if (S.audio === src) S.audio = null; if (S.musBus) S.musBus.gain.setTargetAtTime(.3, S.ac.currentTime, .3); done(); };
+        src.onended = end; src.start(S.clipAt);
+        setTimeout(end, c.buf.duration * 1000 + 3000);
       });
     }
     const sayClean = (s) => String(s).replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}\u{200D}]/gu, "").replace(/\s+/g, " ").trim().slice(0, 300);
     const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     function stopRec(silent) {
       S.playing = false;
-      try { if (S.audio) S.audio.pause(); } catch (e) {}
+      try { if (S.audio) S.audio.stop(); } catch (e) {}
+      try { S.ac && music(false); } catch (e) {}
       try { if (S.rec && S.rec.state !== "inactive") S.rec.stop(); } catch (e) {}
       S.rec = null;
       if (silent && S.el) { const b = S.el.querySelector("#stu-rec"); if (b) b.textContent = "⏺️ " + t("studioRec"); }

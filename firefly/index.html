@@ -722,7 +722,7 @@
   @media (max-width: 680px) { .stu-wrap { grid-template-columns: 1fr; } }
   .stu-stagewrap { position: relative; }
   .stu-stage { width: 100%; aspect-ratio: 9/16; border-radius: 16px; background: #000; box-shadow: 0 12px 30px rgba(0,0,0,.5); display: block; }
-  .stu-badge { position: absolute; top: 8px; left: 8px; background: rgba(0,0,0,.55); color: #fff; font: 700 11px var(--body); padding: 4px 8px; border-radius: 999px; letter-spacing: .04em; }
+  .stu-badge { position: absolute; bottom: 8px; left: 8px; background: rgba(0,0,0,.55); color: #fff; font: 700 11px var(--body); padding: 4px 8px; border-radius: 999px; letter-spacing: .04em; }
   .stu-side { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
   .stu-row { display: flex; gap: 8px; }
   .stu-row input { flex: 1; min-width: 0; border-radius: 12px; border: 1px solid var(--glass-line); background: var(--surface-2); color: #fff; padding: 10px 12px; }
@@ -3498,12 +3498,14 @@ Start with one face tag like [thinking] [happy], then your help.`, Object.assign
       el.querySelector("#stu-rec").onclick = () => (S.playing ? stopRec() : record());
       // her room as the backdrop, and her idle + talking loops for the body
       S.bg = Object.assign(new Image(), { src: (WALLS[VC.room] && WALLS[VC.room].img) || "luma/wall_cozy.webp" });
-      S.vids.idle = mkVid("luma/vc/idle.webm"); S.vids.talk = mkVid("luma/vc/talk_a.webm");
-      S.cur = "idle"; S.cap = ""; draw();
+      // clean full images of her (no cropped heads, no keying halo) — shown as cards with motion captions
+      S.imgs = ["face_main", "face_3", "life_portrait", "face_2", "face_5", "outfit_front", "face_4"].map((n) => Object.assign(new Image(), { src: "luma/" + n + ".webp" }));
+      S.shot = 0; S.cap = ""; S.title = ""; S.prog = 0; S.capAt = performance.now(); S.imgAt = performance.now();
+      draw();
       return "ok";
     }
     function mkVid(src) { const v = document.createElement("video"); v.src = src; v.loop = true; v.muted = true; v.playsInline = true; v.play().catch(() => {}); return v; }
-    function stageMsg(m) { S.cap = m; }
+    function stageMsg(m) { S.title = m; }
     async function idea() {
       const s = session && session.free ? session : { free: true, weight: 0, tags: [], turns: [], worries: [], intention: "" };
       stageMsg("thinking of an idea…");
@@ -3538,31 +3540,62 @@ Be accurate and genuinely simple, never generic filler. Language: ALL of it in n
         <div class="stu-card"><div class="row split"><h5>${t("studioCap")}</h5><button type="button" class="stu-copy" data-copy="cap">${t("copy")}</button></div><p dir="auto" id="stu-igcap">${esc(p.igCaption || "")}</p></div>
         <div class="stu-card"><div class="row split"><h5>${t("studioTags")}</h5><button type="button" class="stu-copy" data-copy="tags">${t("copy")}</button></div><p dir="ltr" id="stu-tags">${esc(tags)}</p></div>`;
       S.el.querySelector("#stu-actions").hidden = false;
+      S.shot = 0; S.imgAt = performance.now(); S.title = ""; S.cap = "";
       S.el.querySelectorAll("[data-copy]").forEach((b) => b.onclick = () => {
         const v = b.dataset.copy === "tags" ? tags : (p.igCaption || "");
         navigator.clipboard.writeText(v).then(() => { b.textContent = "✓"; setTimeout(() => (b.textContent = t("copy")), 1200); }).catch(() => {});
       });
     }
     // draw one frame: room (cover), her alpha loop (contain, bottom), the caption burned in big
+    function rrect(x, a, b, w, h, r) { x.beginPath(); if (x.roundRect) x.roundRect(a, b, w, h, r); else { x.moveTo(a + r, b); x.arcTo(a + w, b, a + w, b + h, r); x.arcTo(a + w, b + h, a, b + h, r); x.arcTo(a, b + h, a, b, r); x.arcTo(a, b, a + w, b, r); x.closePath(); } }
     function draw() {
-      const x = S.cx, W = S.cv.width, H = S.cv.height;
+      const x = S.cx, W = S.cv.width, H = S.cv.height, now = performance.now();
       x.clearRect(0, 0, W, H);
+      // blurred room backdrop
       if (S.bg && S.bg.complete && S.bg.naturalWidth) {
-        const r = Math.max(W / S.bg.naturalWidth, H / S.bg.naturalHeight), iw = S.bg.naturalWidth * r, ih = S.bg.naturalHeight * r;
-        x.drawImage(S.bg, (W - iw) / 2, (H - ih) / 2, iw, ih);
-      } else { x.fillStyle = "#1a1640"; x.fillRect(0, 0, W, H); }
-      const g = x.createLinearGradient(0, 0, 0, H); g.addColorStop(0, "rgba(10,10,30,.35)"); g.addColorStop(.5, "rgba(10,10,30,0)"); g.addColorStop(1, "rgba(10,10,30,.75)"); x.fillStyle = g; x.fillRect(0, 0, W, H);
-      const v = S.vids[S.cur];
-      if (v && v.videoWidth) { const vh = H * .82, vw = vh * (v.videoWidth / v.videoHeight); x.drawImage(v, (W - vw) / 2, H - vh, vw, vh); }
-      if (S.cap) {
-        x.font = "800 " + Math.round(W * .072) + "px " + "Manrope, system-ui, sans-serif";
-        x.textAlign = "center"; x.textBaseline = "bottom"; x.lineJoin = "round";
-        const words = String(S.cap).split(/\s+/), lines = []; let ln = "";
-        for (const w of words) { const tr = ln ? ln + " " + w : w; if (x.measureText(tr).width > W * .86 && ln) { lines.push(ln); ln = w; } else ln = tr; }
-        if (ln) lines.push(ln);
-        const lh = W * .092; let y = H * .80 + lines.length * lh;
-        for (const L of lines) { x.lineWidth = W * .018; x.strokeStyle = "rgba(10,8,25,.9)"; x.strokeText(L, W / 2, y); x.fillStyle = "#fff"; x.fillText(L, W / 2, y); y -= lh; }
+        const r = Math.max(W / S.bg.naturalWidth, H / S.bg.naturalHeight) * 1.12, iw = S.bg.naturalWidth * r, ih = S.bg.naturalHeight * r;
+        try { x.filter = "blur(16px) brightness(.62)"; } catch (e) {}
+        x.drawImage(S.bg, (W - iw) / 2, (H - ih) / 2, iw, ih); try { x.filter = "none"; } catch (e) {}
+      } else { x.fillStyle = "#17123a"; x.fillRect(0, 0, W, H); }
+      const g = x.createLinearGradient(0, 0, 0, H); g.addColorStop(0, "rgba(20,16,50,.55)"); g.addColorStop(.5, "rgba(20,16,50,.18)"); g.addColorStop(1, "rgba(12,9,32,.9)"); x.fillStyle = g; x.fillRect(0, 0, W, H);
+      // her image in a rounded card, slow ken-burns zoom (full head, no crop)
+      const im = S.imgs && S.imgs[(S.shot || 0) % S.imgs.length];
+      if (im && im.complete && im.naturalWidth) {
+        const cardW = W * .74, cardH = cardW, cx0 = (W - cardW) / 2, cy0 = H * .105;
+        const z = 1 + Math.min(.12, (now - (S.imgAt || now)) / 42000);
+        x.save(); rrect(x, cx0, cy0, cardW, cardH, 30); x.clip();
+        const r = Math.max(cardW / im.naturalWidth, cardH / im.naturalHeight) * z, iw = im.naturalWidth * r, ih = im.naturalHeight * r;
+        x.drawImage(im, cx0 + (cardW - iw) / 2, cy0 + (cardH - ih) / 2 - cardH * .04, iw, ih);
+        x.restore();
+        x.save(); rrect(x, cx0, cy0, cardW, cardH, 30); x.lineWidth = 3; x.strokeStyle = "rgba(255,255,255,.2)"; x.stroke(); x.restore();
       }
+      // big animated keyword caption (motion graphics): pops in on a pill
+      if (S.cap) {
+        const tt = Math.min(1, (now - (S.capAt || now)) / 240), e = 1 - Math.pow(1 - tt, 3), scale = .72 + .28 * e;
+        x.save(); x.textAlign = "center"; x.textBaseline = "middle";
+        x.font = "800 " + Math.round(W * .086 * scale) + "px Manrope, system-ui, sans-serif";
+        const words = String(S.cap).split(/\s+/), lines = []; let ln = "";
+        for (const w of words) { const tr = ln ? ln + " " + w : w; if (x.measureText(tr).width > W * .82 && ln) { lines.push(ln); ln = w; } else ln = tr; }
+        if (ln) lines.push(ln);
+        const lh = W * .1 * scale, totalH = lines.length * lh, pad = W * .045, cy = H * .76;
+        const maxw = Math.max.apply(null, lines.map((l) => x.measureText(l).width));
+        x.globalAlpha = e; rrect(x, (W - maxw) / 2 - pad, cy - totalH / 2 - pad * .55, maxw + pad * 2, totalH + pad * 1.1, 22); x.fillStyle = "rgba(123,90,255,.92)"; x.fill();
+        x.fillStyle = "#fff"; let yy = cy - totalH / 2 + lh / 2;
+        for (const L of lines) { x.fillText(L, W / 2, yy); yy += lh; }
+        x.restore();
+      }
+      // hook / title text at the top
+      if (S.title) {
+        x.save(); x.textAlign = "center"; x.textBaseline = "top"; x.lineJoin = "round";
+        x.font = "800 " + Math.round(W * .056) + "px Manrope, system-ui, sans-serif";
+        const words = String(S.title).split(/\s+/), lines = []; let ln = "";
+        for (const w of words) { const tr = ln ? ln + " " + w : w; if (x.measureText(tr).width > W * .9 && ln) { lines.push(ln); ln = w; } else ln = tr; }
+        if (ln) lines.push(ln);
+        let y = H * .035;
+        for (const L of lines) { x.lineWidth = W * .014; x.strokeStyle = "rgba(10,8,25,.9)"; x.strokeText(L, W / 2, y); x.fillStyle = "#ffe9b0"; x.fillText(L, W / 2, y); y += W * .066; }
+        x.restore();
+      }
+      if (S.prog > 0) { x.fillStyle = "rgba(255,255,255,.2)"; x.fillRect(0, H - 6, W, 6); x.fillStyle = "#ffd27a"; x.fillRect(0, H - 6, W * Math.min(1, S.prog), 6); }
       S.raf = requestAnimationFrame(draw);
     }
     async function record() {
@@ -3583,15 +3616,19 @@ Be accurate and genuinely simple, never generic filler. Language: ALL of it in n
         recBtn.textContent = "⏺️ " + t("studioRec");
       };
       S.rec.start();
-      stageMsg(S.pack.hook || "");
-      await wait(700);
-      for (const line of S.pack.lines) {
+      const n = S.pack.lines.length;
+      S.title = S.pack.hook || ""; S.cap = ""; S.shot = 0; S.imgAt = performance.now(); S.prog = 0;
+      await wait(900); S.title = "";
+      for (let i = 0; i < n; i++) {
         if (!S.playing) break;
-        S.cap = line.cap || line.say; S.cur = "talk";
+        const line = S.pack.lines[i];
+        S.shot = i; S.imgAt = performance.now();
+        S.cap = line.cap || line.say; S.capAt = performance.now();
+        S.prog = (i + .4) / n;
         await speakLine(line.say, dest);
-        S.cur = "idle"; await wait(180);
+        S.prog = (i + 1) / n; await wait(160);
       }
-      S.cap = ""; S.cur = "idle"; await wait(400);
+      S.cap = ""; S.title = "follow for more ♡"; S.prog = 1; await wait(900); S.title = "";
       stopRec();
     }
     function speakLine(text, dest) {

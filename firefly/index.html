@@ -3473,7 +3473,7 @@ Start with one face tag like [thinking] [happy], then your help.`, Object.assign
     const INK = "#2b2d42", MUTED = "#7d8796", BLUE = "#2f6bff", BG1 = "#e3ecea", BG2 = "#cfdedb";
     const S = { el: null, pack: null, rec: null, ac: null, raf: 0, playing: false, chunks: [], faces: {}, line: -1, mood: "explain", prevMood: "", moodAt: 0, vis: null, visAt: 0, addAt: 0, say: "", sayAt: 0, chunks2: [], chIdx: -1, chAt: 0, audio: null, title: "", sub: "", titleAt: 0, sm: 0, nameUntil: 0, bgc: null };
     const NICHE = "a cute anime girl who explains tech and computer-science concepts in the simplest, coziest, most beginner-friendly way (e.g. what browser cookies are, CPU cores vs threads, RAM vs storage, what an API is, why your PC lags, how the internet works, Git, caching), warm and a little kawaii, hook + one simple explanation + a question CTA";
-    const BUSY = { windows: 1, flow: 1, bars: 1, code: 1, device: 1, art: 1 };
+    const BUSY = { windows: 1, flow: 1, bars: 1, code: 1, device: 1, art: 1, kinetic: 1, gauge: 1, slider: 1, path: 1, zoom: 1 };
     // the clock: real time while previewing, a virtual clock (exact 30 fps steps) while exporting a Reel
     const now = () => (S.off ? S.vt : performance.now());
     const tnow = () => (S.off ? S.vt / 1000 : S.ac.currentTime);
@@ -3538,7 +3538,7 @@ Sound ALIVE and human, like talking to friends you adore: natural little openers
 Write it as JSON only:
 {"hook":"the scroll-stopping first line, a question or surprise (<9 words)",
 "lines":[{"say":"what you say out loud, one short spoken sentence in simple words","title":"the big title at the top, 1-3 words like \\"Click.\\" or \\"cookies\\" or \\"websites forget you\\"; give it only when the scene changes","sub":"optional tiny grey line under the title (<7 words)","mood":"her pose, one of surprised|wink|think|grin|point|smug|explain|glasses|adjust (pushing up her glasses: 'actually...')|heart (heart hands: love for her followers)|shy|sassy (hand on hip: 'excuse me?')|blush (sweet, thankful)|laugh (after a joke)|stop (palm out: 'wait! don't!')|annoyed (arms crossed)|phone (holding a phone: phone topics)|present (presenting: 'ta-da, here it is')|aside (pointing at the boxes on screen)|coffee (cozy, calm)|thumbsup (good job, approved)|listen (one finger up, serious: 'listen, this matters')|showcase (open palm, showing something off)|shrug ('who knows?', 'it depends')|laptop (holding a laptop: computer topics)|funfact (finger up, smiling: 'fun fact!'); her mouth is OPEN in surprised, wink, grin, point, glasses, adjust, laugh, listen, showcase, laptop, funfact, so use those for talking lines; the others (closed mouth) suit short reactions of a few words","tone":"how your voice sounds on this line, one of excited|happy|thinking|pout|shy|sad (pout = playful teasing)","visual":SCENE}, ... 7 to 10 lines (beats count), 20-35 seconds spoken; first line is the hook (mood surprised or think), last line is the question CTA (mood wink or point)],
-"igCaption":"a warm IG caption with 1-2 small kaomoji","hashtags":["#tag", ... 6 to 10 relevant tech hashtags]}
+"theme":"one of mint|night|paper|peach (the look of the whole Reel: night for gaming/hacking, paper for explainers/history, peach for cozy/phone topics, mint default)","igCaption":"a warm IG caption with 1-2 small kaomoji","hashtags":["#tag", ... 6 to 10 relevant tech hashtags]}
 SCENE is one of (labels short, no emoji):
 {"type":"popup","title":"We use cookies","yes":"ACCEPT ALL","no":"REJECT ALL","pick":"yes"}  (a UI dialog, a cursor clicks the picked button)
 {"type":"windows","left":{"bar":"your browser","text":"you"},"right":{"bar":"shop.example","text":"the website"},"send":"cookie"}  (two browser windows; "send" is an optional little chip travelling left->right)
@@ -3550,6 +3550,11 @@ SCENE is one of (labels short, no emoji):
 {"type":"big","text":"100%"}  (one big number or word)
 {"type":"list","items":["short point","short point"]}  (up to 3)
 {"type":"device","device":"phone","app":"notification","notes":[{"from":"System","title":"Phone is too hot","text":"Charging paused until it cools down","color":"#e2456a"}]}  (DEVICE B-ROLL: a clean phone or laptop mockup that SHOWS the moment. apps: notification (notes up to 3) | chat ("title":"name","msgs":[{"from":"them","text":"..."},{"from":"me","text":"..."}]) | settings (laptop by default: "window":"Display settings","title":"Display","rows":[{"label":"Refresh rate","value":"60 Hz","to":"144 Hz"},{"label":"XMP","value":"off","to":"on"}] -> the cursor changes the value / flips the switch) | stat ("title":"CPU temperature","value":"92°C","bad":true,"trend":"up") | download ("title":"Game name","from":0,"to":0,"stuck":true,"text":"0 B/s"); "device" must be the REAL subject of the topic: "phone" (phone topics), "laptop" (laptop topics), "monitor" (PC / PC gaming), "tv" (consoles: a TV with a console beside it; "hot":true adds heat waves), or "card" (just a clean card, when no device is the subject, e.g. a password strength or a general number). Never show a phone for a console or PC topic. "low":true shows a low battery)
+{"type":"kinetic","words":["8 CORES","STILL","FREEZES?"],"hi":2}  (KINETIC TYPE: 2-4 short words slam in as she says them, "hi" = the key word; great for the hook)
+{"type":"gauge","title":"CPU temperature","value":92,"max":100,"unit":"°C","bad":true}  (a dial filling up, needle swinging)
+{"type":"slider","before":{"value":"60 Hz","label":"before","bad":true},"after":{"value":"144 Hz","label":"after"}}  (before/after with a sweeping divider; a side can use "art":"name" instead of "value")
+{"type":"path","nodes":["You","Router","Server"],"label":"200 ms","bad":true}  (a route with a packet travelling along it: networks, data, steps of a journey)
+{"type":"zoom","art":"name","at":[0.6,0.4],"label":"memory chips"}  (an illustration, then a magnifier zooms into one detail of it)
 {"type":"art","art":"name","text":"optional short caption","motion":"float|shake"}  (an ILLUSTRATION made for the Reel: a clean 3D clay-style picture of the exact thing she's talking about, file luma/reel/art/<name>.webp; use one whenever a picture says it better than a box: the console in a closed cabinet, a potato with earbuds, a fish tank blocking Wi-Fi...)
 {"type":"same"}  (keep the previous scene, for continuity)
 Any scene (also "same") may add "tag":"a sticky-note label like it's you!" and/or "note":"a short blue annotation like sent back every visit".
@@ -3596,6 +3601,7 @@ Keep one scene for 2-3 lines with "same" and add a tag or note on the later line
     function setLine(i, preview) {
       const l = S.pack && S.pack.lines[i]; if (!l) return;
       S.line = i; S.cue = ""; S.addV = null; S.moodSwap = null;
+      const oldVis = S.vis, oldAt = S.visAt, oldItems = S.itemAt;
       let v = l.visual && typeof l.visual === "object" ? l.visual : null;
       if (!v || v.type === "same" || !v.type) {
         // keep the scene, only add the new sticky note / annotation
@@ -3604,6 +3610,8 @@ Keep one scene for 2-3 lines with "same" and add a tag or note on the later line
       } else if (S.vis && S.vis.type === v.type && v.type !== "popup" && v.type !== "device" && JSON.stringify(itemLabels(S.vis)) === JSON.stringify(itemLabels(v))) { S.vis = Object.assign({}, S.vis, v); S.addAt = now(); S.cue = "add"; S.addV = v; }   // same scene again: build on it, don't redraw it
       else { S.vis = v; S.visAt = now(); S.addAt = now() + 900; S.cue = "new"; S.itemAt = null; }
       S.hiAt = null;
+      if (oldVis && S.vis !== oldVis && S.visAt !== oldAt) { S.prevVis = oldVis; S.prevVisAt = oldAt; S.prevItemAt = oldItems; S.trDir = (S.trDir || 1) * -1; }
+      else if (S.visAt !== oldAt) S.prevVis = null;
       if (l.title && l.title !== S.title) { if (!preview && now() - S.visAt > 50) fx.whoosh(0); S.title = l.title; S.sub = l.sub || ""; S.titleAt = now(); }
       else if (l.sub && l.sub !== S.sub) { S.sub = l.sub; S.titleAt = now() - 300; }
       setMood(l.mood);
@@ -3657,6 +3665,11 @@ Keep one scene for 2-3 lines with "same" and add a tag or note on the later line
       else if (ty === "code") { fx.pop(O); const c = (v.lines || []).slice(0, 4).join("").length; for (let k = 0; k < Math.min(90, c); k += 2) fx.tick(O + 350 + k * 38); }
       else if (ty === "big") { fx.pop(O); fx.thwip(O + 400); }
       else if (ty === "art") { fx.pop(O); }
+      else if (ty === "kinetic") { (v.words || []).slice(0, 4).forEach((w, i) => { const t = d(i, O + i * 380); fx.thwip(t); blip(160, 70, .16, .16, "sine", t); }); }
+      else if (ty === "gauge") { fx.pop(O); for (let k = 0; k < 12; k++) fx.tick(O + 400 + k * 110); if (v.bad) fx.boing(O + 1700); }
+      else if (ty === "slider") { fx.pop(O); fx.whoosh(O + 900); fx.ding(O + 2200); }
+      else if (ty === "path") { fx.pop(O); (v.nodes || []).forEach((_, i) => fx.chip(O + i * 450)); fx.thwip(O + 1500); }
+      else if (ty === "zoom") { fx.pop(O); fx.whoosh(O + 1100); fx.check(O + 1500); }
       else if (ty === "device") { fx.pop(O); const n = (v.rows || v.msgs || v.notes || [1]).length; for (let i = 0; i < Math.min(4, n); i++) fx.chip(d(i, O + 400 + i * 600)); }
       else if (ty === "broll") { (v.icons || []).slice(0, 4).forEach((n, i) => fx.pop(d(i, O + (i ? 500 + (i - 1) * 350 : 0)))); if (v.motion === "spin") fx.thwip(O + 200); }
       else if (ty === "list") { fx.pop(O); (v.items || []).slice(0, 3).forEach((s, i) => fx.check(d(i, O + 300 + i * 320))); }
@@ -3717,7 +3730,8 @@ Keep one scene for 2-3 lines with "same" and add a tag or note on the later line
       if (v.type === "windows") return [String((v.left || {}).text || ""), String((v.right || {}).text || "")];
       if (v.type === "big") return [String(v.text || "")];
       if (v.type === "broll") return (v.icons || []).map(String);
-      if (v.type === "device" || v.type === "art") return [];   // a screen plays out on its own little timeline, not word by word
+      if (v.type === "device" || v.type === "art" || v.type === "gauge" || v.type === "slider" || v.type === "path" || v.type === "zoom") return [];
+      if (v.type === "kinetic") return (v.words || []).map(String);   // a screen plays out on its own little timeline, not word by word
       if (v.type === "code") return (v.lines || []).map(String);
       return [];
     }
@@ -3840,25 +3854,36 @@ Keep one scene for 2-3 lines with "same" and add a tag or note on the later line
       rr(x, a, b, w, h, r); x.fillStyle = fill || "#fff"; x.fill(); x.restore();
       if (stroke) { x.save(); rr(x, a, b, w, h, r); x.lineWidth = 3.5; x.strokeStyle = stroke; x.stroke(); x.restore(); }
     }
+    // looks a Reel can wear (the pack's "theme"): the backdrop, the title colours and the light that drifts over it
+    const THEMES = {
+      mint: { bg: [BG1, BG2], dot: "rgba(60,90,95,.07)", vig: "rgba(120,150,150,.18)", glow: "rgba(255,255,255,.35)", title: INK, sub: MUTED, pattern: "dots" },
+      night: { bg: ["#121a36", "#1d2a57"], dot: "rgba(140,170,255,.10)", vig: "rgba(5,8,25,.45)", glow: "rgba(90,130,255,.20)", title: "#ffffff", sub: "#a9b8e6", pattern: "grid" },
+      paper: { bg: ["#f8f2e6", "#efe4cf"], dot: "rgba(70,110,180,.13)", vig: "rgba(150,120,80,.16)", glow: "rgba(255,250,235,.45)", title: "#2b2d42", sub: "#8a7f6d", pattern: "lines" },
+      peach: { bg: ["#ffe8dd", "#f5d4e6"], dot: "rgba(160,90,110,.08)", vig: "rgba(170,110,130,.16)", glow: "rgba(255,255,255,.40)", title: "#3a2a3f", sub: "#9a7d8c", pattern: "dots" },
+    };
+    const TH = () => THEMES[S.pack && S.pack.theme] || THEMES.mint;
     function backdrop(x, W, H, tm) {
-      if (!S.bgc) {
-        // the still part (soft pastel gradient, a faint dot grid) is drawn once
+      const th = TH();
+      if (!S.bgc || S.bgTheme !== th) {
+        // the still part (gradient + a faint pattern) is drawn once per theme
         const c = document.createElement("canvas"); c.width = W; c.height = H; const y = c.getContext("2d");
-        const g = y.createLinearGradient(0, 0, 0, H); g.addColorStop(0, BG1); g.addColorStop(1, BG2);
+        const g = y.createLinearGradient(0, 0, 0, H); g.addColorStop(0, th.bg[0]); g.addColorStop(1, th.bg[1]);
         y.fillStyle = g; y.fillRect(0, 0, W, H);
-        y.fillStyle = "rgba(60,90,95,.07)";
-        for (let yy = 18; yy < H; yy += 36) for (let xx = 18; xx < W; xx += 36) { y.beginPath(); y.arc(xx, yy, 1.6, 0, 6.3); y.fill(); }
+        y.fillStyle = th.dot; y.strokeStyle = th.dot; y.lineWidth = 1.5;
+        if (th.pattern === "grid") { for (let k = 0; k < W; k += 48) { y.beginPath(); y.moveTo(k, 0); y.lineTo(k, H); y.stroke(); } for (let k = 0; k < H; k += 48) { y.beginPath(); y.moveTo(0, k); y.lineTo(W, k); y.stroke(); } }
+        else if (th.pattern === "lines") { for (let k = 120; k < H; k += 42) { y.beginPath(); y.moveTo(0, k); y.lineTo(W, k); y.stroke(); } y.strokeStyle = "rgba(220,90,90,.18)"; y.beginPath(); y.moveTo(64, 0); y.lineTo(64, H); y.stroke(); }
+        else for (let yy = 18; yy < H; yy += 36) for (let xx = 18; xx < W; xx += 36) { y.beginPath(); y.arc(xx, yy, 1.6, 0, 6.3); y.fill(); }
         const v = y.createRadialGradient(W / 2, H * .45, H * .3, W / 2, H * .45, H * .8);
-        v.addColorStop(0, "rgba(255,255,255,0)"); v.addColorStop(1, "rgba(120,150,150,.18)");
+        v.addColorStop(0, "rgba(0,0,0,0)"); v.addColorStop(1, th.vig);
         y.fillStyle = v; y.fillRect(0, 0, W, H);
-        S.bgc = c;
+        S.bgc = c; S.bgTheme = th;
       }
       x.drawImage(S.bgc, 0, 0);
       // two slow soft light blobs so the frame never feels frozen
       for (const [px, py, r, sp] of [[.25, .3, .55, 7000], [.8, .7, .5, 9000]]) {
         const cx = W * px + Math.sin(tm / sp) * 40, cy = H * py + Math.cos(tm / sp) * 50;
         const rg = x.createRadialGradient(cx, cy, 0, cx, cy, W * r);
-        rg.addColorStop(0, "rgba(255,255,255,.35)"); rg.addColorStop(1, "rgba(255,255,255,0)");
+        rg.addColorStop(0, th.glow); rg.addColorStop(1, "rgba(255,255,255,0)");
         x.fillStyle = rg; x.fillRect(0, 0, W, H);
       }
     }
@@ -4008,7 +4033,7 @@ Keep one scene for 2-3 lines with "same" and add a tag or note on the later line
     }
     function loadIcons(pack) {
       const want = new Set(), arts = new Set();
-      for (const l of pack.lines || []) { const v = l.visual || {}; (v.icons || []).forEach((n) => want.add(n)); if (v.art) arts.add(v.art); }
+      for (const l of pack.lines || []) { const v = l.visual || {}; (v.icons || []).forEach((n) => want.add(n)); if (v.art) arts.add(v.art); if (v.before && v.before.art) arts.add(v.before.art); if (v.after && v.after.art) arts.add(v.after.art); }
       const ready = [...arts].map((n) => new Promise((ok) => { art(n); const im = ART[String(n).toLowerCase().replace(/[^a-z0-9_]/g, "")]; if (!im || im.complete) return ok(); im.onload = im.onerror = ok; setTimeout(ok, 6000); }));
       return Promise.all(ready.concat([...want].map((n) => new Promise((ok) => { icon(n); const im = ICON[String(n).toLowerCase()]; if (!im || im.complete) return ok(); im.onload = im.onerror = ok; setTimeout(ok, 5000); }))));
     }
@@ -4190,6 +4215,33 @@ Keep one scene for 2-3 lines with "same" and add a tag or note on the later line
         text(x, String(v.text || ""), bx + bw, by + 32 * u, bw * .6, "700", 14 * u, v.stuck ? "#e2456a" : MUTED, "right");
       }
     }
+    // scene layers (so a whole scene can fade, slide and zoom as one picture)
+    function layerCtx(W, H, k) {
+      S.layers = S.layers || [];
+      let c = S.layers[k];
+      if (!c) { c = S.layers[k] = document.createElement("canvas"); c.width = W; c.height = H; }
+      const y = c.getContext("2d"); y.setTransform(1, 0, 0, 1, 0, 0); y.globalAlpha = 1; y.clearRect(0, 0, W, H);
+      return y;
+    }
+    function layerDraw(x, W, H, paint, k, alpha, dx, zoom, isPrev, cy) {
+      paint();
+      if (alpha <= 0) return;
+      const zc = cy || H * .35;
+      x.save(); x.globalAlpha = Math.min(1, alpha); x.translate(W / 2 + dx, zc); x.scale(zoom, zoom); x.translate(-W / 2, -zc);
+      x.drawImage(S.layers[k], 0, 0); x.restore();
+    }
+    // confetti for the ending
+    function confetti(x, W, H, tm) {
+      if (!S.confAt) return;
+      const d = tm - S.confAt; if (d < 0 || d > 3200) return;
+      const cols = [BLUE, "#ff6b8a", "#ffd166", "#4cd97b", "#8a7dff"];
+      for (let i = 0; i < 60; i++) {
+        const r1 = Math.sin(i * 12.9898) * 43758.5453 % 1, r2 = Math.sin(i * 78.233) * 12345.678 % 1, a = Math.abs(r1), b = Math.abs(r2);
+        const px = W * (.1 + .8 * a) + Math.sin(d / 300 + i) * 30, py = -40 + (d / 1000) * (H * (.35 + .25 * b)) + (d / 1000) * (d / 1000) * 120;
+        x.save(); x.globalAlpha = Math.max(0, Math.min(1, (3200 - d) / 600)); x.translate(px, py); x.rotate(d / (180 + 120 * b) + i);
+        x.fillStyle = cols[i % cols.length]; x.fillRect(-7, -3.5, 14, 7); x.restore();
+      }
+    }
     // the scene for the current line, inside the area between the title and her; returns its bottom edge
     function scene(x, W, H, v, lt, top, area) {
       const L = W * .07, R = W * .93, mw = R - L;
@@ -4338,6 +4390,95 @@ Keep one scene for 2-3 lines with "same" and add a tag or note on the later line
         bottom = top + ch;
       } else if (v.type === "device") {
         bottom = device(x, W, H, v, lt, top, area);
+      } else if (v.type === "kinetic") {
+        // kinetic type: big words slam in one by one (on the word she says), the key word in colour with a marker under it
+        const ws = (v.words || []).slice(0, 4).map(String), n = ws.length || 1, lh = Math.min(118, area / n);
+        ws.forEach((w, i) => {
+          const t0 = itemT(i, i * 380, lt); if (t0 <= 0) return;
+          const e = back(t0 / 300), sl = Math.max(0, 1 - t0 / 260), cy = top + 20 + lh * (i + .5), hi = i === v.hi;
+          const px = fitText(x, w.toUpperCase(), mw, "700", lh * .78);
+          x.save(); x.translate(W / 2 + Math.sin(t0 / 25) * 8 * sl, cy); x.rotate((i % 2 ? .03 : -.03) * sl); x.scale(1 + sl * 1.2, 1 + sl * 1.2);
+          x.globalAlpha = Math.min(1, e); x.font = F("700", px); x.textAlign = "center"; x.textBaseline = "middle";
+          const tw = x.measureText(w.toUpperCase()).width;
+          if (hi) { const m = ease((t0 - 250) / 450); x.fillStyle = "rgba(255,209,102,.75)"; rr(x, -tw / 2 - 10, px * .05, (tw + 20) * m, px * .42, 8); if (m > 0) x.fill(); }
+          x.fillStyle = hi ? BLUE : TH().title; x.fillText(w.toUpperCase(), 0, 0); x.restore();
+        });
+        bottom = top + 20 + lh * n;
+      } else if (v.type === "gauge") {
+        // a dial: the arc fills, the needle swings, the number counts up
+        const val = Number(v.value) || 0, max = Number(v.max) || 100, p = cl(val / max), r = Math.min(mw * .42, area * .62), cx = W / 2, cy = top + r + 40;
+        const t0 = itemT(0, 0, lt), e = back(t0 / 420), f = ease((t0 - 250) / 1400) * p, a0 = Math.PI, a1 = Math.PI * 2;
+        x.save(); x.globalAlpha = Math.min(1, e); paper(x, cx - r - 40, cy - r - 30, (r + 40) * 2, r + 110, 28);
+        x.lineCap = "round"; x.lineWidth = 26; x.strokeStyle = "#e7ebf0"; x.beginPath(); x.arc(cx, cy, r - 20, a0, a1); x.stroke();
+        const col = v.bad ? (f > .75 ? "#e2456a" : f > .5 ? "#ffb02e" : BLUE) : BLUE;
+        if (f > 0) { x.strokeStyle = col; x.beginPath(); x.arc(cx, cy, r - 20, a0, a0 + Math.PI * f); x.stroke(); }
+        for (let k = 0; k <= 10; k++) { const an = a0 + Math.PI * k / 10; x.strokeStyle = MUTED; x.lineWidth = 3; x.beginPath(); x.moveTo(cx + Math.cos(an) * (r - 46), cy + Math.sin(an) * (r - 46)); x.lineTo(cx + Math.cos(an) * (r - 56), cy + Math.sin(an) * (r - 56)); x.stroke(); }
+        const an = a0 + Math.PI * f + Math.sin(lt / 90) * .015 * (f > .8 ? 1 : 0);
+        x.strokeStyle = INK; x.lineWidth = 7; x.beginPath(); x.moveTo(cx, cy); x.lineTo(cx + Math.cos(an) * (r - 62), cy + Math.sin(an) * (r - 62)); x.stroke();
+        x.beginPath(); x.arc(cx, cy, 13, 0, 6.3); x.fillStyle = INK; x.fill();
+        x.restore();
+        x.save(); x.globalAlpha = Math.min(1, e); text(x, Math.round(val * (f / (p || 1))) + (v.unit || ""), cx, cy + 46, r * 1.4, "700", 50, v.bad && f > .75 ? "#e2456a" : INK);
+        if (v.title) text(x, String(v.title), cx, cy - r - 2, r * 1.6, "600", 22, MUTED); x.restore();
+        bottom = cy + 84;
+      } else if (v.type === "slider") {
+        // before / after: a divider sweeps across and reveals the "after"
+        const cw = mw, chh = Math.min(area * .82, 380), cx0 = L, cy0 = top + 10, t0 = itemT(0, 0, lt), e = ease(t0 / 380);
+        // the "before" sits in the left half, the "after" in the right half, revealed as the divider sweeps in from the right
+        const sw = ease((t0 - 900) / 1300), divX = cx0 + cw * (1 - sw * .5), hw = cw / 2;
+        const side = (o, x0, x1, bg, mx) => {
+          x.save(); x.beginPath(); x.rect(x0, cy0, x1 - x0, chh); x.clip(); rr(x, cx0, cy0, cw, chh, 26); x.fillStyle = bg; x.fill();
+          const im = o && o.art ? art(o.art) : null;
+          if (im) { const sc = Math.min(hw * .8 / im.naturalWidth, chh * .66 / im.naturalHeight); x.drawImage(im, mx - im.naturalWidth * sc / 2, cy0 + chh * .42 - im.naturalHeight * sc / 2, im.naturalWidth * sc, im.naturalHeight * sc); }
+          else if (o && o.value) text(x, String(o.value), mx, cy0 + chh * .42, hw * .84, "700", 70, o.bad ? "#e2456a" : INK);
+          if (o && o.label) text(x, String(o.label).toUpperCase(), mx, cy0 + chh - 34, hw * .86, "700", 20, o.bad ? "#e2456a" : BLUE);
+          x.restore();
+        };
+        x.save(); x.globalAlpha = Math.min(1, e); paper(x, cx0, cy0, cw, chh, 26);
+        side(v.before, cx0, cx0 + cw, "#f4f1f1", cx0 + hw * (1 - sw * .5));   // (the "before" glides from the middle to the left half)
+        side(v.after, divX, cx0 + cw, "#eef6ff", cx0 + hw * 1.5);
+        if (sw > 0) { x.fillStyle = "#fff"; x.fillRect(divX - 3, cy0, 6, chh); x.beginPath(); x.arc(divX, cy0 + chh / 2, 22, 0, 6.3); x.fillStyle = "#fff"; x.fill(); x.lineWidth = 3; x.strokeStyle = INK; x.stroke(); text(x, "‹ ›", divX, cy0 + chh / 2 + 1, 40, "700", 20, INK); }
+        x.restore();
+        bottom = cy0 + chh;
+      } else if (v.type === "path") {
+        // a route: nodes along a curve, the line draws itself, a packet runs along it with a trail
+        const ns = (v.nodes || []).slice(0, 4).map(String), n = Math.max(2, ns.length), y0 = top + 40, hh = Math.min(area * .6, 260);
+        const pts = ns.map((_, i) => [L + 50 + (mw - 100) * i / (n - 1), y0 + (i % 2 ? hh : 30)]);
+        const at = (u) => { const f = u * (n - 1), i = Math.min(n - 2, Math.floor(f)), k = f - i, a = pts[i], b = pts[i + 1], my = (a[1] + b[1]) / 2; return [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * (k * k * (3 - 2 * k))]; };
+        const draw = ease(itemT(0, 0, lt) / 1400);
+        x.save(); x.setLineDash([2, 14]); x.lineCap = "round"; x.lineWidth = 6; x.strokeStyle = MUTED; x.beginPath();
+        for (let u = 0; u <= draw; u += .01) { const q = at(u); u ? x.lineTo(q[0], q[1]) : x.moveTo(q[0], q[1]); } x.stroke(); x.restore();
+        pts.forEach((q, i) => {
+          const e = back((itemT(0, 0, lt) - i * 1400 / (n - 1)) / 350); if (e <= 0) return;
+          x.save(); popIn(x, q[0], q[1], e); x.beginPath(); x.arc(q[0], q[1], 34, 0, 6.3); x.fillStyle = "#fff"; x.shadowColor = "rgba(40,70,80,.18)"; x.shadowBlur = 14; x.fill();
+          x.shadowColor = "transparent"; x.lineWidth = 4; x.strokeStyle = i === n - 1 ? BLUE : INK; x.stroke(); x.restore();
+          x.save(); x.globalAlpha = Math.min(1, e); text(x, ns[i], q[0], q[1] + (i % 2 ? 58 : -58), 160, "600", 24, TH().title === "#ffffff" ? "#ffffff" : INK); x.restore();
+        });
+        if (draw >= 1) {
+          const T = 1700, ph = ((lt - 1400) % (T * 2)) / T, u = ph < 1 ? ease(ph) : 1 - ease(ph - 1);
+          for (let k = 6; k >= 0; k--) { const q = at(Math.max(0, Math.min(1, u - (ph < 1 ? 1 : -1) * k * .015))); x.save(); x.globalAlpha = (1 - k / 7) * .9; x.beginPath(); x.arc(q[0], q[1], 11 - k, 0, 6.3); x.fillStyle = BLUE; x.fill(); x.restore(); }
+        }
+        if (v.label) { x.save(); x.globalAlpha = Math.min(1, ease((itemT(0, 0, lt) - 1500) / 400)); x.font = F("700", 26); const lw = x.measureText(String(v.label)).width + 40; rr(x, W / 2 - lw / 2, y0 + hh + 70, lw, 48, 24); x.fillStyle = v.bad ? "#e2456a" : BLUE; x.fill(); text(x, String(v.label), W / 2, y0 + hh + 95, lw, "700", 26, "#fff"); x.restore(); }
+        bottom = y0 + hh + 130;
+      } else if (v.type === "zoom") {
+        // an illustration, then a magnifying lens grows over one detail and a label points at it
+        const im = art(v.art), e = back(itemT(0, 0, lt) / 450);
+        const maxH = Math.min(area * .86, 440), cx = W / 2, cy = top + maxH / 2 + 10;
+        if (im && e > 0) {
+          const sc = Math.min(mw * .85 / im.naturalWidth, maxH / im.naturalHeight), w = im.naturalWidth * sc, h = im.naturalHeight * sc, ix = cx - w / 2, iy = cy - h / 2;
+          x.save(); x.globalAlpha = Math.min(1, e); x.drawImage(im, ix, iy, w, h); x.restore();
+          const at2 = v.at || [.5, .5], px = ix + w * at2[0], py = iy + h * at2[1], le = back((itemT(0, 0, lt) - 1100) / 450);
+          if (le > 0) {
+            const R = 92 * le, lx = Math.min(W - R - 20, Math.max(R + 20, px + (at2[0] > .5 ? -1 : 1) * 40)), ly = Math.max(top + 92 + 64, py - 150);
+            x.save(); x.strokeStyle = TH().title === "#ffffff" ? "#fff" : INK; x.lineWidth = 3; x.setLineDash([6, 8]); x.beginPath(); x.moveTo(px, py); x.lineTo(lx, ly + R); x.stroke(); x.setLineDash([]);
+            x.beginPath(); x.arc(px, py, 10, 0, 6.3); x.stroke();
+            x.save(); x.beginPath(); x.arc(lx, ly, R, 0, 6.3); x.clip(); x.fillStyle = "#fff"; x.fill();
+            const z = 2.4; x.drawImage(im, lx - (px - ix) * z, ly - (py - iy) * z, w * z, h * z); x.restore();
+            x.lineWidth = 7; x.strokeStyle = "#fff"; x.beginPath(); x.arc(lx, ly, R, 0, 6.3); x.stroke(); x.lineWidth = 2.5; x.strokeStyle = INK; x.stroke();
+            x.restore();
+            if (v.label) { x.save(); x.globalAlpha = Math.min(1, le); x.font = F("700", 24); const tw = x.measureText(String(v.label)).width + 32; rr(x, lx - tw / 2, ly - R - 56, tw, 42, 21); x.fillStyle = BLUE; x.fill(); text(x, String(v.label), lx, ly - R - 34, tw, "700", 24, "#fff"); x.restore(); }
+          }
+          bottom = iy + h + 10;
+        } else bottom = top + maxH;
       } else if (v.type === "art") {
         // one illustration, big and calm: it pops in, then breathes (and wobbles a little if it's a warning)
         const im = art(v.art), e = back(lt / 480);
@@ -4455,9 +4596,9 @@ Keep one scene for 2-3 lines with "same" and add a tag or note on the later line
       if (!S.title) return;
       const e = back((tm - S.titleAt) / 420);
       x.save(); x.translate(W / 2, H * .105); x.scale(e, e);
-      const px = fitText(x, S.title, W * .86, "700", 64); x.font = F("700", px); x.fillStyle = INK; x.textAlign = "center"; x.textBaseline = "middle"; x.fillText(S.title, 0, 0);
+      const px = fitText(x, S.title, W * .86, "700", 64); x.font = F("700", px); x.fillStyle = TH().title; x.textAlign = "center"; x.textBaseline = "middle"; x.fillText(S.title, 0, 0);
       x.restore();
-      if (S.sub) text(x, S.sub, W / 2, H * .105 + 50, W * .8, "500", 24, MUTED);
+      if (S.sub) text(x, S.sub, W / 2, H * .105 + 50, W * .8, "500", 24, TH().sub);
     }
     // a small monitor on the desk while she's in the corner
     function prop(x, W, H) {
@@ -4480,9 +4621,19 @@ Keep one scene for 2-3 lines with "same" and add a tag or note on the later line
       title(x, W, H, tm);
       if (S.vis) {
         const top = H * .2, area = H * (.22 + .3 * ease(S.sm));
-        const bottom = scene(x, W, H, S.vis, tm - S.visAt - 120, top, area);
+        // the old scene slides away while the new one slides in, and each scene gets a slow camera push
+        const tr = cl((tm - S.visAt) / 420), te = ease(tr), dir = S.trDir || 1;
+        if (S.prevVis && tr < 1) {
+          const keep = [S.itemAt, S.hiAt]; S.itemAt = S.prevItemAt; S.hiAt = null;
+          layerDraw(x, W, H, () => scene(layerCtx(W, H, 1), W, H, S.prevVis, tm - S.prevVisAt - 120, top, area), 1, 1 - te, -dir * W * .45 * te, 1 + .03 * te, 1);
+          [S.itemAt, S.hiAt] = keep;
+        }
+        let bottom = 0;
+        const push = 1 + .035 * ease(Math.min(1, (tm - S.visAt) / 6000));
+        layerDraw(x, W, H, () => { bottom = scene(layerCtx(W, H, 0), W, H, S.vis, tm - S.visAt - 120, top, area); }, 0, S.prevVis ? te : 1, S.prevVis ? dir * W * .45 * (1 - te) : 0, push, 0, top + area / 2);
         if (S.vis.tag || S.vis.note) extras(x, W, H, S.vis, bottom, Math.max(S.addAt, S.visAt + 700));
       }
+      confetti(x, W, H, tm);
       emotes(x, W, H, tm);
       nameTag(x, W, H, tm);
       chips(x, W, H, tm);
@@ -4538,7 +4689,7 @@ Keep one scene for 2-3 lines with "same" and add a tag or note on the later line
     }
     // the Reel itself, the same for live and export: her lines one after another, then "follow for more"
     async function timeline(clips, wantMusic) {
-      S.vis = null; S.title = ""; S.sub = ""; S.prevMood = ""; S.emotes = [];
+      S.vis = null; S.title = ""; S.sub = ""; S.prevMood = ""; S.emotes = []; S.prevVis = null; S.confAt = 0;
       S.moodAt = S.titleAt = S.visAt = S.addAt = S.sayAt = S.chAt = now() - 2000; S.beatAt = -1e9;   // (the export's clock starts at 0)
       S.mood = S.pack.lines[0].mood || S.mood;   // open on her first expression, no fade from the preview
       hiss(.01, 1000, 1000, .0001, 0);   // makes the noise buffer the hi-hat uses
@@ -4553,7 +4704,7 @@ Keep one scene for 2-3 lines with "same" and add a tag or note on the later line
         await playClip(c);
         await wait(70);
       }
-      setMood("wink"); setSay("follow for more ♡"); fx.ding(200); emote("hearts", now() + 150);
+      setMood("wink"); setSay("follow for more ♡"); fx.ding(200); emote("hearts", now() + 150); S.confAt = now() + 100; for (let k = 0; k < 6; k++) fx.chip(150 + k * 90);
       await wait(1300);
       music(false);
       await wait(700);

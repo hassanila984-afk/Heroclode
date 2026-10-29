@@ -3473,7 +3473,7 @@ Start with one face tag like [thinking] [happy], then your help.`, Object.assign
     const INK = "#2b2d42", MUTED = "#7d8796", BLUE = "#2f6bff", BG1 = "#e3ecea", BG2 = "#cfdedb";
     const S = { el: null, pack: null, rec: null, ac: null, raf: 0, playing: false, chunks: [], faces: {}, line: -1, mood: "explain", prevMood: "", moodAt: 0, vis: null, visAt: 0, addAt: 0, say: "", sayAt: 0, chunks2: [], chIdx: -1, chAt: 0, audio: null, title: "", sub: "", titleAt: 0, sm: 0, nameUntil: 0, bgc: null };
     const NICHE = "a cute anime girl who explains tech and computer-science concepts in the simplest, coziest, most beginner-friendly way (e.g. what browser cookies are, CPU cores vs threads, RAM vs storage, what an API is, why your PC lags, how the internet works, Git, caching), warm and a little kawaii, hook + one simple explanation + a question CTA";
-    const BUSY = { windows: 1, flow: 1, bars: 1, code: 1, device: 1 };
+    const BUSY = { windows: 1, flow: 1, bars: 1, code: 1, device: 1, art: 1 };
     // the clock: real time while previewing, a virtual clock (exact 30 fps steps) while exporting a Reel
     const now = () => (S.off ? S.vt : performance.now());
     const tnow = () => (S.off ? S.vt / 1000 : S.ac.currentTime);
@@ -3550,6 +3550,7 @@ SCENE is one of (labels short, no emoji):
 {"type":"big","text":"100%"}  (one big number or word)
 {"type":"list","items":["short point","short point"]}  (up to 3)
 {"type":"device","device":"phone","app":"notification","notes":[{"from":"System","title":"Phone is too hot","text":"Charging paused until it cools down","color":"#e2456a"}]}  (DEVICE B-ROLL: a clean phone or laptop mockup that SHOWS the moment. apps: notification (notes up to 3) | chat ("title":"name","msgs":[{"from":"them","text":"..."},{"from":"me","text":"..."}]) | settings (laptop by default: "window":"Display settings","title":"Display","rows":[{"label":"Refresh rate","value":"60 Hz","to":"144 Hz"},{"label":"XMP","value":"off","to":"on"}] -> the cursor changes the value / flips the switch) | stat ("title":"CPU temperature","value":"92°C","bad":true,"trend":"up") | download ("title":"Game name","from":0,"to":0,"stuck":true,"text":"0 B/s"); "device" must be the REAL subject of the topic: "phone" (phone topics), "laptop" (laptop topics), "monitor" (PC / PC gaming), "tv" (consoles: a TV with a console beside it; "hot":true adds heat waves), or "card" (just a clean card, when no device is the subject, e.g. a password strength or a general number). Never show a phone for a console or PC topic. "low":true shows a low battery)
+{"type":"art","art":"name","text":"optional short caption","motion":"float|shake"}  (an ILLUSTRATION made for the Reel: a clean 3D clay-style picture of the exact thing she's talking about, file luma/reel/art/<name>.webp; use one whenever a picture says it better than a box: the console in a closed cabinet, a potato with earbuds, a fish tank blocking Wi-Fi...)
 {"type":"same"}  (keep the previous scene, for continuity)
 Any scene (also "same") may add "tag":"a sticky-note label like it's you!" and/or "note":"a short blue annotation like sent back every visit".
 VISUAL HOOK (the device must match the topic, see "device"): the first line's visual should be a device scene that SHOWS the problem itself (the notification, the wrong setting, the scam message, the number). Use a device scene every 2-3 lines; keep every scene clean: one idea, few words, no clutter.
@@ -3655,6 +3656,7 @@ Keep one scene for 2-3 lines with "same" and add a tag or note on the later line
       else if (ty === "flow") { const n = Math.min(4, (v.steps || []).length); let last = 0; for (let i = 0; i < n; i++) { const t = Math.max(d(i, O + i * 420), i ? last + 300 : 0); last = t; fx.pop(t); } fx.ding(last + 420); }
       else if (ty === "code") { fx.pop(O); const c = (v.lines || []).slice(0, 4).join("").length; for (let k = 0; k < Math.min(90, c); k += 2) fx.tick(O + 350 + k * 38); }
       else if (ty === "big") { fx.pop(O); fx.thwip(O + 400); }
+      else if (ty === "art") { fx.pop(O); }
       else if (ty === "device") { fx.pop(O); const n = (v.rows || v.msgs || v.notes || [1]).length; for (let i = 0; i < Math.min(4, n); i++) fx.chip(d(i, O + 400 + i * 600)); }
       else if (ty === "broll") { (v.icons || []).slice(0, 4).forEach((n, i) => fx.pop(d(i, O + (i ? 500 + (i - 1) * 350 : 0)))); if (v.motion === "spin") fx.thwip(O + 200); }
       else if (ty === "list") { fx.pop(O); (v.items || []).slice(0, 3).forEach((s, i) => fx.check(d(i, O + 300 + i * 320))); }
@@ -3715,7 +3717,7 @@ Keep one scene for 2-3 lines with "same" and add a tag or note on the later line
       if (v.type === "windows") return [String((v.left || {}).text || ""), String((v.right || {}).text || "")];
       if (v.type === "big") return [String(v.text || "")];
       if (v.type === "broll") return (v.icons || []).map(String);
-      if (v.type === "device") return [];   // a screen plays out on its own little timeline, not word by word
+      if (v.type === "device" || v.type === "art") return [];   // a screen plays out on its own little timeline, not word by word
       if (v.type === "code") return (v.lines || []).map(String);
       return [];
     }
@@ -3995,10 +3997,20 @@ Keep one scene for 2-3 lines with "same" and add a tag or note on the later line
       return im.complete && im.naturalWidth ? im : null;
     }
     // every icon a Reel uses, loaded before recording so none pops in late
+    // illustrations made for her Reels (Canva), in luma/reel/art/<name>.webp
+    const ART = {};
+    function art(name) {
+      name = String(name || "").toLowerCase().replace(/[^a-z0-9_]/g, "");
+      if (!name) return null;
+      let im = ART[name];
+      if (!im) { im = ART[name] = new Image(); im.src = "luma/reel/art/" + name + ".webp"; }
+      return im.complete && im.naturalWidth ? im : null;
+    }
     function loadIcons(pack) {
-      const want = new Set();
-      for (const l of pack.lines || []) { const v = l.visual || {}; (v.icons || []).forEach((n) => want.add(n)); }
-      return Promise.all([...want].map((n) => new Promise((ok) => { icon(n); const im = ICON[String(n).toLowerCase()]; if (!im || im.complete) return ok(); im.onload = im.onerror = ok; setTimeout(ok, 5000); })));
+      const want = new Set(), arts = new Set();
+      for (const l of pack.lines || []) { const v = l.visual || {}; (v.icons || []).forEach((n) => want.add(n)); if (v.art) arts.add(v.art); }
+      const ready = [...arts].map((n) => new Promise((ok) => { art(n); const im = ART[String(n).toLowerCase().replace(/[^a-z0-9_]/g, "")]; if (!im || im.complete) return ok(); im.onload = im.onerror = ok; setTimeout(ok, 6000); }));
+      return Promise.all(ready.concat([...want].map((n) => new Promise((ok) => { icon(n); const im = ICON[String(n).toLowerCase()]; if (!im || im.complete) return ok(); im.onload = im.onerror = ok; setTimeout(ok, 5000); }))));
     }
     function drawIcon(x, name, cx, cy, size, rot) {
       const im = icon(name); if (!im) return false;
@@ -4326,6 +4338,20 @@ Keep one scene for 2-3 lines with "same" and add a tag or note on the later line
         bottom = top + ch;
       } else if (v.type === "device") {
         bottom = device(x, W, H, v, lt, top, area);
+      } else if (v.type === "art") {
+        // one illustration, big and calm: it pops in, then breathes (and wobbles a little if it's a warning)
+        const im = art(v.art), e = back(lt / 480);
+        const hasT = !!v.text, maxH = Math.min(area * (hasT ? .78 : .9), 470), maxW = mw * .9;
+        if (im && e > 0) {
+          const sc = Math.min(maxW / im.naturalWidth, maxH / im.naturalHeight), w = im.naturalWidth * sc, h = im.naturalHeight * sc;
+          const cx = W / 2, cy = top + (hasT ? 50 : 0) + maxH / 2;
+          const breathe = 1 + Math.sin(lt / 900) * .012, float = Math.sin(lt / 1100) * 6, rot = v.motion === "shake" ? Math.sin(lt / 45) * .02 * Math.max(0, 1 - lt / 1500) : Math.sin(lt / 1600) * .012;
+          x.save(); x.globalAlpha = Math.min(1, e); x.translate(cx, cy + float); x.rotate(rot); x.scale(e * breathe, e * breathe);
+          x.shadowColor = "rgba(40,70,80,.14)"; x.shadowBlur = 30; x.shadowOffsetY = 14;
+          x.drawImage(im, -w / 2, -h / 2, w, h); x.restore();
+          bottom = cy + h / 2 + 10;
+        } else bottom = top + maxH;
+        if (hasT) { x.save(); x.globalAlpha = Math.min(1, Math.max(0, e)); text(x, String(v.text), W / 2, top + 22, mw, "600", 34, INK); x.restore(); }
       } else if (v.type === "broll") {
         // b-roll: one big illustration with a little motion story, and helpers around it
         const ic = (v.icons || []).slice(0, 4), main = ic[0], rest = ic.slice(1), mo = v.motion || "float";

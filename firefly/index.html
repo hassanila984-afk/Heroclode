@@ -3538,7 +3538,7 @@ Sound ALIVE and human, like talking to friends you adore: natural little openers
 Write it as JSON only:
 {"hook":"the scroll-stopping first line, a question or surprise (<9 words)",
 "lines":[{"say":"what you say out loud, one short spoken sentence in simple words","title":"the big title at the top, 1-3 words like \\"Click.\\" or \\"cookies\\" or \\"websites forget you\\"; give it only when the scene changes","sub":"optional tiny grey line under the title (<7 words)","mood":"her pose, one of surprised|wink|think|grin|point|smug|explain|glasses|adjust (pushing up her glasses: 'actually...')|heart (heart hands: love for her followers)|shy|sassy (hand on hip: 'excuse me?')|blush (sweet, thankful)|laugh (after a joke)|stop (palm out: 'wait! don't!')|annoyed (arms crossed)|phone (holding a phone: phone topics)|present (presenting: 'ta-da, here it is')|aside (pointing at the boxes on screen)|coffee (cozy, calm)|thumbsup (good job, approved)|listen (one finger up, serious: 'listen, this matters')|showcase (open palm, showing something off)|shrug ('who knows?', 'it depends')|laptop (holding a laptop: computer topics)|funfact (finger up, smiling: 'fun fact!'); her mouth is OPEN in surprised, wink, grin, point, glasses, adjust, laugh, listen, showcase, laptop, funfact, so use those for talking lines; the others (closed mouth) suit short reactions of a few words","tone":"how your voice sounds on this line, one of excited|happy|thinking|pout|shy|sad (pout = playful teasing)","visual":SCENE}, ... 7 to 10 lines (beats count), 20-35 seconds spoken; first line is the hook (mood surprised or think), last line is the question CTA (mood wink or point)],
-"theme":"one of mint|night|paper|peach (the look of the whole Reel: night for gaming/hacking, paper for explainers/history, peach for cozy/phone topics, mint default)","igCaption":"a warm IG caption with 1-2 small kaomoji","hashtags":["#tag", ... 6 to 10 relevant tech hashtags]}
+"topic":"the topic in 2-4 words, shown on a bar at the bottom the whole time","theme":"one of mint|night|paper|peach (the look of the whole Reel: night for gaming/hacking, paper for explainers/history, peach for cozy/phone topics, mint default)","igCaption":"a warm IG caption with 1-2 small kaomoji","hashtags":["#tag", ... 6 to 10 relevant tech hashtags]}
 SCENE is one of (labels short, no emoji):
 {"type":"popup","title":"We use cookies","yes":"ACCEPT ALL","no":"REJECT ALL","pick":"yes"}  (a UI dialog, a cursor clicks the picked button)
 {"type":"windows","left":{"bar":"your browser","text":"you"},"right":{"bar":"shop.example","text":"the website"},"send":"cookie"}  (two browser windows; "send" is an optional little chip travelling left->right)
@@ -3557,7 +3557,7 @@ SCENE is one of (labels short, no emoji):
 {"type":"zoom","art":"name","at":[0.6,0.4],"label":"memory chips"}  (an illustration, then a magnifier zooms into one detail of it)
 {"type":"art","art":"name","text":"optional short caption","motion":"float|shake"}  (an ILLUSTRATION made for the Reel: a clean 3D clay-style picture of the exact thing she's talking about, file luma/reel/art/<name>.webp; use one whenever a picture says it better than a box: the console in a closed cabinet, a potato with earbuds, a fish tank blocking Wi-Fi...)
 {"type":"same"}  (keep the previous scene, for continuity)
-Any scene (also "same") may add "tag":"a sticky-note label like it's you!" and/or "note":"a short blue annotation like sent back every visit".
+Any scene (also "same") may add "stamp":"ONE WORD" (a red rubber stamp slams on for a punchline) or "tag":"a sticky-note label like it's you!" and/or "note":"a short blue annotation like sent back every visit".
 VISUAL HOOK (the device must match the topic, see "device"): the first line's visual should be a device scene that SHOWS the problem itself (the notification, the wrong setting, the scam message, the number). Use a device scene every 2-3 lines; keep every scene clean: one idea, few words, no clutter.
 Keep one scene for 2-3 lines with "same" and add a tag or note on the later lines, building it up like a teacher. Vary scenes across the Reel, and vary her pose line by line (rarely the same pose twice in a row). Be accurate and genuinely simple, never generic filler. Never mention AI or being an AI anywhere in the script, caption or hashtags. Language: ALL of it in natural English (en-US), whatever language the app is in.`, { cache: false, hard: true });
         const pack = JSON.parse(text.slice(text.indexOf("{"), text.lastIndexOf("}") + 1));
@@ -3605,10 +3605,10 @@ Keep one scene for 2-3 lines with "same" and add a tag or note on the later line
       let v = l.visual && typeof l.visual === "object" ? l.visual : null;
       if (!v || v.type === "same" || !v.type) {
         // keep the scene, only add the new sticky note / annotation
-        if (S.vis && v && (v.tag || v.note)) { S.vis = Object.assign({}, S.vis, v.tag ? { tag: v.tag } : {}, v.note ? { note: v.note } : {}, { type: S.vis.type }); S.addAt = now(); S.cue = "add"; S.addV = v; }
+        if (S.vis && v && (v.tag || v.note || v.stamp)) { S.vis = Object.assign({}, S.vis, v.tag ? { tag: v.tag } : {}, v.note ? { note: v.note } : {}, v.stamp ? { stamp: v.stamp, stampAt: now() } : {}, { type: S.vis.type }); S.addAt = now(); S.cue = "add"; S.addV = v; }
         else if (!S.vis && v && v.type !== "same") { S.vis = v; S.visAt = S.addAt = now(); S.cue = "new"; S.itemAt = null; }
       } else if (S.vis && S.vis.type === v.type && v.type !== "popup" && v.type !== "device" && JSON.stringify(itemLabels(S.vis)) === JSON.stringify(itemLabels(v))) { S.vis = Object.assign({}, S.vis, v); S.addAt = now(); S.cue = "add"; S.addV = v; }   // same scene again: build on it, don't redraw it
-      else { S.vis = v; S.visAt = now(); S.addAt = now() + 900; S.cue = "new"; S.itemAt = null; }
+      else { S.vis = v.stamp ? Object.assign({}, v, { stampAt: now() + 500 }) : v; S.visAt = now(); S.addAt = now() + 900; S.cue = "new"; S.itemAt = null; }
       S.hiAt = null;
       if (oldVis && S.vis !== oldVis && S.visAt !== oldAt) { S.prevVis = oldVis; S.prevVisAt = oldAt; S.prevItemAt = oldItems; S.trDir = (S.trDir || 1) * -1; }
       else if (S.visAt !== oldAt) S.prevVis = null;
@@ -3649,6 +3649,7 @@ Keep one scene for 2-3 lines with "same" and add a tag or note on the later line
     };
     // sticky note / annotation added later in a scene (d = when it starts, ms)
     function addSounds(v, d) {
+      if (v.stamp) { blip(140, 55, .16, .32, "sine", d + 120); hiss(.08, 900, 300, .25, d + 120, 1); }
       if (v.tag) fx.thwip(d);
       if (v.note) for (let k = 0; k < 9; k++) fx.tick(d + 350 + k * 70);
     }
@@ -3674,6 +3675,7 @@ Keep one scene for 2-3 lines with "same" and add a tag or note on the later line
       else if (ty === "broll") { (v.icons || []).slice(0, 4).forEach((n, i) => fx.pop(d(i, O + (i ? 500 + (i - 1) * 350 : 0)))); if (v.motion === "spin") fx.thwip(O + 200); }
       else if (ty === "list") { fx.pop(O); (v.items || []).slice(0, 3).forEach((s, i) => fx.check(d(i, O + 300 + i * 320))); }
       if (v.tag || v.note) addSounds(v, 900);
+      if (v.stamp && !v.tag && !v.note) addSounds({ stamp: 1 }, 500);
     }
     // a very soft lo-fi bed: Fmaj7 - Em7 - Dm7 - Cmaj7, a music-box arpeggio, a gentle kick and hat
     function music(on) {
@@ -4230,6 +4232,23 @@ Keep one scene for 2-3 lines with "same" and add a tag or note on the later line
       x.save(); x.globalAlpha = Math.min(1, alpha); x.translate(W / 2 + dx, zc); x.scale(zoom, zoom); x.translate(-W / 2, -zc);
       x.drawImage(S.layers[k], 0, 0); x.restore();
     }
+    // a rubber stamp that slams onto the scene for a punchline ("BETRAYAL", "HAUNTED")
+    function stamp(x, W, H, s, t, top, area) {
+      if (t < 0) return;
+      const e = Math.min(1, t / 140), sc = 2.2 - 1.2 * ease(e), cx = W * .7, cy = top + Math.min(area, 420) * .2, shake = t < 260 ? Math.sin(t / 18) * 5 * (1 - t / 260) : 0;
+      x.save(); x.globalAlpha = Math.min(1, t / 90) * .92; x.translate(cx + shake, cy); x.rotate(-.16); x.scale(sc, sc);
+      x.font = F("700", 38); const w = x.measureText(s.toUpperCase()).width + 36, h = 60;
+      x.lineWidth = 5; x.strokeStyle = "#e2456a"; rr(x, -w / 2, -h / 2, w, h, 10); x.stroke();
+      x.lineWidth = 2; rr(x, -w / 2 + 6, -h / 2 + 6, w - 12, h - 12, 7); x.stroke();
+      x.fillStyle = "#e2456a"; x.textAlign = "center"; x.textBaseline = "middle"; x.fillText(s.toUpperCase(), 0, 2); x.restore();
+    }
+    // the topic of the Reel, always on a bar at the bottom (people who scroll in halfway know what it's about)
+    function topicBar(x, W, H, tm) {
+      const s = S.pack && S.pack.topic; if (!s || !S.playing && !S.off) return;
+      const e = ease((tm - (S.topicAt || 0)) / 500), h = 70, y = H - 96 + (1 - e) * 120, dark = TH().title === "#ffffff";
+      x.save(); x.shadowColor = "rgba(20,30,50,.25)"; x.shadowBlur = 18; rr(x, 26, y, W - 52, h, 18); x.fillStyle = dark ? "#ffffff" : "#22263a"; x.fill(); x.restore();
+      text(x, String(s), W / 2, y + h / 2 + 1, W - 100, "700", 32, dark ? "#22263a" : "#ffffff");
+    }
     // confetti for the ending
     function confetti(x, W, H, tm) {
       if (!S.confAt) return;
@@ -4632,9 +4651,11 @@ Keep one scene for 2-3 lines with "same" and add a tag or note on the later line
         const push = 1 + .035 * ease(Math.min(1, (tm - S.visAt) / 6000));
         layerDraw(x, W, H, () => { bottom = scene(layerCtx(W, H, 0), W, H, S.vis, tm - S.visAt - 120, top, area); }, 0, S.prevVis ? te : 1, S.prevVis ? dir * W * .45 * (1 - te) : 0, push, 0, top + area / 2);
         if (S.vis.tag || S.vis.note) extras(x, W, H, S.vis, bottom, Math.max(S.addAt, S.visAt + 700));
+        if (S.vis.stamp) stamp(x, W, H, String(S.vis.stamp), tm - (S.vis.stampAt || S.visAt) - 120, top, area);
       }
       confetti(x, W, H, tm);
       emotes(x, W, H, tm);
+      topicBar(x, W, H, tm);
       nameTag(x, W, H, tm);
       chips(x, W, H, tm);
     }
@@ -4689,7 +4710,7 @@ Keep one scene for 2-3 lines with "same" and add a tag or note on the later line
     }
     // the Reel itself, the same for live and export: her lines one after another, then "follow for more"
     async function timeline(clips, wantMusic) {
-      S.vis = null; S.title = ""; S.sub = ""; S.prevMood = ""; S.emotes = []; S.prevVis = null; S.confAt = 0;
+      S.vis = null; S.title = ""; S.sub = ""; S.prevMood = ""; S.emotes = []; S.prevVis = null; S.confAt = 0; S.topicAt = now() + 600;
       S.moodAt = S.titleAt = S.visAt = S.addAt = S.sayAt = S.chAt = now() - 2000; S.beatAt = -1e9;   // (the export's clock starts at 0)
       S.mood = S.pack.lines[0].mood || S.mood;   // open on her first expression, no fade from the preview
       hiss(.01, 1000, 1000, .0001, 0);   // makes the noise buffer the hi-hat uses

@@ -3549,8 +3549,10 @@ SCENE is one of (labels short, no emoji):
 {"type":"code","lines":["git add .","git commit -m \\"fix\\""]}  (a tiny terminal, up to 4 short lines)
 {"type":"big","text":"100%"}  (one big number or word)
 {"type":"list","items":["short point","short point"]}  (up to 3)
+{"type":"broll","icons":["phone","fire","fire"],"motion":"heat","text":"optional short caption"}  (B-ROLL: one big 3D illustration that SHOWS the moment, the first icon is the main one and the rest are helpers; motion is one of float|shake|heat|pulse|spin|drain|fall|orbit|zoom|rise: heat = things rising from it, pulse = waves going out (wifi, signal), spin = loading/working, drain = something emptying (battery), fall = things raining down (money, cookies), shake = warning/annoyed, orbit = things circling it)
 {"type":"same"}  (keep the previous scene, for continuity)
 Any scene (also "same") may add "tag":"a sticky-note label like it's you!" and/or "note":"a short blue annotation like sent back every visit".
+ICONS: cards, flow, list and vs scenes may add "icons":[...] (one per item, in order) and b-roll scenes need them. Use ONLY these names: airplane alarm antenna battery bell bolt bomb brain bug bulb calendar camera card chat check clap cloud coffee coin cookie cool cross desktop detective disk down email eye eyes film fire floppy folder game gear ghost gift globe hammer headphones heart hourglass house hundred joystick key keyboard laptop link lock lowbattery mag mic mindblown money moon mouse movie music package party phish phone pirate plug popcorn printer puzzle rabbit robot rocket satellite scream search shield signal skull sleep snail snow sparkles star stopwatch sun thermometer think thumbsup tools trash trophy tv unlock up warning water wave. People get bored by text alone: give most scenes icons, and put a b-roll scene every 2-3 lines.
 Keep one scene for 2-3 lines with "same" and add a tag or note on the later lines, building it up like a teacher. Vary scenes across the Reel, and vary her pose line by line (rarely the same pose twice in a row). Be accurate and genuinely simple, never generic filler. Never mention AI or being an AI anywhere in the script, caption or hashtags. Language: ALL of it in natural English (en-US), whatever language the app is in.`, { cache: false, hard: true });
         const pack = JSON.parse(text.slice(text.indexOf("{"), text.lastIndexOf("}") + 1));
         if (!pack || !Array.isArray(pack.lines) || !pack.lines.length) throw 0;
@@ -3653,6 +3655,7 @@ Keep one scene for 2-3 lines with "same" and add a tag or note on the later line
       else if (ty === "flow") { const n = Math.min(4, (v.steps || []).length); let last = 0; for (let i = 0; i < n; i++) { const t = Math.max(d(i, O + i * 420), i ? last + 300 : 0); last = t; fx.pop(t); } fx.ding(last + 420); }
       else if (ty === "code") { fx.pop(O); const c = (v.lines || []).slice(0, 4).join("").length; for (let k = 0; k < Math.min(90, c); k += 2) fx.tick(O + 350 + k * 38); }
       else if (ty === "big") { fx.pop(O); fx.thwip(O + 400); }
+      else if (ty === "broll") { (v.icons || []).slice(0, 4).forEach((n, i) => fx.pop(d(i, O + (i ? 500 + (i - 1) * 350 : 0)))); if (v.motion === "spin") fx.thwip(O + 200); }
       else if (ty === "list") { fx.pop(O); (v.items || []).slice(0, 3).forEach((s, i) => fx.check(d(i, O + 300 + i * 320))); }
       if (v.tag || v.note) addSounds(v, 900);
     }
@@ -3710,6 +3713,7 @@ Keep one scene for 2-3 lines with "same" and add a tag or note on the later line
       if (v.type === "vs") return [String(v.left || ""), String(v.right || "")];
       if (v.type === "windows") return [String((v.left || {}).text || ""), String((v.right || {}).text || "")];
       if (v.type === "big") return [String(v.text || "")];
+      if (v.type === "broll") return (v.icons || []).map(String);
       if (v.type === "code") return (v.lines || []).map(String);
       return [];
     }
@@ -3980,6 +3984,27 @@ Keep one scene for 2-3 lines with "same" and add a tag or note on the later line
       const full = "↔ " + s, n = Math.ceil(full.length * Math.min(1, e)), wFull = x.measureText(full).width;
       x.textAlign = "left"; x.fillText(full.slice(0, n), cx - wFull / 2, cy); x.restore();
     }
+    // little 3D illustrations (Microsoft Fluent Emoji, MIT) for her scenes: on cards, steps, list rows, and as b-roll
+    const ICONS = "airplane alarm antenna battery bell bolt bomb brain bug bulb calendar camera card chat check clap cloud coffee coin cookie cool cross desktop detective disk down email eye eyes film fire floppy folder game gear ghost gift globe hammer headphones heart hourglass house hundred joystick key keyboard laptop link lock lowbattery mag mic mindblown money moon mouse movie music package party phish phone pirate plug popcorn printer puzzle rabbit robot rocket satellite scream search shield signal skull sleep snail snow sparkles star stopwatch sun thermometer think thumbsup tools trash trophy tv unlock up warning water wave".split(" ");
+    const ICON = {};
+    function icon(name) {
+      name = String(name || "").toLowerCase();
+      if (!ICONS.includes(name)) return null;
+      let im = ICON[name];
+      if (!im) { im = ICON[name] = new Image(); im.src = "luma/reel/icons/" + name + ".webp"; }
+      return im.complete && im.naturalWidth ? im : null;
+    }
+    // every icon a Reel uses, loaded before recording so none pops in late
+    function loadIcons(pack) {
+      const want = new Set();
+      for (const l of pack.lines || []) { const v = l.visual || {}; (v.icons || []).forEach((n) => want.add(n)); }
+      return Promise.all([...want].map((n) => new Promise((ok) => { icon(n); const im = ICON[String(n).toLowerCase()]; if (!im || im.complete) return ok(); im.onload = im.onerror = ok; setTimeout(ok, 5000); })));
+    }
+    function drawIcon(x, name, cx, cy, size, rot) {
+      const im = icon(name); if (!im) return false;
+      x.save(); x.translate(cx, cy); if (rot) x.rotate(rot); x.drawImage(im, -size / 2, -size / 2, size, size); x.restore();
+      return true;
+    }
     // when each item of the scene comes in: on the word where she says it, else on the usual stagger
     function itemT(i, def, lt) { const a = S.itemAt && S.itemAt[i]; return a ? now() - a : lt - def; }
     function hiOn(i) { const a = S.hiAt && S.hiAt[i]; if (!a) return false; const d = now() - a; return d > 0 && d < 1500; }
@@ -4038,7 +4063,10 @@ Keep one scene for 2-3 lines with "same" and add a tag or note on the later line
           const c = i % cols, r = Math.floor(i / cols), bw = gw - 20, bh = gh - 20, cx = L + c * gw + 10, cy = top + r * gh + 10;
           const hi = (i === v.hi && lt > 700 + n * 120) || hiOn(i);
           x.save(); popIn(x, cx + bw / 2, cy + bh / 2, e); paper(x, cx, cy, bw, bh, 18, hi ? BLUE : null);
-          text(x, String(s), cx + bw / 2, cy + bh / 2, bw - 22, "600", 32, hi ? BLUE : INK); x.restore();
+          const ic = (v.icons || [])[i], isz = Math.min(bh * .48, bw * .5, 76);
+          if (ic && icon(ic)) { drawIcon(x, ic, cx + bw / 2, cy + bh * .36, isz, Math.sin(lt / 500 + i) * .05); text(x, String(s), cx + bw / 2, cy + bh * .78, bw - 22, "600", 26, hi ? BLUE : INK); }
+          else text(x, String(s), cx + bw / 2, cy + bh / 2, bw - 22, "600", 32, hi ? BLUE : INK);
+          x.restore();
           bottom = Math.max(bottom, cy + bh);
         });
       } else if (v.type === "bars") {
@@ -4059,20 +4087,25 @@ Keep one scene for 2-3 lines with "same" and add a tag or note on the later line
         const cw = mw * .4, ch = Math.min(area * .75, 180), y = top + 10;
         const el = ease(itemT(0, 0, lt) / 450), er = ease(itemT(1, 150, lt) / 450), ev = back((itemT(1, 150, lt) - 370) / 400);
         x.save(); x.globalAlpha = el; paper(x, L - (1 - el) * 120, y, cw, ch, 22); x.restore();
-        x.save(); x.globalAlpha = el; text(x, String(v.left || ""), L - (1 - el) * 120 + cw / 2, y + ch / 2, cw - 30, "600", 44, INK); x.restore();
+        const vi = v.icons || [], vsz = Math.min(ch * .45, 84), hasI = (k) => vi[k] && icon(vi[k]);
+        x.save(); x.globalAlpha = el; if (hasI(0)) drawIcon(x, vi[0], L - (1 - el) * 120 + cw / 2, y + ch * .36, vsz, Math.sin(lt / 450) * .06);
+        text(x, String(v.left || ""), L - (1 - el) * 120 + cw / 2, y + ch * (hasI(0) ? .76 : .5), cw - 30, "600", hasI(0) ? 34 : 44, INK); x.restore();
         x.save(); x.globalAlpha = er; paper(x, R - cw + (1 - er) * 120, y, cw, ch, 22); x.restore();
-        x.save(); x.globalAlpha = er; text(x, String(v.right || ""), R - cw + (1 - er) * 120 + cw / 2, y + ch / 2, cw - 30, "600", 44, INK); x.restore();
+        x.save(); x.globalAlpha = er; if (hasI(1)) drawIcon(x, vi[1], R - cw + (1 - er) * 120 + cw / 2, y + ch * .36, vsz, Math.sin(lt / 450 + 2) * .06);
+        text(x, String(v.right || ""), R - cw + (1 - er) * 120 + cw / 2, y + ch * (hasI(1) ? .76 : .5), cw - 30, "600", hasI(1) ? 34 : 44, INK); x.restore();
         if (ev > 0) { x.save(); x.translate(W / 2, y + ch / 2); x.scale(ev, ev); x.beginPath(); x.arc(0, 0, 36, 0, 6.3); x.fillStyle = INK; x.fill(); text(x, "vs", 0, 1, 60, "700", 30, "#fff"); x.restore(); }
         bottom = y + ch;
       } else if (v.type === "flow") {
-        const st = (v.steps || []).slice(0, 4), n = st.length || 1, gap = 34, bw = (mw - gap * (n - 1)) / n, bh = Math.min(120, area * .5), y = top + 20;
+        const st = (v.steps || []).slice(0, 4), n = st.length || 1, gap = 34, bw = (mw - gap * (n - 1)) / n, fi = v.icons || [], bh = Math.min(fi.length ? 160 : 120, area * (fi.length ? .62 : .5)), y = top + 20;
         // a flow builds left to right: a step never shows up before the one before it
         const ts = []; for (let i = 0; i <= n; i++) ts.push(i ? Math.min(itemT(i, i * 420, lt), ts[i - 1] - 300) : itemT(0, 0, lt));
         st.forEach((s, i) => {
           const e = back(ts[i] / 360); if (e <= 0) return;
           const bx = L + i * (bw + gap), last = (i === n - 1 && lt > n * 420 + 300 && e >= 1) || hiOn(i);
           x.save(); popIn(x, bx + bw / 2, y + bh / 2, e); paper(x, bx, y, bw, bh, 18, last ? BLUE : null);
-          text(x, String(s), bx + bw / 2, y + bh / 2, bw - 18, "600", 28, last ? BLUE : INK); x.restore();
+          if (fi[i] && icon(fi[i])) { drawIcon(x, fi[i], bx + bw / 2, y + bh * .38, Math.min(bw * .55, bh * .48, 72), Math.sin(lt / 500 + i) * .05); text(x, String(s), bx + bw / 2, y + bh * .8, bw - 16, "600", 24, last ? BLUE : INK); }
+          else text(x, String(s), bx + bw / 2, y + bh / 2, bw - 18, "600", 28, last ? BLUE : INK);
+          x.restore();
           if (i < n - 1) {
             const ea = ease((ts[i + 1] + 160) / 260); if (ea <= 0) return;
             const ax = bx + bw + 5, ay = y + bh / 2, len = (gap - 10) * ea;
@@ -4112,11 +4145,54 @@ Keep one scene for 2-3 lines with "same" and add a tag or note on the later line
         it.forEach((s, i) => {
           const e = ease(itemT(i, 300 + i * 320, lt) / 380); if (e <= 0) return;
           const y = top + 10 + i * rh + rh / 2;
+          const li = (v.icons || [])[i];
+          if (li && icon(li)) { x.save(); x.globalAlpha = e; drawIcon(x, li, L + 40, y, Math.min(48, rh * .8) * back(itemT(i, 300 + i * 320, lt) / 380)); x.restore(); }
+          else {
           x.save(); x.globalAlpha = e; x.beginPath(); x.arc(L + 40, y, 15, 0, 6.3); x.fillStyle = BLUE; x.fill();
           x.strokeStyle = "#fff"; x.lineWidth = 3.5; x.lineCap = "round"; x.lineJoin = "round"; x.beginPath(); x.moveTo(L + 33, y); x.lineTo(L + 38, y + 6); x.lineTo(L + 48, y - 6); x.stroke(); x.restore();
+          }
           x.save(); x.globalAlpha = e; text(x, String(s), L + 70 + (1 - e) * 30, y, mw - 100, hiOn(i) ? "600" : "500", 28, hiOn(i) ? BLUE : INK, "left"); x.restore();
         });
         bottom = top + ch;
+      } else if (v.type === "broll") {
+        // b-roll: one big illustration with a little motion story, and helpers around it
+        const ic = (v.icons || []).slice(0, 4), main = ic[0], rest = ic.slice(1), mo = v.motion || "float";
+        // a caption sits above the illustration (below it would run into her head)
+        const hasT = !!v.text, sz = hasT ? Math.min(area * .62, 200) : Math.min(area * .78, 250), cx = W / 2, cy = top + (hasT ? 48 : 0) + Math.min(area, 330) * (hasT ? .42 : .5);
+        const e = back(itemT(0, 0, lt) / 420);
+        if (e > 0 && main) {
+          let dx = 0, dy = Math.sin(lt / 600) * 8, rot = Math.sin(lt / 900) * .05, sc = e;
+          if (mo === "shake" || mo === "heat") { dx = Math.sin(lt / 28) * (mo === "heat" ? 3 : 6); rot = Math.sin(lt / 40) * .05; }
+          if (mo === "spin") rot = lt / 700;
+          if (mo === "zoom") sc = e * (1 + Math.min(1, lt / 6000) * .15);
+          if (mo === "pulse" && lt > 300) for (let k = 0; k < 3; k++) {   // waves going out
+            const p = ((lt / 1400) + k / 3) % 1; x.save(); x.globalAlpha = (1 - p) * .55; x.strokeStyle = BLUE; x.lineWidth = 5;
+            x.beginPath(); x.arc(cx, cy, sz * .45 + p * sz * .7, 0, 6.3); x.stroke(); x.restore();
+          }
+          x.save(); x.globalAlpha = Math.min(1, e); x.shadowColor = "rgba(40,70,80,.18)"; x.shadowBlur = 24; x.shadowOffsetY = 10;
+          drawIcon(x, main, cx + dx, cy + dy, sz * sc, rot); x.restore();
+          if (mo === "drain") {   // a level that slowly empties
+            const p = Math.max(.08, 1 - lt / 5000), bw2 = sz * .7, bx2 = cx - bw2 / 2, by2 = cy + sz * .55;
+            x.save(); rr(x, bx2, by2, bw2, 16, 8); x.fillStyle = "#e4e8ec"; x.fill(); rr(x, bx2, by2, bw2 * p, 16, 8); x.fillStyle = p < .25 ? "#ff5a5a" : "#4cd97b"; x.fill(); x.restore();
+          }
+        }
+        rest.forEach((n, k) => {
+          const t0 = itemT(k + 1, 500 + k * 350, lt); if (t0 <= 0) return;
+          const ek = back(t0 / 380), ssz = sz * .38;
+          let px, py, a = 1, r = 0;
+          if (mo === "heat" || mo === "rise") {   // they float up out of it, again and again
+            const p = ((t0 / 1600) + k * .33) % 1; px = cx + (k - (rest.length - 1) / 2) * ssz * .9 + Math.sin(t0 / 300 + k) * 10; py = cy - sz * .2 - p * sz * .9; a = 1 - p; r = Math.sin(t0 / 200 + k) * .2;
+          } else if (mo === "fall") {   // they rain down
+            const p = ((t0 / 1800) + k * .37) % 1; px = cx + (k - (rest.length - 1) / 2) * ssz * 1.3; py = top - ssz * .3 + p * (sz + ssz); a = Math.min(1, (1 - p) * 4); r = p * 2 + k;
+          } else if (mo === "orbit") {   // they circle it
+            const an = t0 / 900 + k * 6.283 / rest.length; px = cx + Math.cos(an) * sz * .72; py = cy + Math.sin(an) * sz * .32;
+          } else {   // around it, popping in, bobbing a little
+            const sp = [[-1, -.55], [1, -.55], [1, .45], [-1, .45]][k]; px = cx + sp[0] * sz * .72; py = cy + sp[1] * sz * .7 + Math.sin(t0 / 500 + k) * 6; r = Math.sin(t0 / 700 + k) * .08;
+          }
+          x.save(); x.globalAlpha = Math.max(0, Math.min(1, a, ek)); drawIcon(x, n, px, py, ssz * Math.min(1.1, ek), r); x.restore();
+        });
+        if (hasT) { x.save(); x.globalAlpha = Math.min(1, Math.max(0, e)); text(x, String(v.text), cx, top + 22, mw, "600", 34, INK); x.restore(); }
+        bottom = cy + sz * .5 + 20;
       }
       x.restore();
       return bottom;
@@ -4238,6 +4314,7 @@ Keep one scene for 2-3 lines with "same" and add a tag or note on the later line
         try { S.lofi = await S.ac.decodeAudioData(await (await fetch("luma/reel/lofi.ogg")).arrayBuffer()); } catch (e) {}
       }
       const lines = S.pack.lines;
+      await loadIcons(S.pack);
       const clips = lines.map((l) => voiceFor(l.say, l.tone || TONE_OF[l.mood]));
       const canExport = window.VideoEncoder && window.AudioEncoder && window.OfflineAudioContext && window.VideoFrame && await muxerLib();
       if (canExport) {

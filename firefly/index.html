@@ -3749,6 +3749,8 @@ Keep one scene for 2-3 lines with "same" and add a tag or note on the later line
           later.push(...S.pack.lines[k].say.split(/\s+/).map(norm));
         }
         S.itemAt = hits.map((h, i) => (h == null && findWord(labels[i], later, 0) >= 0 ? Infinity : h));
+        // never an empty screen: the first item is there as the scene opens
+        if (S.itemAt.length && (S.itemAt[0] === Infinity || S.itemAt[0] == null || S.itemAt[0] > now() + 350)) S.itemAt[0] = now() + 150;
         sceneSounds(v, rel.map((r, i) => (S.itemAt[i] === Infinity ? -1 : r)));
       } else if (v) {
         S.hiAt = hits.slice();
@@ -4414,7 +4416,6 @@ Keep one scene for 2-3 lines with "same" and add a tag or note on the later line
       const busy = S.vis && (BUSY[S.vis.type] || (S.vis.type === "cards" && (S.vis.items || []).length > 3));
       S.sm += ((busy ? 1 : 0) - S.sm) * .08;
       backdrop(x, W, H, tm);
-      prop(x, W, H);
       her(x, W, H, tm);
       title(x, W, H, tm);
       if (S.vis) {

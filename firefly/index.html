@@ -3538,7 +3538,7 @@ Sound ALIVE and human, like talking to friends you adore: natural little openers
 Write it as JSON only:
 {"hook":"the scroll-stopping first line, a question or surprise (<9 words)",
 "lines":[{"say":"what you say out loud, one short spoken sentence in simple words","title":"the big title at the top, 1-3 words like \\"Click.\\" or \\"cookies\\" or \\"websites forget you\\"; give it only when the scene changes","sub":"optional tiny grey line under the title (<7 words)","mood":"her pose, one of surprised|wink|think|grin|point|smug|explain|glasses|adjust (pushing up her glasses: 'actually...')|heart (heart hands: love for her followers)|shy|sassy (hand on hip: 'excuse me?')|blush (sweet, thankful)|laugh (after a joke)|stop (palm out: 'wait! don't!')|annoyed (arms crossed)|phone (holding a phone: phone topics)|present (presenting: 'ta-da, here it is')|aside (pointing at the boxes on screen)|coffee (cozy, calm)|thumbsup (good job, approved)|listen (one finger up, serious: 'listen, this matters')|showcase (open palm, showing something off)|shrug ('who knows?', 'it depends')|laptop (holding a laptop: computer topics)|funfact (finger up, smiling: 'fun fact!'); her mouth is OPEN in surprised, wink, grin, point, glasses, adjust, laugh, listen, showcase, laptop, funfact, so use those for talking lines; the others (closed mouth) suit short reactions of a few words","tone":"how your voice sounds on this line, one of excited|happy|thinking|pout|shy|sad (pout = playful teasing)","visual":SCENE}, ... 7 to 10 lines (beats count), 20-35 seconds spoken; first line is the hook (mood surprised or think), last line is the question CTA (mood wink or point)],
-"topic":"the topic in 2-4 words, shown on a bar at the bottom the whole time","theme":"one of mint|night|paper|peach (the look of the whole Reel: night for gaming/hacking, paper for explainers/history, peach for cozy/phone topics, mint default)","igCaption":"a warm IG caption with 1-2 small kaomoji","hashtags":["#tag", ... 6 to 10 relevant tech hashtags]}
+"topic":"the topic in 2-4 words, pops up on a bar for ~3s only on the line where she says \"today we're talking about…\" (or a line with \"showTopic\":true)","theme":"one of mint|night|paper|peach (the look of the whole Reel: night for gaming/hacking, paper for explainers/history, peach for cozy/phone topics, mint default)","igCaption":"a warm IG caption with 1-2 small kaomoji","hashtags":["#tag", ... 6 to 10 relevant tech hashtags]}
 SCENE is one of (labels short, no emoji):
 {"type":"popup","title":"We use cookies","yes":"ACCEPT ALL","no":"REJECT ALL","pick":"yes"}  (a UI dialog, a cursor clicks the picked button)
 {"type":"windows","left":{"bar":"your browser","text":"you"},"right":{"bar":"shop.example","text":"the website"},"send":"cookie"}  (two browser windows; "send" is an optional little chip travelling left->right)
@@ -3601,6 +3601,7 @@ Keep one scene for 2-3 lines with "same" and add a tag or note on the later line
     function setLine(i, preview) {
       const l = S.pack && S.pack.lines[i]; if (!l) return;
       S.line = i; S.cue = ""; S.addV = null; S.moodSwap = null;
+      if (!preview && !S.topicAt && S.pack.topic && (l.showTopic || /talking about|today we're|let's talk about/i.test(l.say || ""))) { S.topicAt = now(); S.topicEnd = now() + 2800; }
       const oldVis = S.vis, oldAt = S.visAt, oldItems = S.itemAt;
       let v = l.visual && typeof l.visual === "object" ? l.visual : null;
       if (!v || v.type === "same" || !v.type) {
@@ -4242,12 +4243,13 @@ Keep one scene for 2-3 lines with "same" and add a tag or note on the later line
       x.lineWidth = 2; rr(x, -w / 2 + 6, -h / 2 + 6, w - 12, h - 12, 7); x.stroke();
       x.fillStyle = "#e2456a"; x.textAlign = "center"; x.textBaseline = "middle"; x.fillText(s.toUpperCase(), 0, 2); x.restore();
     }
-    // the topic of the Reel, always on a bar at the bottom (people who scroll in halfway know what it's about)
+    // the topic of the Reel: pops up only while she announces it ("today we're talking about…"), then slides away so it never sits on Luma
     function topicBar(x, W, H, tm) {
-      const s = S.pack && S.pack.topic; if (!s || !S.playing && !S.off) return;
-      const e = ease((tm - (S.topicAt || 0)) / 500), h = 70, y = H - 96 + (1 - e) * 120, dark = TH().title === "#ffffff";
-      x.save(); x.shadowColor = "rgba(20,30,50,.25)"; x.shadowBlur = 18; rr(x, 26, y, W - 52, h, 18); x.fillStyle = dark ? "#ffffff" : "#22263a"; x.fill(); x.restore();
-      text(x, String(s), W / 2, y + h / 2 + 1, W - 100, "700", 32, dark ? "#22263a" : "#ffffff");
+      const s = S.pack && S.pack.topic; if (!s || !S.topicAt || !S.playing && !S.off) return;
+      const a = tm - S.topicAt, e = Math.min(ease(a / 450), ease((S.topicEnd - tm) / 450)); if (e <= 0) return;
+      const h = 70, y = H - 96 + (1 - e) * 120, dark = TH().title === "#ffffff";
+      x.save(); x.globalAlpha = e; x.shadowColor = "rgba(20,30,50,.25)"; x.shadowBlur = 18; rr(x, 26, y, W - 52, h, 18); x.fillStyle = dark ? "#ffffff" : "#22263a"; x.fill(); x.restore();
+      x.save(); x.globalAlpha = e; text(x, String(s), W / 2, y + h / 2 + 1, W - 100, "700", 32, dark ? "#22263a" : "#ffffff"); x.restore();
     }
     // confetti for the ending
     function confetti(x, W, H, tm) {
@@ -4710,7 +4712,7 @@ Keep one scene for 2-3 lines with "same" and add a tag or note on the later line
     }
     // the Reel itself, the same for live and export: her lines one after another, then "follow for more"
     async function timeline(clips, wantMusic) {
-      S.vis = null; S.title = ""; S.sub = ""; S.prevMood = ""; S.emotes = []; S.prevVis = null; S.confAt = 0; S.topicAt = now() + 600;
+      S.vis = null; S.title = ""; S.sub = ""; S.prevMood = ""; S.emotes = []; S.prevVis = null; S.confAt = 0; S.topicAt = 0;
       S.moodAt = S.titleAt = S.visAt = S.addAt = S.sayAt = S.chAt = now() - 2000; S.beatAt = -1e9;   // (the export's clock starts at 0)
       S.mood = S.pack.lines[0].mood || S.mood;   // open on her first expression, no fade from the preview
       hiss(.01, 1000, 1000, .0001, 0);   // makes the noise buffer the hi-hat uses

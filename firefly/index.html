@@ -3549,10 +3549,10 @@ SCENE is one of (labels short, no emoji):
 {"type":"code","lines":["git add .","git commit -m \\"fix\\""]}  (a tiny terminal, up to 4 short lines)
 {"type":"big","text":"100%"}  (one big number or word)
 {"type":"list","items":["short point","short point"]}  (up to 3)
-{"type":"device","device":"phone","app":"notification","notes":[{"from":"System","title":"Phone is too hot","text":"Charging paused until it cools down","color":"#e2456a"}]}  (DEVICE B-ROLL: a clean phone or laptop mockup that SHOWS the moment. apps: notification (notes up to 3) | chat ("title":"name","msgs":[{"from":"them","text":"..."},{"from":"me","text":"..."}]) | settings (laptop by default: "window":"Display settings","title":"Display","rows":[{"label":"Refresh rate","value":"60 Hz","to":"144 Hz"},{"label":"XMP","value":"off","to":"on"}] -> the cursor changes the value / flips the switch) | stat ("title":"CPU temperature","value":"92°C","bad":true,"trend":"up") | download ("title":"Game name","from":0,"to":0,"stuck":true,"text":"0 B/s"); "device":"phone" or "laptop"; "low":true shows a low battery)
+{"type":"device","device":"phone","app":"notification","notes":[{"from":"System","title":"Phone is too hot","text":"Charging paused until it cools down","color":"#e2456a"}]}  (DEVICE B-ROLL: a clean phone or laptop mockup that SHOWS the moment. apps: notification (notes up to 3) | chat ("title":"name","msgs":[{"from":"them","text":"..."},{"from":"me","text":"..."}]) | settings (laptop by default: "window":"Display settings","title":"Display","rows":[{"label":"Refresh rate","value":"60 Hz","to":"144 Hz"},{"label":"XMP","value":"off","to":"on"}] -> the cursor changes the value / flips the switch) | stat ("title":"CPU temperature","value":"92°C","bad":true,"trend":"up") | download ("title":"Game name","from":0,"to":0,"stuck":true,"text":"0 B/s"); "device" must be the REAL subject of the topic: "phone" (phone topics), "laptop" (laptop topics), "monitor" (PC / PC gaming), "tv" (consoles: a TV with a console beside it; "hot":true adds heat waves), or "card" (just a clean card, when no device is the subject, e.g. a password strength or a general number). Never show a phone for a console or PC topic. "low":true shows a low battery)
 {"type":"same"}  (keep the previous scene, for continuity)
 Any scene (also "same") may add "tag":"a sticky-note label like it's you!" and/or "note":"a short blue annotation like sent back every visit".
-VISUAL HOOK: the first line's visual should be a device scene that SHOWS the problem itself (the notification, the wrong setting, the scam message, the number). Use a device scene every 2-3 lines; keep every scene clean: one idea, few words, no clutter.
+VISUAL HOOK (the device must match the topic, see "device"): the first line's visual should be a device scene that SHOWS the problem itself (the notification, the wrong setting, the scam message, the number). Use a device scene every 2-3 lines; keep every scene clean: one idea, few words, no clutter.
 Keep one scene for 2-3 lines with "same" and add a tag or note on the later lines, building it up like a teacher. Vary scenes across the Reel, and vary her pose line by line (rarely the same pose twice in a row). Be accurate and genuinely simple, never generic filler. Never mention AI or being an AI anywhere in the script, caption or hashtags. Language: ALL of it in natural English (en-US), whatever language the app is in.`, { cache: false, hard: true });
         const pack = JSON.parse(text.slice(text.indexOf("{"), text.lastIndexOf("}") + 1));
         if (!pack || !Array.isArray(pack.lines) || !pack.lines.length) throw 0;
@@ -4035,6 +4035,40 @@ Keep one scene for 2-3 lines with "same" and add a tag or note on the later line
         appDraw(x, v, app, lt, sx, sy + sw * .16, sw, sh - sw * .16, true);
         x.restore();
         bottom = py + ph;
+      } else if (kind === "card") {
+        // no device at all: just the screen's content on a clean card
+        const cw = Math.min(W * .78, 520), chh = Math.min(area * .8, 420), cx0 = (W - cw) / 2, cy0 = top + 8;
+        paper(x, cx0, cy0, cw, chh, 26);
+        x.save(); rr(x, cx0, cy0, cw, chh, 26); x.clip();
+        appDraw(x, v, app, lt, cx0, cy0 + 6, cw, chh - 6, true);
+        x.restore();
+        bottom = cy0 + chh;
+      } else if (kind === "tv" || kind === "monitor") {
+        // a TV with a console under it, or a PC monitor on its stand
+        const tv = kind === "tv", mw2 = Math.min(W * .86, 620), mh2 = mw2 * .58, mx = (W - mw2) / 2, my = top + 6;
+        paper(x, mx, my, mw2, mh2, tv ? 10 : 16, null, "#1d2030");
+        const sx = mx + 10, sy = my + 10, sw = mw2 - 20, sh = mh2 - 20;
+        x.save(); rr(x, sx, sy, sw, sh, 6); x.clip();
+        const g = x.createLinearGradient(0, sy, 0, sy + sh); g.addColorStop(0, "#e9eef6"); g.addColorStop(1, "#f6f8fb"); x.fillStyle = g; x.fillRect(sx, sy, sw, sh);
+        appDraw(x, v, app, lt, sx, sy + 6, sw, sh - 6, false);
+        x.restore();
+        if (tv) {
+          // little feet, then the console standing next to it, its fan breathing hot air when it's loud
+          x.fillStyle = "#1d2030"; x.fillRect(mx + mw2 * .18, my + mh2, 10, 16); x.fillRect(mx + mw2 * .82 - 10, my + mh2, 10, 16);
+          const cw2 = 92, ch2 = 130, cx2 = mx + mw2 - cw2 - 6, cy2 = my + mh2 + 22;
+          paper(x, cx2, cy2, cw2, ch2, 18, null, "#fbfbfd");
+          x.fillStyle = "#1d2030"; rr(x, cx2 + cw2 * .42, cy2 + 10, cw2 * .16, ch2 - 20, 6); x.fill();
+          x.beginPath(); x.arc(cx2 + cw2 * .5, cy2 + 24, 3.5, 0, 6.3); x.fillStyle = BLUE; x.fill();
+          if (v.hot) for (let k = 0; k < 3; k++) {   // heat waves rising off it
+            const p2 = ((lt / 900) + k / 3) % 1, hx = cx2 + cw2 * (.25 + k * .25), hy = cy2 - 8 - p2 * 60;
+            x.save(); x.globalAlpha = (1 - p2) * .7; x.strokeStyle = "#ff7a59"; x.lineWidth = 4; x.lineCap = "round";
+            x.beginPath(); x.moveTo(hx, hy + 18); x.quadraticCurveTo(hx + 8, hy + 9, hx, hy); x.quadraticCurveTo(hx - 8, hy - 9, hx, hy - 18); x.stroke(); x.restore();
+          }
+          bottom = cy2 + ch2;
+        } else {
+          x.fillStyle = "#c9ced6"; x.fillRect(W / 2 - 14, my + mh2, 28, 34); rr(x, W / 2 - 80, my + mh2 + 30, 160, 12, 6); x.fill();
+          bottom = my + mh2 + 44;
+        }
       } else {
         const lw = Math.min(W * .86, 640), lh = lw * .62, lx = (W - lw) / 2, ly = top + 6;
         paper(x, lx, ly, lw, lh, 18, null, "#22263a");

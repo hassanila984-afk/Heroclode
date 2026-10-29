@@ -4390,7 +4390,7 @@ Keep one scene for 2-3 lines with "same" and add a tag or note on the later line
       } else if (v.type === "big") {
         const e = back(lt / 500), s = String(v.text || ""), cy = top + area * .4;
         x.save(); x.translate(W / 2, cy); x.scale(e, e);
-        const px = fitText(x, s, mw, "700", 150); x.font = F("700", px); x.textAlign = "center"; x.textBaseline = "middle"; x.fillStyle = INK; x.fillText(s, 0, 0);
+        const px = fitText(x, s, mw, "700", 150); x.font = F("700", px); x.textAlign = "center"; x.textBaseline = "middle"; x.fillStyle = TH().title; x.fillText(s, 0, 0);   // on the backdrop: use the theme's title colour (dark ink vanished on night)
         const tw = Math.min(mw, x.measureText(s).width), u = ease((lt - 400) / 500);
         x.strokeStyle = BLUE; x.lineWidth = 8; x.lineCap = "round"; x.beginPath(); x.moveTo(-tw / 2, px * .52); x.quadraticCurveTo(0, px * .62, -tw / 2 + tw * u, px * .5); if (u > 0) x.stroke();
         x.restore(); bottom = cy + 110;

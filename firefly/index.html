@@ -3473,7 +3473,7 @@ Start with one face tag like [thinking] [happy], then your help.`, Object.assign
     const INK = "#2b2d42", MUTED = "#7d8796", BLUE = "#2f6bff", BG1 = "#e3ecea", BG2 = "#cfdedb";
     const S = { el: null, pack: null, rec: null, ac: null, raf: 0, playing: false, chunks: [], faces: {}, line: -1, mood: "explain", prevMood: "", moodAt: 0, vis: null, visAt: 0, addAt: 0, say: "", sayAt: 0, chunks2: [], chIdx: -1, chAt: 0, audio: null, title: "", sub: "", titleAt: 0, sm: 0, nameUntil: 0, bgc: null };
     const NICHE = "a cute anime girl who explains tech and computer-science concepts in the simplest, coziest, most beginner-friendly way (e.g. what browser cookies are, CPU cores vs threads, RAM vs storage, what an API is, why your PC lags, how the internet works, Git, caching), warm and a little kawaii, hook + one simple explanation + a question CTA";
-    const BUSY = { windows: 1, flow: 1, bars: 1, code: 1 };
+    const BUSY = { windows: 1, flow: 1, bars: 1, code: 1, device: 1 };
     // the clock: real time while previewing, a virtual clock (exact 30 fps steps) while exporting a Reel
     const now = () => (S.off ? S.vt : performance.now());
     const tnow = () => (S.off ? S.vt / 1000 : S.ac.currentTime);
@@ -3549,10 +3549,10 @@ SCENE is one of (labels short, no emoji):
 {"type":"code","lines":["git add .","git commit -m \\"fix\\""]}  (a tiny terminal, up to 4 short lines)
 {"type":"big","text":"100%"}  (one big number or word)
 {"type":"list","items":["short point","short point"]}  (up to 3)
-{"type":"broll","icons":["phone","fire","fire"],"motion":"heat","text":"optional short caption"}  (B-ROLL: one big 3D illustration that SHOWS the moment, the first icon is the main one and the rest are helpers; motion is one of float|shake|heat|pulse|spin|drain|fall|orbit|zoom|rise: heat = things rising from it, pulse = waves going out (wifi, signal), spin = loading/working, drain = something emptying (battery), fall = things raining down (money, cookies), shake = warning/annoyed, orbit = things circling it)
+{"type":"device","device":"phone","app":"notification","notes":[{"from":"System","title":"Phone is too hot","text":"Charging paused until it cools down","color":"#e2456a"}]}  (DEVICE B-ROLL: a clean phone or laptop mockup that SHOWS the moment. apps: notification (notes up to 3) | chat ("title":"name","msgs":[{"from":"them","text":"..."},{"from":"me","text":"..."}]) | settings (laptop by default: "window":"Display settings","title":"Display","rows":[{"label":"Refresh rate","value":"60 Hz","to":"144 Hz"},{"label":"XMP","value":"off","to":"on"}] -> the cursor changes the value / flips the switch) | stat ("title":"CPU temperature","value":"92°C","bad":true,"trend":"up") | download ("title":"Game name","from":0,"to":0,"stuck":true,"text":"0 B/s"); "device":"phone" or "laptop"; "low":true shows a low battery)
 {"type":"same"}  (keep the previous scene, for continuity)
 Any scene (also "same") may add "tag":"a sticky-note label like it's you!" and/or "note":"a short blue annotation like sent back every visit".
-ICONS: cards, flow, list and vs scenes may add "icons":[...] (one per item, in order) and b-roll scenes need them. Use ONLY these names: airplane alarm antenna battery bell bolt bomb brain bug bulb calendar camera card chat check clap cloud coffee coin cookie cool cross desktop detective disk down email eye eyes film fire floppy folder game gear ghost gift globe hammer headphones heart hourglass house hundred joystick key keyboard laptop link lock lowbattery mag mic mindblown money moon mouse movie music package party phish phone pirate plug popcorn printer puzzle rabbit robot rocket satellite scream search shield signal skull sleep snail snow sparkles star stopwatch sun thermometer think thumbsup tools trash trophy tv unlock up warning water wave. People get bored by text alone: give most scenes icons, and put a b-roll scene every 2-3 lines.
+VISUAL HOOK: the first line's visual should be a device scene that SHOWS the problem itself (the notification, the wrong setting, the scam message, the number). Use a device scene every 2-3 lines; keep every scene clean: one idea, few words, no clutter.
 Keep one scene for 2-3 lines with "same" and add a tag or note on the later lines, building it up like a teacher. Vary scenes across the Reel, and vary her pose line by line (rarely the same pose twice in a row). Be accurate and genuinely simple, never generic filler. Never mention AI or being an AI anywhere in the script, caption or hashtags. Language: ALL of it in natural English (en-US), whatever language the app is in.`, { cache: false, hard: true });
         const pack = JSON.parse(text.slice(text.indexOf("{"), text.lastIndexOf("}") + 1));
         if (!pack || !Array.isArray(pack.lines) || !pack.lines.length) throw 0;
@@ -3600,7 +3600,7 @@ Keep one scene for 2-3 lines with "same" and add a tag or note on the later line
         // keep the scene, only add the new sticky note / annotation
         if (S.vis && v && (v.tag || v.note)) { S.vis = Object.assign({}, S.vis, v.tag ? { tag: v.tag } : {}, v.note ? { note: v.note } : {}, { type: S.vis.type }); S.addAt = now(); S.cue = "add"; S.addV = v; }
         else if (!S.vis && v && v.type !== "same") { S.vis = v; S.visAt = S.addAt = now(); S.cue = "new"; S.itemAt = null; }
-      } else if (S.vis && S.vis.type === v.type && v.type !== "popup" && JSON.stringify(itemLabels(S.vis)) === JSON.stringify(itemLabels(v))) { S.vis = Object.assign({}, S.vis, v); S.addAt = now(); S.cue = "add"; S.addV = v; }   // same scene again: build on it, don't redraw it
+      } else if (S.vis && S.vis.type === v.type && v.type !== "popup" && v.type !== "device" && JSON.stringify(itemLabels(S.vis)) === JSON.stringify(itemLabels(v))) { S.vis = Object.assign({}, S.vis, v); S.addAt = now(); S.cue = "add"; S.addV = v; }   // same scene again: build on it, don't redraw it
       else { S.vis = v; S.visAt = now(); S.addAt = now() + 900; S.cue = "new"; S.itemAt = null; }
       S.hiAt = null;
       if (l.title && l.title !== S.title) { if (!preview && now() - S.visAt > 50) fx.whoosh(0); S.title = l.title; S.sub = l.sub || ""; S.titleAt = now(); }
@@ -3655,6 +3655,7 @@ Keep one scene for 2-3 lines with "same" and add a tag or note on the later line
       else if (ty === "flow") { const n = Math.min(4, (v.steps || []).length); let last = 0; for (let i = 0; i < n; i++) { const t = Math.max(d(i, O + i * 420), i ? last + 300 : 0); last = t; fx.pop(t); } fx.ding(last + 420); }
       else if (ty === "code") { fx.pop(O); const c = (v.lines || []).slice(0, 4).join("").length; for (let k = 0; k < Math.min(90, c); k += 2) fx.tick(O + 350 + k * 38); }
       else if (ty === "big") { fx.pop(O); fx.thwip(O + 400); }
+      else if (ty === "device") { fx.pop(O); const n = (v.rows || v.msgs || v.notes || [1]).length; for (let i = 0; i < Math.min(4, n); i++) fx.chip(d(i, O + 400 + i * 600)); }
       else if (ty === "broll") { (v.icons || []).slice(0, 4).forEach((n, i) => fx.pop(d(i, O + (i ? 500 + (i - 1) * 350 : 0)))); if (v.motion === "spin") fx.thwip(O + 200); }
       else if (ty === "list") { fx.pop(O); (v.items || []).slice(0, 3).forEach((s, i) => fx.check(d(i, O + 300 + i * 320))); }
       if (v.tag || v.note) addSounds(v, 900);
@@ -3714,6 +3715,7 @@ Keep one scene for 2-3 lines with "same" and add a tag or note on the later line
       if (v.type === "windows") return [String((v.left || {}).text || ""), String((v.right || {}).text || "")];
       if (v.type === "big") return [String(v.text || "")];
       if (v.type === "broll") return (v.icons || []).map(String);
+      if (v.type === "device") return [];   // a screen plays out on its own little timeline, not word by word
       if (v.type === "code") return (v.lines || []).map(String);
       return [];
     }
@@ -3766,13 +3768,9 @@ Keep one scene for 2-3 lines with "same" and add a tag or note on the later line
       const first = { surprised: "exclaim", think: "question", wink: "hearts", grin: "notes", smug: "sparkle", glasses: "sparkle",
         adjust: "sparkle", heart: "hearts", shy: "hearts", blush: "hearts", laugh: "notes", stop: "exclaim", sassy: "question", present: "sparkle",
         thumbsup: "sparkle", listen: "exclaim", showcase: "sparkle", shrug: "question", funfact: "exclaim" }[l.mood];
-      if (first) ev.push([first, t0 + 80]);
-      raw.forEach((w, j) => {
-        const n = norm(w);
-        if (/\?$/.test(w)) ev.push(["question", times[j] + 150]);
-        else if (/!$/.test(w) || WOW.test(n)) ev.push(["exclaim", times[j]]);
-        else if (LOVE.test(n) || (n === "guys" && norm(raw[j - 1] || "") === "you")) ev.push(["hearts", times[j]]);
-      });
+      // kept calm: a reaction only on the hook, on a one-beat joke, and on her last line, never on every word
+      const key = S.line === 0 || S.chunks2.length === 1 || S.line === S.pack.lines.length - 1;
+      if (first && key) ev.push([first, t0 + 80]);
       // a giggle in her line: notes and a wiggle where it falls
       const toks = String(l.say || "").split(/\s+/).filter(Boolean); let k = 0;
       toks.forEach((tk) => { if (/^\*[^*]+\*$/.test(tk)) ev.push(["notes", k < times.length ? times[k] - 250 : (times[times.length - 1] || t0) + 300]); else k++; });
@@ -3984,8 +3982,8 @@ Keep one scene for 2-3 lines with "same" and add a tag or note on the later line
       const full = "↔ " + s, n = Math.ceil(full.length * Math.min(1, e)), wFull = x.measureText(full).width;
       x.textAlign = "left"; x.fillText(full.slice(0, n), cx - wFull / 2, cy); x.restore();
     }
-    // little 3D illustrations (Microsoft Fluent Emoji, MIT) for her scenes: on cards, steps, list rows, and as b-roll
-    const ICONS = "airplane alarm antenna battery bell bolt bomb brain bug bulb calendar camera card chat check clap cloud coffee coin cookie cool cross desktop detective disk down email eye eyes film fire floppy folder game gear ghost gift globe hammer headphones heart hourglass house hundred joystick key keyboard laptop link lock lowbattery mag mic mindblown money moon mouse movie music package party phish phone pirate plug popcorn printer puzzle rabbit robot rocket satellite scream search shield signal skull sleep snail snow sparkles star stopwatch sun thermometer think thumbsup tools trash trophy tv unlock up warning water wave".split(" ");
+    // optional icons on scenes (none bundled right now)
+    const ICONS = [];   // (emoji icons were tried and dropped: they clashed with the clean look)
     const ICON = {};
     function icon(name) {
       name = String(name || "").toLowerCase();
@@ -4008,6 +4006,142 @@ Keep one scene for 2-3 lines with "same" and add a tag or note on the later line
     // when each item of the scene comes in: on the word where she says it, else on the usual stagger
     function itemT(i, def, lt) { const a = S.itemAt && S.itemAt[i]; return a ? now() - a : lt - def; }
     function hiOn(i) { const a = S.hiAt && S.hiAt[i]; if (!a) return false; const d = now() - a; return d > 0 && d < 1500; }
+    // b-roll as clean device mockups in the same look as the rest of the video: a phone or a laptop whose
+    // screen shows the moment she's talking about (a notification sliding in, a setting the cursor changes,
+    // a chat, a number climbing, a download), so the hook is visual and nothing is just text
+    function wrapLines(x, s, maxW) {
+      const out = []; let ln = "";
+      for (const w of String(s).split(/\s+/)) { const tr = ln ? ln + " " + w : w; if (x.measureText(tr).width > maxW && ln) { out.push(ln); ln = w; } else ln = tr; }
+      if (ln) out.push(ln); return out;
+    }
+    function device(x, W, H, v, lt, top, area) {
+      const app = v.app || "notification", kind = v.device || (app === "settings" || app === "download" ? "laptop" : "phone");
+      const a0 = ease(lt / 380), slide = (1 - ease(lt / 520)) * 70;
+      let bottom;
+      x.save(); x.globalAlpha = a0; x.translate(0, slide);
+      if (kind === "phone") {
+        const ph = Math.min(area * .97, 640), pw = ph * .5, px = (W - pw) / 2, py = top + Math.max(0, (area - ph) / 2);
+        paper(x, px, py, pw, ph, pw * .15, null, "#22263a");
+        const sx = px + 9, sy = py + 9, sw = pw - 18, sh = ph - 18;
+        x.save(); rr(x, sx, sy, sw, sh, pw * .13); x.clip();
+        const g = x.createLinearGradient(0, sy, 0, sy + sh); g.addColorStop(0, "#dde8f6"); g.addColorStop(1, "#eef2f8"); x.fillStyle = g; x.fillRect(sx, sy, sw, sh);
+        text(x, "9:41", sx + sw * .1, sy + sw * .09, sw * .3, "600", sw * .055, INK, "left");
+        const bw2 = sw * .1, bh2 = sw * .05, bx2 = sx + sw * .8, by2 = sy + sw * .09 - bh2 / 2;
+        x.lineWidth = 2; x.strokeStyle = INK; rr(x, bx2, by2, bw2, bh2, 3); x.stroke();
+        x.fillStyle = v.low ? "#ff5a5a" : INK; x.fillRect(bx2 + 2.5, by2 + 2.5, (bw2 - 5) * (v.low ? .18 : .75), bh2 - 5);
+        x.fillStyle = "#22263a"; rr(x, sx + sw / 2 - sw * .15, sy + sw * .045, sw * .3, sw * .075, sw * .037); x.fill();
+        appDraw(x, v, app, lt, sx, sy + sw * .16, sw, sh - sw * .16, true);
+        x.restore();
+        bottom = py + ph;
+      } else {
+        const lw = Math.min(W * .86, 640), lh = lw * .62, lx = (W - lw) / 2, ly = top + 6;
+        paper(x, lx, ly, lw, lh, 18, null, "#22263a");
+        const sx = lx + 12, sy = ly + 12, sw = lw - 24, sh = lh - 24;
+        x.save(); rr(x, sx, sy, sw, sh, 8); x.clip(); x.fillStyle = "#f4f6f9"; x.fillRect(sx, sy, sw, sh);
+        x.fillStyle = "#e7ebf0"; x.fillRect(sx, sy, sw, 34);
+        for (let i = 0; i < 3; i++) { x.beginPath(); x.arc(sx + 18 + i * 14, sy + 17, 4.5, 0, 6.3); x.fillStyle = ["#ff6b6b", "#ffd166", "#4cd97b"][i]; x.fill(); }
+        text(x, String(v.window || ""), sx + sw / 2, sy + 17, sw - 140, "600", 15, MUTED);
+        appDraw(x, v, app, lt, sx, sy + 34, sw, sh - 34, false);
+        x.restore();
+        x.fillStyle = "#c9ced6"; x.beginPath(); x.moveTo(lx - 34, ly + lh + 4); x.lineTo(lx + lw + 34, ly + lh + 4); x.lineTo(lx + lw + 12, ly + lh + 22); x.lineTo(lx - 12, ly + lh + 22); x.closePath(); x.fill();
+        bottom = ly + lh + 26;
+      }
+      x.restore();
+      return bottom;
+    }
+    function appDraw(x, v, app, lt, ax, ay, aw, ah, phone) {
+      const u = phone ? aw / 235 : aw / 520;   // type scale for the screen (big enough to read on a phone)
+      if (app === "notification") {
+        text(x, v.clock || "9:41", ax + aw / 2, ay + ah * .12, aw, "600", 64 * u, INK);
+        text(x, v.date || "Tuesday, October 28", ax + aw / 2, ay + ah * .12 + 44 * u, aw, "500", 15 * u, MUTED);
+        const notes = (v.notes || [{ from: v.from, title: v.title, text: v.text, color: v.color }]).slice(0, 3);
+        notes.forEach((n, i) => {
+          const t = itemT(i, 500 + i * 700, lt); if (t <= 0) return;
+          const e = ease(t / 420), nh = 92 * u, nx = ax + aw * .05, nw = aw * .9, ny = ay + ah * .3 + i * (nh + 10 * u) - (1 - e) * 40;
+          x.save(); x.globalAlpha *= e; paper(x, nx, ny, nw, nh, 18 * u, null, "rgba(255,255,255,.95)");
+          const bs = 26 * u; rr(x, nx + 12 * u, ny + 12 * u, bs, bs, 7 * u); x.fillStyle = n.color || BLUE; x.fill();
+          text(x, String(n.from || "").slice(0, 1).toUpperCase(), nx + 12 * u + bs / 2, ny + 12 * u + bs / 2 + 1, bs, "700", 15 * u, "#fff");
+          text(x, String(n.from || "").toUpperCase(), nx + 20 * u + bs, ny + 12 * u + bs / 2, nw * .55, "600", 11 * u, MUTED, "left");
+          text(x, "now", nx + nw - 14 * u, ny + 12 * u + bs / 2, 60, "500", 11 * u, MUTED, "right");
+          text(x, String(n.title || ""), nx + 14 * u, ny + nh * .58, nw - 28 * u, "700", 16 * u, INK, "left");
+          text(x, String(n.text || ""), nx + 14 * u, ny + nh * .8, nw - 28 * u, "500", 13.5 * u, MUTED, "left");
+          x.restore();
+        });
+      } else if (app === "chat") {
+        x.fillStyle = "#fff"; x.fillRect(ax, ay, aw, 54 * u);
+        x.beginPath(); x.arc(ax + 30 * u, ay + 27 * u, 15 * u, 0, 6.3); x.fillStyle = v.color || "#8a7dff"; x.fill();
+        text(x, String(v.title || "").slice(0, 1).toUpperCase(), ax + 30 * u, ay + 28 * u, 30 * u, "700", 15 * u, "#fff");
+        text(x, String(v.title || ""), ax + 54 * u, ay + 27 * u, aw * .7, "700", 15 * u, INK, "left");
+        let y = ay + 70 * u;
+        (v.msgs || []).slice(0, 4).forEach((m, i) => {
+          const t = itemT(i, 400 + i * 900, lt); const me = m.from === "me";
+          x.font = F("500", 14.5 * u); const ls = wrapLines(x, m.text, aw * .62), bh = ls.length * 20 * u + 16 * u;
+          const bw = Math.max(...ls.map((l) => x.measureText(l).width)) + 26 * u, bx = me ? ax + aw - bw - 12 * u : ax + 12 * u;
+          if (t <= 0) {   // "typing..." just before their message comes in
+            if (!me && t > -650) { x.save(); rr(x, ax + 12 * u, y, 58 * u, 30 * u, 15 * u); x.fillStyle = "#fff"; x.fill(); for (let k = 0; k < 3; k++) { x.beginPath(); x.arc(ax + 29 * u + k * 12 * u, y + 15 * u - Math.max(0, Math.sin(lt / 120 - k)) * 3 * u, 3.5 * u, 0, 6.3); x.fillStyle = MUTED; x.fill(); } x.restore(); }
+            return;
+          }
+          const e = back(t / 300);
+          x.save(); popIn(x, me ? bx + bw : bx, y + bh / 2, e); rr(x, bx, y, bw, bh, 14 * u); x.fillStyle = me ? BLUE : "#fff"; x.fill();
+          x.fillStyle = me ? "#fff" : INK; x.textBaseline = "middle"; x.textAlign = "left"; x.font = F("500", 14.5 * u);
+          ls.forEach((l, k) => x.fillText(l, bx + 13 * u, y + 8 * u + 10 * u + k * 20 * u)); x.restore();
+          y += bh + 10 * u;
+        });
+      } else if (app === "settings") {
+        text(x, String(v.title || "Settings"), ax + 22 * u, ay + 30 * u, aw - 44 * u, "700", 22 * u, INK, "left");
+        const rows = (v.rows || []).slice(0, 4), rh = 50 * u, y0 = ay + 56 * u;
+        rows.forEach((r, i) => {
+          const t = itemT(i, 300 + i * 250, lt); if (t <= 0) return;
+          const e = ease(t / 350), ry = y0 + i * (rh + 9 * u), rx = ax + 14 * u, rw = aw - 28 * u;
+          const tog = r.value === "on" || r.value === "off", ch = r.to != null ? cl((t - 1100) / 350) : 0, cur = ch > .5 ? r.to : r.value;
+          x.save(); x.globalAlpha *= e; paper(x, rx, ry, rw, rh, 12 * u, ch > .5 ? BLUE : null);
+          text(x, String(r.label), rx + 16 * u, ry + rh / 2, rw * .55, "600", 15.5 * u, INK, "left");
+          let tx, ty;
+          if (tog) {
+            const tw = 46 * u, th = 26 * u; tx = rx + rw - tw - 14 * u; ty = ry + (rh - th) / 2;
+            const from = r.value === "on" ? 1 : 0, to = r.to === "on" ? 1 : r.to === "off" ? 0 : from, p = from + (to - from) * ease(ch);
+            rr(x, tx, ty, tw, th, th / 2); x.fillStyle = p > .5 ? "#34c759" : "#d5dae0"; x.fill();
+            x.beginPath(); x.arc(tx + th / 2 + p * (tw - th), ty + th / 2, th / 2 - 3, 0, 6.3); x.fillStyle = "#fff"; x.fill();
+            tx += tw / 2; ty += th / 2;
+          } else {
+            x.font = F("600", 15 * u); const vw = x.measureText(String(cur)).width + 30 * u, vx = rx + rw - vw - 12 * u, vy = ry + (rh - 30 * u) / 2;
+            rr(x, vx, vy, vw, 30 * u, 8 * u); x.fillStyle = ch > .5 ? "#eaf1ff" : "#f0f2f5"; x.fill();
+            text(x, String(cur) + " ▾", vx + vw / 2, vy + 15 * u, vw, "600", 14 * u, ch > .5 ? BLUE : INK);
+            tx = vx + vw / 2; ty = vy + 15 * u;
+          }
+          x.restore();
+          if (r.to != null && t > 350 && t < 1900) {   // the cursor comes in and clicks it
+            const m = ease((t - 350) / 700), sx2 = ax + aw * .85, sy2 = ry + rh + 70 * u;
+            cursor(x, sx2 + (tx - sx2) * m, sy2 + (ty - sy2) * m, t > 1050 && t < 1250);
+          }
+        });
+      } else if (app === "stat") {
+        text(x, String(v.title || ""), ax + aw / 2, ay + ah * .14, aw * .9, "600", 18 * u, MUTED);
+        const t = itemT(0, 200, lt), p = ease(t / 1300), val = String(v.value || ""), m = val.match(/^([^\d-]*)(-?[\d.,]+)(.*)$/);
+        let shown = val;
+        if (m) { const num = parseFloat(m[2].replace(/,/g, "")), dec = (m[2].split(".")[1] || "").length; shown = m[1] + (num * p).toLocaleString("en-US", { minimumFractionDigits: dec, maximumFractionDigits: dec }) + m[3]; }
+        text(x, shown, ax + aw / 2, ay + ah * .34, aw * .9, "700", 70 * u, v.bad ? "#e2456a" : INK);
+        // a little chart under it, drawn as it goes
+        const cx0 = ax + aw * .1, cw0 = aw * .8, cy0 = ay + ah * .5, chh = ah * .3, trend = v.trend || "up";
+        const pts = []; for (let i = 0; i <= 24; i++) { const f = i / 24; let yv = trend === "down" ? 1 - f : trend === "flat" ? .5 : f; yv = yv * .8 + .1 + Math.sin(i * 1.7) * .05; pts.push([cx0 + f * cw0, cy0 + chh - yv * chh]); }
+        const k = Math.max(1, Math.floor(p * 24));
+        x.save(); x.beginPath(); x.moveTo(pts[0][0], cy0 + chh); for (let i = 0; i <= k; i++) x.lineTo(pts[i][0], pts[i][1]); x.lineTo(pts[k][0], cy0 + chh); x.closePath();
+        x.fillStyle = v.bad ? "rgba(226,69,106,.12)" : "rgba(47,107,255,.12)"; x.fill();
+        x.beginPath(); for (let i = 0; i <= k; i++) (i ? x.lineTo : x.moveTo).call(x, pts[i][0], pts[i][1]); x.strokeStyle = v.bad ? "#e2456a" : BLUE; x.lineWidth = 3.5 * u; x.lineJoin = "round"; x.stroke();
+        x.beginPath(); x.arc(pts[k][0], pts[k][1], 5 * u, 0, 6.3); x.fillStyle = v.bad ? "#e2456a" : BLUE; x.fill(); x.restore();
+      } else if (app === "download") {
+        const cx0 = ax + 20 * u, cw0 = aw - 40 * u, cy0 = ay + ah * .22;
+        paper(x, cx0, cy0, cw0, 130 * u, 14 * u);
+        x.fillStyle = "#3a3f58"; rr(x, cx0 + 16 * u, cy0 + 16 * u, 70 * u, 98 * u, 8 * u); x.fill();
+        text(x, String(v.title || "Game"), cx0 + 102 * u, cy0 + 34 * u, cw0 - 120 * u, "700", 18 * u, INK, "left");
+        const from = (v.from || 0) / 100, to = (v.to != null ? v.to : 100) / 100, t = itemT(0, 200, lt), p = from + (to - from) * ease(t / 2200);
+        const bx = cx0 + 102 * u, bw = cw0 - 120 * u, by = cy0 + 66 * u;
+        rr(x, bx, by, bw, 12 * u, 6 * u); x.fillStyle = "#e7ebf0"; x.fill();
+        if (p > .01) { rr(x, bx, by, bw * p, 12 * u, 6 * u); x.fillStyle = v.stuck ? "#ffb02e" : BLUE; x.fill(); }
+        text(x, Math.round(p * 100) + "%", bx, by + 32 * u, 80 * u, "600", 14 * u, MUTED, "left");
+        text(x, String(v.text || ""), bx + bw, by + 32 * u, bw * .6, "700", 14 * u, v.stuck ? "#e2456a" : MUTED, "right");
+      }
+    }
     // the scene for the current line, inside the area between the title and her; returns its bottom edge
     function scene(x, W, H, v, lt, top, area) {
       const L = W * .07, R = W * .93, mw = R - L;
@@ -4154,6 +4288,8 @@ Keep one scene for 2-3 lines with "same" and add a tag or note on the later line
           x.save(); x.globalAlpha = e; text(x, String(s), L + 70 + (1 - e) * 30, y, mw - 100, hiOn(i) ? "600" : "500", 28, hiOn(i) ? BLUE : INK, "left"); x.restore();
         });
         bottom = top + ch;
+      } else if (v.type === "device") {
+        bottom = device(x, W, H, v, lt, top, area);
       } else if (v.type === "broll") {
         // b-roll: one big illustration with a little motion story, and helpers around it
         const ic = (v.icons || []).slice(0, 4), main = ic[0], rest = ic.slice(1), mo = v.motion || "float";
@@ -4263,7 +4399,7 @@ Keep one scene for 2-3 lines with "same" and add a tag or note on the later line
     }
     // a small monitor on the desk while she's in the corner
     function prop(x, W, H) {
-      const k = ease(S.sm); if (k <= .02) return;
+      const k = ease(S.sm) * (S.vis && S.vis.type === "device" ? 0 : 1); if (k <= .02) return;   // (not next to a device mockup)
       const w = 108, h = 76, a = W * .72, b = H * .84;
       x.save(); x.globalAlpha = k;
       paper(x, a, b, w, h, 8, null, "#22263a");

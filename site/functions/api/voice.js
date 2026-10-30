@@ -7,6 +7,9 @@ import { configured, sessionFrom, sameOrigin, json, voiceKey } from "../../lib/a
 // on calls she always answers in English. Without the key, or if Inworld fails, Cloudflare's Aura voice is used.
 const MODEL = "inworld-ai/realtime-tts-2";
 const VOICES = ["Luna", "Ashley", "Sarah", "Kayla", "Lauren", "Olivia"];   // natural young women's voices (Luna is hers); picked on the You page
+// more voices for the other characters in her Reels (Rita, her goth friend); not offered on the You page
+const CAST = ["Deborah", "Elizabeth", "Veronica", "Victoria", "Serena", "Celeste", "Claire", "Julia", "Miranda", "Hana", "Evelyn", "Tessa", "Chloe", "Wendy"];
+const ALL_VOICES = VOICES.concat(CAST);
 // how she sounds, by the feeling she's showing as she says it: always a real person, never acted or cartoonish
 const NATURAL = "natural, like a real person chatting with a friend";
 const TONE = {
@@ -19,6 +22,8 @@ const TONE = {
   sleepy: `a bit sleepy and relaxed, ${NATURAL}`,
   thinking: `relaxed and curious, warm, ${NATURAL}`,
   listening: `relaxed and warm, lightly smiling, ${NATURAL}`,
+  // Rita: calm and sure of herself, low and soft, a little cool on top but kind underneath
+  cool: "calm, confident and unhurried, low soft voice, a little cool and dry, kind underneath, a real person talking to one friend",
 };
 // when she sings (s=1): a little song, voice only
 const SINGING = "singing softly, a sweet lullaby melody, held notes";
@@ -69,7 +74,7 @@ async function speak(request, env, rawText, voice, mood) {
       const r = await fetch("https://api.deepinfra.com/v1/inference/" + MODEL, {
         method: "POST",
         headers: { authorization: "Bearer " + key, "content-type": "application/json" },
-        body: JSON.stringify({ text: `[${mood === "sing" ? SINGING : TONE[mood] || TONE.listening}] ` + text, voice: VOICES.includes(voice) ? voice : VOICES[0], output_format: "mp3", stream: true }),
+        body: JSON.stringify({ text: `[${mood === "sing" ? SINGING : TONE[mood] || TONE.listening}] ` + text, voice: ALL_VOICES.includes(voice) ? voice : VOICES[0], output_format: "mp3", stream: true }),
       });
       if (r.ok && r.body) return new Response(r.body, { headers: { "content-type": "audio/mpeg", "cache-control": "no-store" } });
       if (r.status < 500) break;   // key or balance problem: retrying won't help

@@ -1,0 +1,766 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+<meta name="theme-color" content="#6c3cf0">
+<title>Spark</title>
+<style>
+  :root {
+    --bg: #fff7ec;
+    --chat-bg: radial-gradient(circle at 15% 10%, #ffe2f1 0, transparent 40%),
+               radial-gradient(circle at 90% 30%, #dff4ff 0, transparent 40%),
+               radial-gradient(circle at 30% 90%, #fff1c9 0, transparent 45%), #fff7ec;
+    --text: #22183a;
+    --muted: #7d7396;
+    --bot: #ffffff;
+    --me: #6c3cf0;
+    --me-text: #ffffff;
+    --head: linear-gradient(120deg, #6c3cf0, #e5408f 60%, #ff9a3c);
+    --chip: #ffffff;
+    --chip-line: #e5dcff;
+    --line: #eee5f8;
+    --good: #18a957;
+    --e1: #ff4d6d; --e2: #ff9a3c; --e3: #ffd23f; --e4: #8bd346; --e5: #18c27a;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #140f24;
+      --chat-bg: radial-gradient(circle at 15% 10%, #3a1640 0, transparent 40%),
+                 radial-gradient(circle at 90% 30%, #142c46 0, transparent 40%),
+                 radial-gradient(circle at 30% 90%, #3a2a10 0, transparent 45%), #140f24;
+      --text: #f4efff;
+      --muted: #a89fc4;
+      --bot: #241c3d;
+      --chip: #241c3d;
+      --chip-line: #3d3266;
+      --line: #342a55;
+      --good: #43d98a;
+    }
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    display: flex; flex-direction: column;
+    height: 100dvh;
+    overflow: hidden;
+  }
+
+  /* ---------- header ---------- */
+  header {
+    background: var(--head);
+    background-size: 200% 200%;
+    animation: shimmer 8s ease infinite;
+    color: #fff;
+    display: flex; align-items: center; gap: 12px;
+    padding: calc(10px + env(safe-area-inset-top)) 16px 10px;
+    box-shadow: 0 4px 18px rgba(108, 60, 240, .25);
+    z-index: 2;
+  }
+  @keyframes shimmer { 0%,100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+  header .who { flex: 1; min-width: 0; }
+  header b { font-size: 18px; display: block; }
+  header small { opacity: .9; font-size: 13px; }
+  .icon-btn {
+    border: 0; background: rgba(255,255,255,.2); color: #fff;
+    width: 38px; height: 38px; border-radius: 50%; font-size: 18px; cursor: pointer;
+  }
+  .score {
+    background: rgba(255,255,255,.22); border-radius: 999px; padding: 4px 10px;
+    font-weight: 700; font-size: 14px; white-space: nowrap;
+  }
+  .score.bump { animation: bump .5s ease; }
+  @keyframes bump { 40% { transform: scale(1.4); } }
+
+  /* ---------- Bolt, the buddy ---------- */
+  .bolt {
+    width: 48px; height: 48px; flex: none; position: relative;
+    border-radius: 50% 50% 46% 46%;
+    background: radial-gradient(circle at 35% 30%, #fff6b0, #ffd23f 45%, #ff9a3c);
+    box-shadow: 0 0 0 3px rgba(255,255,255,.6), 0 4px 10px rgba(0,0,0,.2);
+    animation: float 3s ease-in-out infinite;
+  }
+  .bolt::before {
+    content: ""; position: absolute; top: -9px; left: 50%; transform: translateX(-50%) rotate(12deg);
+    width: 10px; height: 14px; background: #ffd23f;
+    clip-path: polygon(60% 0, 0 60%, 45% 60%, 30% 100%, 100% 35%, 55% 35%);
+  }
+  .bolt .eye {
+    position: absolute; top: 17px; width: 7px; height: 10px; border-radius: 4px; background: #22183a;
+    animation: blink 4s infinite; transition: height .2s, top .2s;
+  }
+  .bolt .eye.l { left: 13px; } .bolt .eye.r { right: 13px; }
+  .bolt .mouth {
+    position: absolute; left: 50%; top: 29px; transform: translateX(-50%);
+    width: 14px; height: 7px; border: 3px solid #22183a; border-top: 0;
+    border-radius: 0 0 14px 14px; transition: all .2s;
+  }
+  .bolt .cheek { position: absolute; top: 28px; width: 7px; height: 4px; border-radius: 50%; background: #ff7aa8; opacity: .8; }
+  .bolt .cheek.l { left: 6px; } .bolt .cheek.r { right: 6px; }
+  .bolt.sleepy .eye { height: 3px; top: 21px; animation: none; }
+  .bolt.sleepy .mouth { width: 8px; height: 8px; border: 3px solid #22183a; border-radius: 50%; top: 29px; }
+  .bolt.typing { animation: wobble .6s ease-in-out infinite; }
+  .bolt.party { animation: party .9s ease; }
+  .bolt.party .mouth { width: 18px; height: 10px; background: #22183a; }
+  @keyframes float { 50% { transform: translateY(-3px); } }
+  @keyframes blink { 0%, 92%, 100% { transform: scaleY(1); } 95% { transform: scaleY(.1); } }
+  @keyframes wobble { 25% { transform: rotate(-6deg); } 75% { transform: rotate(6deg); } }
+  @keyframes party { 30% { transform: translateY(-14px) rotate(-15deg) scale(1.15); } 60% { transform: translateY(0) rotate(360deg); } 100% { transform: rotate(360deg); } }
+
+  /* ---------- chat ---------- */
+  #chat {
+    flex: 1; overflow-y: auto; background: var(--chat-bg);
+    padding: 16px 12px 8px;
+    scroll-behavior: smooth;
+  }
+  .wrap { max-width: 620px; margin: 0 auto; display: flex; flex-direction: column; gap: 8px; }
+  .msg {
+    max-width: 86%; padding: 10px 14px; border-radius: 20px;
+    overflow-wrap: anywhere;
+    animation: pop .35s cubic-bezier(.2, 1.4, .4, 1) both;
+    box-shadow: 0 2px 6px rgba(34, 24, 58, .08);
+  }
+  .msg.bot { background: var(--bot); align-self: flex-start; border-bottom-left-radius: 6px; }
+  .msg.me { background: var(--me); color: var(--me-text); align-self: flex-end; border-bottom-right-radius: 6px; }
+  .msg.big { font-size: 22px; font-weight: 800; line-height: 1.25; }
+  .msg.task {
+    background: linear-gradient(135deg, #ffd23f, #ff9a3c); color: #22183a;
+    font-size: 21px; font-weight: 800; border-bottom-left-radius: 6px;
+  }
+  .msg.task small { display: block; font-size: 13px; font-weight: 600; opacity: .75; }
+  .msg.joke { font-style: italic; }
+  .msg.party { background: linear-gradient(135deg, #18c27a, #3cc8ff); color: #fff; font-weight: 700; }
+  .msg.history { animation: none; }
+  .day {
+    align-self: center; font-size: 12px; color: var(--muted);
+    background: var(--bot); padding: 3px 10px; border-radius: 999px; margin: 6px 0;
+  }
+  @keyframes pop { from { opacity: 0; transform: translateY(10px) scale(.85); } to { opacity: 1; transform: none; } }
+  .typing-dots { display: inline-flex; gap: 4px; padding: 4px 2px; }
+  .typing-dots i { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); animation: dot 1s infinite; }
+  .typing-dots i:nth-child(2) { animation-delay: .15s; } .typing-dots i:nth-child(3) { animation-delay: .3s; }
+  @keyframes dot { 30% { transform: translateY(-5px); opacity: .5; } }
+
+  /* special bubbles */
+  .ring { display: flex; align-items: center; gap: 14px; }
+  .ring svg { width: 84px; height: 84px; transform: rotate(-90deg); flex: none; }
+  .ring circle { fill: none; stroke-width: 9; }
+  .ring .track { stroke: var(--line); }
+  .ring .prog { stroke: url(#ringGrad); stroke-linecap: round; transition: stroke-dashoffset 1s linear; }
+  .ring b { font-size: 30px; font-variant-numeric: tabular-nums; }
+  .tasklist { list-style: none; padding: 0; margin: 6px 0 0; }
+  .tasklist li { display: flex; gap: 8px; align-items: center; padding: 6px 0; border-top: 1px solid var(--line); }
+  .tasklist li span { flex: 1; }
+  .tasklist button { border: 0; background: none; color: var(--muted); font-size: 16px; cursor: pointer; padding: 2px 6px; }
+  .bars { display: flex; align-items: flex-end; gap: 5px; height: 90px; margin: 10px 0 4px; }
+  .bars div { flex: 1; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; }
+  .bars i { width: 100%; min-height: 4px; border-radius: 6px 6px 2px 2px; background: var(--line); animation: grow .6s ease both; transform-origin: bottom; }
+  .bars span { font-size: 11px; color: var(--muted); margin-top: 3px; }
+  @keyframes grow { from { transform: scaleY(0); } }
+  .stats { display: flex; gap: 14px; margin-top: 8px; font-size: 14px; }
+  .stats b { font-size: 20px; display: block; }
+
+  /* ---------- bottom ---------- */
+  footer {
+    background: var(--bg); border-top: 1px solid var(--line);
+    padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
+    z-index: 2;
+  }
+  footer .wrap { gap: 8px; }
+  #chips { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+  #chips:empty { display: none; }
+  .chip {
+    font: inherit; font-weight: 700; font-size: 15px;
+    border: 2px solid var(--chip-line); background: var(--chip); color: var(--text);
+    border-radius: 999px; padding: 9px 15px; cursor: pointer;
+    animation: pop .3s cubic-bezier(.2, 1.4, .4, 1) both;
+    transition: transform .1s;
+  }
+  .chip:active { transform: scale(.92); }
+  .chip.main { background: linear-gradient(135deg, #6c3cf0, #e5408f); color: #fff; border-color: transparent; box-shadow: 0 4px 12px rgba(108,60,240,.35); }
+  .chip.go { background: linear-gradient(135deg, #18c27a, #3cc8ff); color: #fff; border-color: transparent; }
+  .chip:nth-child(2) { animation-delay: .05s; } .chip:nth-child(3) { animation-delay: .1s; }
+  .chip:nth-child(4) { animation-delay: .15s; } .chip:nth-child(5) { animation-delay: .2s; } .chip:nth-child(6) { animation-delay: .25s; }
+  .menu { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; }
+  .menu button {
+    font: inherit; font-size: 13px; font-weight: 600; white-space: nowrap;
+    border: 0; background: var(--line); color: var(--text); border-radius: 999px; padding: 6px 11px; cursor: pointer;
+  }
+  form { display: flex; gap: 8px; }
+  form input {
+    flex: 1; min-width: 0; font: inherit;
+    border: 2px solid var(--chip-line); border-radius: 999px; padding: 10px 16px;
+    background: var(--chip); color: var(--text); outline: none;
+  }
+  form input:focus { border-color: #6c3cf0; }
+  form button {
+    width: 46px; height: 46px; border-radius: 50%; border: 0; flex: none;
+    background: linear-gradient(135deg, #6c3cf0, #e5408f); color: #fff; font-size: 20px; cursor: pointer;
+  }
+  #confetti { position: fixed; inset: 0; pointer-events: none; z-index: 10; }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute">
+  <defs><linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6c3cf0"/><stop offset="1" stop-color="#ff9a3c"/></linearGradient></defs>
+</svg>
+
+<header>
+  <div class="bolt" id="bolt"><i class="eye l"></i><i class="eye r"></i><i class="cheek l"></i><i class="cheek r"></i><i class="mouth"></i></div>
+  <div class="who">
+    <b>Bolt</b>
+    <small id="status">online</small>
+  </div>
+  <span class="score" id="score" title="Steps done today">⚡ 0</span>
+  <button class="icon-btn" id="mute" aria-label="Sound on or off">🔊</button>
+</header>
+
+<div id="chat"><div class="wrap" id="log"></div></div>
+
+<footer>
+  <div class="wrap">
+    <div id="chips"></div>
+    <div class="menu">
+      <button data-menu="list">📋 My list</button>
+      <button data-menu="joke">😂 Joke</button>
+      <button data-menu="win">🌟 Good thing</button>
+      <button data-menu="week">📈 My week</button>
+      <button data-menu="energy">🔋 Battery</button>
+    </div>
+    <form id="form">
+      <input id="input" type="text" maxlength="160" autocomplete="off" placeholder="Type a task to add…">
+      <button aria-label="Send">➤</button>
+    </form>
+  </div>
+</footer>
+
+<canvas id="confetti"></canvas>
+
+<script>
+(() => {
+  const KEY = 'spark-v1';
+
+  // ================= Bolt's lines =================
+  const R = (arr) => arr[Math.floor(Math.random() * arr.length)];
+  const GREET = {
+    morning: ['Good morning! ☀️ Or as I call it, "why is it bright already".', 'Morning! I’ve had zero coffee because I’m a web page. You?', 'Rise and… well, rise at least. 🌅'],
+    afternoon: ['Hey hey! Afternoon slump hitting yet? 🫠', 'Afternoon! The part of the day where lunch makes everyone a zombie. 🧟', 'Yo! Halfway through the day. You survived the morning, legend.'],
+    evening: ['Evening! 🌙 The day is almost over. You made it.', 'Hey night owl. 🦉 Let’s keep this chill.', 'Evening! If today was a movie, what rating? Don’t answer. Let’s just finish strong.'],
+  };
+  const BACK = ['Oh hey, you’re back! I missed you. Don’t tell anyone. 🤫', 'Look who it is! 👀', 'Welcome back! I kept your seat warm. 🪑', 'You came back! My plan is working. 😈'];
+  const ASK_ENERGY = ['Real talk: how’s your battery right now? 🔋', 'Battery check! How charged are you? 🔋', 'Before anything: how much energy do you have? Be honest, I can’t tell your boss.'];
+  const ENERGY = [
+    { v: 1, chip: '🪫 Dead', react: ['Dead battery. Got it. 🪫 Today the goal is ONE tiny thing. Or zero. Resting is allowed, I checked the rules.', 'Oof. Running on fumes. We’re doing the smallest thing possible, like a sloth on vacation. 🦥'] },
+    { v: 2, chip: '😔 Low', react: ['Low battery mode activated. 🐢 One small thing today = full win. That’s the deal.', 'Low? Okay. We go slow. Slow is still moving. 🐌'] },
+    { v: 3, chip: '😐 Meh', react: ['Meh is fine. Meh is honest. Let’s aim for 2–3 tiny steps with snack breaks. 🍪', 'Meh energy: the official energy of Tuesdays. Let’s do a couple of small things.'] },
+    { v: 4, chip: '🙂 Decent', react: ['Decent! 🙌 Great time to do that one thing you’ve been avoiding. You know the one.', 'Ooh, decent battery. Let’s use it before a meeting steals it. 🏃'] },
+    { v: 5, chip: '⚡ Charged', react: ['CHARGED?! Who are you and what did you do with my human? ⚡⚡', 'Full power! Quick, do something before it wears off! 🚀'] },
+  ];
+  const TASK_INTRO = ['Okay. Your ONE thing right now:', 'Today’s victim:', 'Next up on the chopping block:', 'Here’s the only thing you need to think about:', 'Drumroll please… 🥁'];
+  const TASK_JOKES = [
+    'This task might need a coffee to handle. Maybe two. Espresso yourself. ☕',
+    'This task is not a mountain. It’s a speed bump wearing a mountain costume. 🎭',
+    'Fun fact: this task is scared of you. It’s been hiding in the list for days.',
+    'This one’s so small an ant would call it a warm-up. 🐜',
+    'I’d do it for you, but I don’t have hands. Just vibes. ✨',
+    'Do it now and future you buys you a coffee. Future you is very generous.',
+    'Rome wasn’t built in a day. But somebody laid one brick. This is your brick. 🧱',
+    'This task walked into a bar. Nobody did it there either. Be the hero. 🦸',
+    'Shorter than finding the TV remote. Probably.',
+    'I believe in you. Mostly because I’m programmed to. But also genuinely.',
+  ];
+  const JOKES = [
+    'I’m reading a book about anti-gravity. It’s impossible to put down. 📚',
+    'I told my to-do list a joke. It didn’t laugh. It just got longer.',
+    'Why don’t skeletons fight each other? They don’t have the guts. 💀',
+    'I’m great at multitasking. I can waste time, be unproductive and procrastinate all at once.',
+    'What do you call a fake noodle? An impasta. 🍝',
+    'I used to be addicted to soap. I’m clean now. 🧼',
+    'Why did the coffee file a police report? It got mugged. ☕',
+    'My boss told me to have a good day. So I went home. 🏠',
+    'Why did the scarecrow get promoted? He was outstanding in his field. 🌾',
+    'I asked my energy where it went. It said it’s on a coffee break. Indefinitely.',
+    'I’m reading a book about procrastination. I’ll finish it later.',
+    'What do you call a sleeping dinosaur? A dino-snore. 🦕',
+    'Why did the computer go to the doctor? It had a virus. And no sick days. 🤒',
+    'I only know 25 letters of the alphabet. I don’t know y.',
+    'Parallel lines have so much in common. It’s a shame they’ll never meet.',
+    'What’s the best thing about Switzerland? I don’t know, but the flag is a big plus. 🇨🇭',
+    'Why do bees have sticky hair? Because they use honeycombs. 🐝',
+    'I’m not lazy. I’m in energy-saving mode. Like a phone at 3%.',
+    'My email inbox and I have a lot in common. We’re both full of things nobody wants to deal with.',
+    'What do you call a cow with no legs? Ground beef. 🐄',
+  ];
+  const RIMSHOT = ['🥁 ba-dum-tss', '😂', 'I’ll see myself out. 🚪', 'Thank you, I’m here all week. 🎤', 'You smiled. I saw that. 😏'];
+  const DONE = [
+    'YESSS! 🎉 That task never saw you coming.',
+    'DONE! Somewhere, a to-do list is crying. Good. 😤',
+    'Look at you go! I’d high-five you but I’m a blob. 🙌',
+    'Boom. 💥 Handled. Like a boss. A tired boss, but a boss.',
+    'Done! You deserve a coffee. Or a nap. Or both, in that order. ☕😴',
+    'Legendary. I’m telling all the other apps about you. 🏆',
+    'That was easier than it looked, right? It always is. Sneaky tasks.',
+  ];
+  const FIRST_TODAY = 'First one today! The first one is the hardest. Everything after is downhill. 🛷';
+  const NOT_NOW = ['Fine. I’ll put it in timeout. 🙈', 'Skipping. It’ll think about what it did.', 'No problem, back of the line it goes. 🚶', 'Okay, okay. Next suspect!'];
+  const TOO_BIG = ['Too big? Let’s shrink it. 🔬 What’s the tiniest first piece? Stupidly small. Like "open the laptop" small.', 'Big task energy. 😩 Type the smallest possible first step. If it doesn’t feel silly, it’s not small enough.'];
+  const SPLIT_OK = ['Ooh, tiny. I respect it. 🤏', 'Perfect. That’s a step even a sleepy panda could do. 🐼', 'Love it. Small steps, big flex. 💪'];
+  const ADDED = ['Added! It’s on the list now. Shaking, probably. 📝', 'Got it. Written in my tiny brain. 🧠', 'Noted! I’ll bring it up at the worst possible moment. Kidding. Mostly.', 'On the list! You don’t have to remember it anymore. That’s my job.'];
+  const EMPTY = ['Your list is empty. Suspicious. 🤨 Type a task below, or just enjoy the peace.', 'Nothing on the list! Either you’re a legend or you’re hiding tasks from me. 👀 Type one below whenever.'];
+  const TIMER_START = ['2 minutes. That’s it. You just have to START. I’ll be here pretending to work too. ⏱️', 'Timer on! 2 minutes. If you stop after, it still counts. Those are the rules, I made them.'];
+  const TIMER_END = ['⏰ 2 minutes! You STARTED, which is the hardest part. Keep going or call it. Both count.', '⏰ Ding! Starting is 90% of the battle. The other 10% is snacks.'];
+  const ASK_WIN = ['Quick one before you go: what’s one thing that went okay today? Even tiny. 🌟', 'Tell me one good thing from today. Small counts. "I drank water" counts. 🌟'];
+  const WIN_OK = ['Saved to the good-stuff vault. 🏦✨ Over time we’ll see what still lights you up.', 'Love that. 💛 Collecting these for you.', 'That’s going in the highlight reel. 🎬'];
+  const CARE = 'Hey, real talk for a sec. 💛 Your battery has been low for most of the last two weeks. That’s not laziness, that’s a signal. Sleep, food, a walk and a few real days off help. And a doctor can check things like iron, vitamin D, thyroid and depression. You deserve to feel better, not just push through.';
+
+  // ================= storage =================
+  function blank() { return { checkins: {}, tasks: [], wins: [], doneLog: [], chat: [], muted: false }; }
+  function load() {
+    try {
+      const d = JSON.parse(localStorage.getItem(KEY));
+      if (d && typeof d === 'object') return Object.assign(blank(), d);
+    } catch (e) {}
+    return blank();
+  }
+  let data = load();
+  function save() {
+    data.chat = data.chat.slice(-60);
+    try { localStorage.setItem(KEY, JSON.stringify(data)); } catch (e) {}
+  }
+
+  // ================= helpers =================
+  const $ = (id) => document.getElementById(id);
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+  const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  function dayKey(d = new Date()) {
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+  function daysAgo(n) { const d = new Date(); d.setDate(d.getDate() - n); return d; }
+  const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const doneToday = () => data.doneLog.filter((d) => d === dayKey()).length;
+
+  function nextThing() {
+    for (const t of data.tasks) {
+      if (t.done) continue;
+      return { task: t, step: t.steps.find((s) => !s.done) };
+    }
+    return null;
+  }
+  function markDone(task, step) {
+    if (step) step.done = true;
+    if (!step || task.steps.every((s) => s.done)) { task.done = true; task.doneAt = Date.now(); }
+    data.doneLog.push(dayKey());
+  }
+
+  // ================= sound =================
+  let ac = null;
+  function tone(freq, start, dur, type = 'sine', vol = 0.12) {
+    if (data.muted) return;
+    try {
+      ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+      const o = ac.createOscillator(), g = ac.createGain();
+      o.type = type; o.frequency.value = freq;
+      const t = ac.currentTime + start;
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(vol, t + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      o.connect(g).connect(ac.destination);
+      o.start(t); o.stop(t + dur + 0.02);
+    } catch (e) {}
+  }
+  const sfx = {
+    pop: () => { tone(660, 0, 0.08, 'sine', 0.06); tone(990, 0.04, 0.08, 'sine', 0.05); },
+    send: () => tone(440, 0, 0.07, 'triangle', 0.06),
+    win: () => [523, 659, 784, 1047].forEach((f, i) => tone(f, i * 0.09, 0.35, 'triangle', 0.12)),
+    rim: () => { tone(180, 0, 0.12, 'square', 0.05); tone(240, 0.12, 0.12, 'square', 0.05); tone(2000, 0.26, 0.25, 'triangle', 0.05); },
+    alarm: () => [0, 0.2, 0.4].forEach((s) => tone(880, s, 0.15, 'square', 0.06)),
+  };
+  function buzz(p) { try { navigator.vibrate && navigator.vibrate(p); } catch (e) {} }
+
+  // ================= confetti =================
+  const cv = $('confetti'), cx = cv.getContext('2d');
+  let parts = [], raf = null;
+  function confetti(n = 140) {
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    cv.width = innerWidth; cv.height = innerHeight;
+    const colors = ['#6c3cf0', '#e5408f', '#ff9a3c', '#ffd23f', '#18c27a', '#3cc8ff'];
+    for (let i = 0; i < n; i++) {
+      parts.push({
+        x: innerWidth / 2 + (Math.random() - 0.5) * 80, y: innerHeight * 0.6,
+        vx: (Math.random() - 0.5) * 14, vy: -Math.random() * 16 - 6,
+        r: Math.random() * 6 + 4, c: colors[i % colors.length],
+        a: Math.random() * 6, va: (Math.random() - 0.5) * 0.4, life: 0,
+      });
+    }
+    if (!raf) raf = requestAnimationFrame(frame);
+  }
+  function frame() {
+    cx.clearRect(0, 0, cv.width, cv.height);
+    parts = parts.filter((p) => p.y < cv.height + 20 && p.life < 220);
+    for (const p of parts) {
+      p.vy += 0.4; p.vx *= 0.99; p.x += p.vx; p.y += p.vy; p.a += p.va; p.life++;
+      cx.save(); cx.translate(p.x, p.y); cx.rotate(p.a);
+      cx.fillStyle = p.c; cx.fillRect(-p.r / 2, -p.r / 4, p.r, p.r / 2);
+      cx.restore();
+    }
+    raf = parts.length ? requestAnimationFrame(frame) : null;
+    if (!raf) cx.clearRect(0, 0, cv.width, cv.height);
+  }
+
+  // ================= chat UI =================
+  const log = $('log'), chat = $('chat'), bolt = $('bolt');
+  function scrollDown() { requestAnimationFrame(() => { chat.scrollTop = chat.scrollHeight; }); }
+  function bubble(from, html, cls = '', keep = true) {
+    const el = document.createElement('div');
+    el.className = `msg ${from} ${cls}`;
+    el.innerHTML = html;
+    log.appendChild(el);
+    if (keep) { data.chat.push({ from, html, cls, day: dayKey() }); save(); }
+    scrollDown();
+    return el;
+  }
+  let typingEl = null;
+  async function typing(ms) {
+    bolt.classList.add('typing');
+    $('status').textContent = 'typing…';
+    typingEl = bubble('bot', '<span class="typing-dots"><i></i><i></i><i></i></span>', '', false);
+    await sleep(ms);
+    typingEl.remove(); typingEl = null;
+    bolt.classList.remove('typing');
+    $('status').textContent = 'online';
+  }
+  // Bolt says something, with a typing pause scaled to its length.
+  async function say(html, cls = '', keep = true) {
+    await typing(Math.min(1300, 350 + html.length * 12));
+    sfx.pop();
+    return bubble('bot', html, cls, keep);
+  }
+  function me(text) { sfx.send(); bubble('me', esc(text)); }
+
+  // Quick-reply chips. Each: [label, handler, style]
+  function chips(list) {
+    const box = $('chips');
+    box.innerHTML = '';
+    for (const [label, fn, style] of list) {
+      const b = document.createElement('button');
+      b.className = 'chip ' + (style || '');
+      b.textContent = label;
+      b.onclick = () => { if (busy) return; box.innerHTML = ''; run(fn); };
+      box.appendChild(b);
+    }
+    scrollDown();
+  }
+  // Run one flow at a time so buttons can't overlap conversations.
+  // Typed messages queue up behind whatever Bolt is saying.
+  let busy = false, queue = Promise.resolve();
+  function run(fn) {
+    queue = queue.then(async () => {
+      busy = true;
+      try { await fn(); } catch (e) { console.error(e); } finally { busy = false; }
+    });
+    return queue;
+  }
+  let mode = 'task'; // what typed text means: task | split | win
+  function setMode(m) {
+    mode = m;
+    $('input').placeholder = { task: 'Type a task to add…', split: 'Tiniest first step…', win: 'One good thing…' }[m];
+  }
+  function setMood() {
+    const c = data.checkins[dayKey()];
+    bolt.classList.toggle('sleepy', !!c && c.energy <= 2);
+  }
+  function updateScore(bumpIt) {
+    const s = $('score');
+    s.textContent = '⚡ ' + doneToday();
+    if (bumpIt) { s.classList.remove('bump'); void s.offsetWidth; s.classList.add('bump'); }
+  }
+
+  // ================= flows =================
+  async function greet() {
+    const h = new Date().getHours();
+    const part = h < 12 ? 'morning' : h < 18 ? 'afternoon' : 'evening';
+    await say(R(GREET[part]), 'big');
+    if (lowStreak()) await say(CARE);
+    await askEnergy();
+  }
+
+  async function askEnergy() {
+    await say(R(ASK_ENERGY));
+    chips(ENERGY.map((e) => [e.chip, () => pickEnergy(e)]));
+  }
+  async function pickEnergy(e) {
+    me(e.chip);
+    data.checkins[dayKey()] = { energy: e.v, at: Date.now() };
+    save();
+    setMood();
+    await say(R(e.react));
+    await offerNext();
+  }
+
+  let currentChips = [];
+  async function offerNext() {
+    setMode('task');
+    const next = nextThing();
+    if (!next) {
+      await say(R(EMPTY));
+      currentChips = [['😂 Tell me a joke', joke], ['🌟 Good thing today', askWin]];
+      chips(currentChips);
+      return;
+    }
+    const { task, step } = next;
+    await say(R(TASK_INTRO));
+    const left = task.steps.filter((s) => !s.done).length;
+    await typing(500);
+    sfx.pop();
+    bubble('bot', step && step.text !== task.title ? `${esc(step.text)}<small>part of “${esc(task.title)}” · ${left} step${left > 1 ? 's' : ''} left</small>` : esc(task.title), 'task');
+    await say(R(TASK_JOKES), 'joke');
+    currentChips = [
+      ['⏱️ Start 2 min', startTimer, 'main'],
+      ['✅ Done', done, 'go'],
+      ['😩 Too big', tooBig],
+      ['🙈 Not now', notNow],
+      ['😂 Joke', joke],
+    ];
+    chips(currentChips);
+  }
+
+  async function done() {
+    me('✅ Done');
+    const next = nextThing();
+    if (next) markDone(next.task, next.step);
+    save();
+    celebrate();
+    const n = doneToday();
+    await say(R(DONE), 'party');
+    if (n === 1) await say(FIRST_TODAY);
+    else if (n === 3 || n === 5 || n === 10) await say(`That’s ${n} today. 🔥 You’re on a roll. Allowed to stop here and feel smug.`);
+    const winToday = data.wins.some((w) => w.date === dayKey());
+    if (!winToday && (n === 2 || new Date().getHours() >= 17)) return askWin();
+    await offerNext();
+  }
+  function celebrate() {
+    sfx.win(); buzz([40, 40, 80]); confetti();
+    bolt.classList.remove('party'); void bolt.offsetWidth; bolt.classList.add('party');
+    updateScore(true);
+  }
+
+  async function notNow() {
+    me('🙈 Not now');
+    const next = nextThing();
+    if (next) { data.tasks.splice(data.tasks.indexOf(next.task), 1); data.tasks.push(next.task); save(); }
+    await say(R(NOT_NOW));
+    await offerNext();
+  }
+
+  async function tooBig() {
+    me('😩 Too big');
+    setMode('split');
+    await say(R(TOO_BIG));
+    $('input').focus();
+    chips([['Never mind', async () => { me('Never mind'); await offerNext(); }]]);
+  }
+  async function addStep(text) {
+    const next = nextThing();
+    if (!next) return offerNext();
+    // The new tiny step goes before any unfinished steps.
+    const firstOpen = next.task.steps.findIndex((s) => !s.done);
+    const s = { id: uid(), text, done: false };
+    if (firstOpen !== -1) next.task.steps.splice(firstOpen, 0, s);
+    // No steps left yet: the rest of the task stays on as its own step.
+    else next.task.steps.push(s, { id: uid(), text: next.task.title, done: false });
+    save();
+    await say(R(SPLIT_OK));
+    await offerNext();
+  }
+
+  async function joke() {
+    await say(R(JOKES), 'joke');
+    await sleep(500);
+    sfx.rim();
+    await say(R(RIMSHOT));
+    chips(currentChips);
+  }
+
+  async function askWin() {
+    setMode('win');
+    await say(R(ASK_WIN));
+    $('input').focus();
+    chips([['Skip', async () => { me('Skip'); await say('All good. Tomorrow then. 😌'); await offerNext(); }]]);
+  }
+  async function addWin(text) {
+    data.wins.unshift({ id: uid(), text, date: dayKey(), at: Date.now() });
+    save();
+    sfx.win(); confetti(60);
+    await say(R(WIN_OK));
+    if (data.wins.length === 5 || data.wins.length === 15) await showWins();
+    await offerNext();
+  }
+  async function showWins() {
+    await say(`Here’s your good-stuff vault so far 🏦<ul class="tasklist">${data.wins.slice(0, 8).map((w) => `<li><span>🌟 ${esc(w.text)}</span></li>`).join('')}</ul><small>Notice anything that repeats? A kind of task, a person, a time of day? That’s where your spark still is.</small>`, '', false);
+  }
+
+  async function addTask(text) {
+    const wasEmpty = !nextThing();
+    data.tasks.push({ id: uid(), title: text, steps: [], done: false, created: Date.now() });
+    save();
+    await say(R(ADDED));
+    if (wasEmpty) await offerNext(); else chips(currentChips);
+  }
+
+  // ---------- 2-minute timer ----------
+  let timerId = null;
+  async function startTimer() {
+    me('⏱️ Start 2 min');
+    await say(R(TIMER_START));
+    const C = 2 * Math.PI * 36;
+    const el = bubble('bot', `<div class="ring"><svg viewBox="0 0 84 84"><circle class="track" cx="42" cy="42" r="36"/><circle class="prog" cx="42" cy="42" r="36" stroke-dasharray="${C}" stroke-dashoffset="0"/></svg><b>2:00</b></div>`, '', false);
+    const prog = el.querySelector('.prog'), num = el.querySelector('b');
+    let left = 120;
+    chips([['✅ Did it!', () => { stopTimer(); return done(); }, 'go'], ['🛑 Stop', async () => { stopTimer(); me('🛑 Stop'); await say('No stress. You tried, that counts. 💛'); chips(currentChips); }]]);
+    clearInterval(timerId);
+    timerId = setInterval(async () => {
+      left--;
+      num.textContent = Math.floor(left / 60) + ':' + String(left % 60).padStart(2, '0');
+      prog.style.strokeDashoffset = String(C * (1 - left / 120));
+      if (left === 60) { sfx.pop(); bubble('bot', 'Halfway! You’re doing it. 👀', '', false); }
+      if (left <= 0) {
+        stopTimer();
+        sfx.alarm(); buzz([200, 100, 200]);
+        if (busy) return;
+        await run(() => say(R(TIMER_END)));
+        chips([['✅ Done', done, 'go'], ['⏱️ 2 more', startTimer, 'main'], ['🛑 Call it', async () => { me('🛑 Call it'); await say('Respect. You showed up. 💛'); await offerNext(); }]]);
+      }
+    }, 1000);
+  }
+  function stopTimer() { clearInterval(timerId); timerId = null; }
+
+  // ---------- list & week ----------
+  async function showList() {
+    const open = data.tasks.filter((t) => !t.done);
+    if (!open.length) { await say(R(EMPTY)); return chips(currentChips); }
+    await say(`Here’s the list. Tap ✕ to delete. 🗑️<ul class="tasklist">${open.map((t) =>
+      `<li data-id="${t.id}"><span>${esc(t.title)}${t.steps.some((s) => !s.done) ? ` <small>(${t.steps.filter((s) => !s.done).length} steps)</small>` : ''}</span><button data-del="${t.id}" aria-label="Delete">✕</button></li>`).join('')}</ul>`, '', false);
+    chips(currentChips);
+  }
+  log.addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-del]');
+    if (!b) return;
+    data.tasks = data.tasks.filter((t) => t.id !== b.dataset.del);
+    save();
+    b.closest('li').remove();
+    sfx.send();
+  });
+
+  function lowStreak() {
+    let low = 0, n = 0;
+    for (let i = 0; i < 14; i++) {
+      const c = data.checkins[dayKey(daysAgo(i))];
+      if (c) { n++; if (c.energy <= 2) low++; }
+    }
+    return n >= 5 && low / n >= 0.6;
+  }
+  async function showWeek() {
+    const colors = ['var(--line)', 'var(--e1)', 'var(--e2)', 'var(--e3)', 'var(--e4)', 'var(--e5)'];
+    let bars = '';
+    const last7 = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = daysAgo(i), k = dayKey(d), c = data.checkins[k];
+      last7.push(k);
+      bars += `<div><i style="height:${c ? c.energy * 20 : 0}%;background:${colors[c ? c.energy : 0]};animation-delay:${(6 - i) * 0.06}s"></i><span>${DAYS[d.getDay()]}</span></div>`;
+    }
+    const steps = data.doneLog.filter((d) => last7.includes(d)).length;
+    const wins = data.wins.filter((w) => last7.includes(w.date)).length;
+    // best and worst weekday across all check-ins
+    const byDay = {};
+    for (const [k, c] of Object.entries(data.checkins)) {
+      const [y, m, d] = k.split('-').map(Number);
+      (byDay[new Date(y, m - 1, d).getDay()] ||= []).push(c.energy);
+    }
+    const avgs = Object.entries(byDay).filter(([, v]) => v.length >= 2)
+      .map(([wd, v]) => [Number(wd), v.reduce((a, b) => a + b, 0) / v.length]).sort((a, b) => a[1] - b[1]);
+    let insight = steps ? `You did ${steps} step${steps > 1 ? 's' : ''} this week. While tired. That’s not nothing, that’s grit. 💪` : 'Quiet week. That’s okay. One tiny step next time? 🤏';
+    if (avgs.length >= 2 && avgs[avgs.length - 1][1] - avgs[0][1] >= 0.8) {
+      const lo = DAYS[avgs[0][0]], hi = DAYS[avgs[avgs.length - 1][0]];
+      insight += `<br><br>🔎 Pattern: your battery is lowest on <b>${lo}</b> and best on <b>${hi}</b>. Save the hard stuff for ${hi}, keep ${lo} chill.`;
+    }
+    await say(`Your week, scientifically analyzed by a blob 🧪<div class="bars">${bars}</div>
+      <div class="stats"><span><b>${steps}</b>steps</span><span><b>${wins}</b>good things</span><span><b>${Object.keys(data.checkins).length}</b>check-ins</span></div>
+      <p style="margin:10px 0 0">${insight}</p>`, '', false);
+    if (lowStreak()) await say(CARE);
+    if (data.wins.length) await showWins();
+    chips(currentChips);
+  }
+
+  // ================= wiring =================
+  $('form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const text = $('input').value.trim();
+    if (!text) return;
+    $('input').value = '';
+    me(text);
+    $('chips').innerHTML = '';
+    const m = mode;
+    setMode('task');
+    run(() => (m === 'split' ? addStep(text) : m === 'win' ? addWin(text) : addTask(text)));
+  });
+
+  document.querySelector('.menu').addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-menu]');
+    if (!b || busy) return;
+    $('chips').innerHTML = '';
+    const act = {
+      list: () => { me('📋 My list'); return showList(); },
+      joke: () => { me('😂 Joke'); return joke(); },
+      win: () => { me('🌟 Good thing'); return askWin(); },
+      week: () => { me('📈 My week'); return showWeek(); },
+      energy: () => { me('🔋 Battery'); return askEnergy(); },
+    }[b.dataset.menu];
+    run(act);
+  });
+
+  $('mute').addEventListener('click', () => {
+    data.muted = !data.muted;
+    save();
+    $('mute').textContent = data.muted ? '🔇' : '🔊';
+    if (!data.muted) sfx.pop();
+  });
+
+  // ================= start =================
+  $('mute').textContent = data.muted ? '🔇' : '🔊';
+  setMood();
+  updateScore(false);
+  let lastDay = null;
+  for (const m of data.chat) {
+    if (m.day !== lastDay) {
+      const d = document.createElement('div');
+      d.className = 'day';
+      d.textContent = m.day === dayKey() ? 'Today' : m.day;
+      log.appendChild(d);
+      lastDay = m.day;
+    }
+    bubble(m.from, m.html, (m.cls || '') + ' history', false);
+  }
+  const seenToday = data.chat.some((m) => m.day === dayKey());
+  if (!seenToday) {
+    const d = document.createElement('div');
+    d.className = 'day'; d.textContent = 'Today';
+    log.appendChild(d);
+  }
+  run(async () => {
+    await sleep(300);
+    if (!seenToday) return greet();
+    await say(R(BACK));
+    if (!data.checkins[dayKey()]) return askEnergy();
+    await offerNext();
+  });
+})();
+</script>
+</body>
+</html>

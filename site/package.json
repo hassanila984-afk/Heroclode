@@ -1,0 +1,16 @@
+{
+  "name": "firefly-site",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "sh build.sh dist",
+    "deploy": "sh build.sh dist && wrangler pages deploy dist --project-name firefly",
+    "dev": "wrangler pages dev ../firefly"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "latest"
+  },
+  "devDependencies": {
+    "wrangler": "latest"
+  }
+}
